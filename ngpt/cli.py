@@ -385,20 +385,38 @@ def main():
         print(f"Total configurations: {len(configs)}")
         print(f"Active configuration index: {args.config_index}")
 
+        # Temporarily initialize a client to get the detected provider for each config
+        def get_detected_provider(config):
+            base_url = config.get('base_url', '')
+            temp_client = NGPTClient(
+                api_key=config.get('api_key', ''),
+                base_url=base_url,
+                provider=config.get('provider', 'N/A'),
+                model=config.get('model', 'N/A')
+            )
+            detected = temp_client._detect_provider_from_url(base_url)
+            return detected if detected else config.get('provider', 'N/A')
+
         if args.all:
             # Show details for all configurations
             print("\nAll configuration details:")
             for i, cfg in enumerate(configs):
                 active_str = '(Active)' if i == args.config_index else ''
+                detected_provider = get_detected_provider(cfg)
+                provider_str = f" [{detected_provider}]" if detected_provider else ""
+                
                 print(f"\n--- Configuration Index {i} {active_str} ---")
-                print(f"  API Key: {'[Set]' if cfg.get('api_key') else '[Not Set]'}")
+                print(f"  API Key: {'[Set]' if cfg.get('api_key') else '[Not Set]'}{provider_str}")
                 print(f"  Base URL: {cfg.get('base_url', 'N/A')}")
                 print(f"  Provider: {cfg.get('provider', 'N/A')}")
                 print(f"  Model: {cfg.get('model', 'N/A')}")
         else:
             # Show active config details and summary list
+            detected_provider = get_detected_provider(active_config)
+            provider_str = f" [{detected_provider}]" if detected_provider else ""
+            
             print("\nActive configuration details:")
-            print(f"  API Key: {'[Set]' if active_config.get('api_key') else '[Not Set]'}")
+            print(f"  API Key: {'[Set]' if active_config.get('api_key') else '[Not Set]'}{provider_str}")
             print(f"  Base URL: {active_config.get('base_url', 'N/A')}")
             print(f"  Provider: {active_config.get('provider', 'N/A')}")
             print(f"  Model: {active_config.get('model', 'N/A')}")
@@ -407,7 +425,9 @@ def main():
                 print("\nAvailable configurations:")
                 for i, cfg in enumerate(configs):
                     active_marker = "*" if i == args.config_index else " "
-                    print(f"[{i}]{active_marker} {cfg.get('provider', 'N/A')} - {cfg.get('model', 'N/A')} ({'[API Key Set]' if cfg.get('api_key') else '[API Key Not Set]'})")
+                    detected = get_detected_provider(cfg)
+                    detected_str = f" [{detected}]" if detected else ""
+                    print(f"[{i}]{active_marker} {cfg.get('provider', 'N/A')} - {cfg.get('model', 'N/A')} ({'[API Key Set]' if cfg.get('api_key') else '[API Key Not Set]'}{detected_str})")
         
         return
     
