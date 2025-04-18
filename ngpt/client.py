@@ -18,11 +18,64 @@ class NGPTClient:
         self.base_url = base_url if base_url.endswith('/') else base_url + '/'
         self.model = model
         
+        # Detect provider based on base_url domain first
+        detected_provider = self._detect_provider_from_url(self.base_url)
+        self.provider = detected_provider if detected_provider else provider
+        
         # Default headers
         self.headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}"
         }
+
+    def _detect_provider_from_url(self, url: str) -> str:
+        """
+        Detect the API provider based on the base URL domain.
+        
+        Args:
+            url: The base URL to analyze
+            
+        Returns:
+            Detected provider name or empty string if not detected
+        """
+        import re
+        from urllib.parse import urlparse
+        
+        # Extract domain from URL
+        try:
+            parsed_url = urlparse(url)
+            domain = parsed_url.netloc.lower()
+            
+            # Check for known API provider domains
+            if 'openai.com' in domain:
+                return 'OpenAI'
+            elif 'anthropic.com' in domain:
+                return 'Anthropic'
+            elif 'generativelanguage.googleapis.com' in domain:
+                return 'Gemini'
+            elif 'groq.com' in domain:
+                return 'Groq'
+            elif 'cohere.com' in domain or 'cohere.ai' in domain:
+                return 'Cohere'
+            elif 'mistral.ai' in domain:
+                return 'Mistral'
+            elif 'claude.ai' in domain:
+                return 'Claude'
+            elif re.match(r'(127\.0\.0\.1|localhost)', domain):
+                # Local APIs, check path components for clues
+                path = parsed_url.path.lower()
+                if '/ollama' in path:
+                    return 'Ollama'
+                elif '/llama' in path:
+                    return 'Llama'
+                # Default to the explicitly provided provider for local APIs
+                return ''
+            
+            # Return empty string if no match found, will fall back to provided provider
+            return ''
+        except Exception:
+            # In case of any parsing error, fall back to provided provider
+            return ''
 
     def chat(
         self,
@@ -79,11 +132,26 @@ class NGPTClient:
         endpoint = "chat/completions"
         url = f"{self.base_url}{endpoint}"
         
+        # Set headers based on provider
+        headers = self.headers.copy()
+        provider = self.provider.lower() if hasattr(self, 'provider') else ""
+        
+        # Provider-specific customizations
+        if 'gemini' in provider:
+            # Gemini uses X-Goog-Api-Key instead of Bearer token
+            headers = {
+                "Content-Type": "application/json",
+                "X-Goog-Api-Key": self.api_key
+            }
+            
+            # Gemini may require a different endpoint or payload structure
+            # This is a simplistic approach - may need further customization
+        
         try:
             if not stream:
                 # Regular request
                 try:
-                    response = requests.post(url, headers=self.headers, json=payload)
+                    response = requests.post(url, headers=headers, json=payload)
                     response.raise_for_status()  # Raise exception for HTTP errors
                     result = response.json()
                     
@@ -97,7 +165,7 @@ class NGPTClient:
             else:
                 # Streaming request
                 collected_content = ""
-                with requests.post(url, headers=self.headers, json=payload, stream=True) as response:
+                with requests.post(url, headers=headers, json=payload, stream=True) as response:
                     response.raise_for_status()  # Raise exception for HTTP errors
                     
                     try:
@@ -271,36 +339,77 @@ Code:"""
         if not self.api_key:
             print("Error: API key is not set. Please configure your API key in the config file or provide it with --api-key.")
             return []
-            
-        # Endpoint for models
-        url = f"{self.base_url}models"
         
-        try:
-            response = requests.get(url, headers=self.headers)
-            response.raise_for_status()  # Raise exception for HTTP errors
-            result = response.json()
-            
-            if "data" in result:
-                return result["data"]
+        provider = getattr(self, 'provider', '').lower()
+        
+        # Handle provider-specific API differences
+        if 'gemini' in provider:
+            # Gemini API specific handling
+            # Base URL typically ends with /v1beta or similar - we want to add /models
+            base_url = self.base_url.rstrip('/')
+            if base_url.endswith('/v1beta'):
+                url = f"{base_url}/models"
             else:
-                print("Error: Unexpected response format when retrieving models.")
+                url = f"{base_url}/models"
+            
+            # Gemini uses X-Goog-Api-Key instead of Bearer token
+            headers = {
+                "Content-Type": "application/json",
+                "X-Goog-Api-Key": self.api_key
+            }
+            
+            try:
+                response = requests.get(url, headers=headers)
+                response.raise_for_status()
+                result = response.json()
+                
+                # Gemini API returns models in a different format
+                if "models" in result:
+                    # Transform to match our expected format
+                    return [{"id": model.get("name", "").split("/")[-1], 
+                             "owned_by": "Google"} 
+                            for model in result["models"]]
+                else:
+                    print("Error: Unexpected response format when retrieving Gemini models.")
+                    return []
+                    
+            except requests.exceptions.HTTPError as e:
+                print(f"HTTP Error with Gemini API: {e}")
                 return []
                 
-        except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 401:
-                print("Error: Authentication failed. Please check your API key.")
-            elif e.response.status_code == 404:
-                print(f"Error: Models endpoint not found at {url}")
-            elif e.response.status_code == 429:
-                print("Error: Rate limit exceeded. Please try again later.")
-            else:
-                print(f"HTTP Error: {e}")
-            return []
+            except Exception as e:
+                print(f"Error retrieving Gemini models: {e}")
+                return []
+        else:
+            # Standard OpenAI-compatible endpoint
+            url = f"{self.base_url}models"
             
-        except requests.exceptions.ConnectionError:
-            print(f"Error: Could not connect to {self.base_url}. Please check your internet connection and base URL.")
-            return []
-            
-        except Exception as e:
-            print(f"Error: An unexpected error occurred while retrieving models: {e}")
-            return [] 
+            try:
+                response = requests.get(url, headers=self.headers)
+                response.raise_for_status()  # Raise exception for HTTP errors
+                result = response.json()
+                
+                if "data" in result:
+                    return result["data"]
+                else:
+                    print("Error: Unexpected response format when retrieving models.")
+                    return []
+                    
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code == 401:
+                    print("Error: Authentication failed. Please check your API key.")
+                elif e.response.status_code == 404:
+                    print(f"Error: Models endpoint not found at {url}")
+                elif e.response.status_code == 429:
+                    print("Error: Rate limit exceeded. Please try again later.")
+                else:
+                    print(f"HTTP Error: {e}")
+                return []
+                
+            except requests.exceptions.ConnectionError:
+                print(f"Error: Could not connect to {self.base_url}. Please check your internet connection and base URL.")
+                return []
+                
+            except Exception as e:
+                print(f"Error: An unexpected error occurred while retrieving models: {e}")
+                return [] 
