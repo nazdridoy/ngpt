@@ -1402,6 +1402,9 @@ def main():
                     {"role": "user", "content": prompt}
                 ]
             
+            # Set default streaming behavior based on --no-stream and --prettify arguments
+            should_stream = not args.no_stream and not args.prettify
+            
             # If stream-prettify is enabled
             stream_callback = None
             live_display = None
@@ -1461,6 +1464,9 @@ def main():
                     {"role": "system", "content": args.preprompt},
                     {"role": "user", "content": prompt}
                 ]
+            
+            # Set default streaming behavior based on --no-stream and --prettify arguments
+            should_stream = not args.no_stream and not args.prettify
             
             # If stream-prettify is enabled
             stream_callback = None

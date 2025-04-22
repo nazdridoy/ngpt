@@ -134,7 +134,7 @@ wheels = [
 
 [[package]]
 name = "ngpt"
-version = "2.7.1"
+version = "2.7.2"
 source = { editable = "." }
 dependencies = [
     { name = "requests" },
