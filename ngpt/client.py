@@ -34,6 +34,7 @@ class NGPTClient:
         messages: Optional[List[Dict[str, str]]] = None,
         web_search: bool = False,
         markdown_format: bool = False,
+        stream_callback: Optional[callable] = None,
         **kwargs
     ) -> str:
         """
@@ -48,6 +49,7 @@ class NGPTClient:
             messages: Optional list of message objects to override default behavior
             web_search: Whether to enable web search capability
             markdown_format: If True, allow markdown-formatted responses, otherwise plain text
+            stream_callback: Optional callback function for streaming mode updates
             **kwargs: Additional arguments to pass to the API
             
         Returns:
@@ -129,15 +131,23 @@ class NGPTClient:
                                         delta = chunk["choices"][0].get("delta", {})
                                         content = delta.get("content", "")
                                         if content:
-                                            print(content, end="", flush=True)
-                                            collected_content += content
+                                            if stream_callback:
+                                                # If we have a callback, use it and don't print here
+                                                collected_content += content
+                                                stream_callback(collected_content)
+                                            else:
+                                                # Default behavior: print to console
+                                                print(content, end="", flush=True)
+                                                collected_content += content
                                 except json.JSONDecodeError:
                                     pass  # Skip invalid JSON
                     except KeyboardInterrupt:
                         print("\nGeneration cancelled by user.")
                         return collected_content
                 
-                print()  # Add a final newline
+                # Only print a newline if we're not using a callback
+                if not stream_callback:
+                    print()  # Add a final newline
                 return collected_content
                 
         except requests.exceptions.HTTPError as e:
@@ -248,7 +258,9 @@ Command:"""
         temperature: float = 0.4,
         top_p: float = 0.95,
         max_tokens: Optional[int] = None,
-        markdown_format: bool = False
+        markdown_format: bool = False,
+        stream: bool = False,
+        stream_callback: Optional[callable] = None
     ) -> str:
         """
         Generate code based on the prompt.
@@ -261,6 +273,8 @@ Command:"""
             top_p: Controls diversity via nucleus sampling
             max_tokens: Maximum number of tokens to generate
             markdown_format: If True, request markdown-formatted code, otherwise plain text
+            stream: Whether to stream the response
+            stream_callback: Optional callback function for streaming mode updates
             
         Returns:
             The generated code
@@ -299,12 +313,13 @@ Code:"""
         try:
             return self.chat(
                 prompt=prompt,
-                stream=False,
+                stream=stream,
                 messages=messages,
                 web_search=web_search,
                 temperature=temperature,
                 top_p=top_p,
-                max_tokens=max_tokens
+                max_tokens=max_tokens,
+                stream_callback=stream_callback
             )
         except Exception as e:
             print(f"Error generating code: {e}")

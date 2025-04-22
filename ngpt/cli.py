@@ -507,8 +507,22 @@ def check_config(config):
     
     return True
 
-def interactive_chat_session(client, web_search=False, no_stream=False, temperature=0.7, top_p=1.0, max_tokens=None, log_file=None, preprompt=None, prettify=False, renderer='auto'):
-    """Run an interactive chat session with conversation history."""
+def interactive_chat_session(client, web_search=False, no_stream=False, temperature=0.7, top_p=1.0, max_tokens=None, log_file=None, preprompt=None, prettify=False, renderer='auto', stream_prettify=False):
+    """Start an interactive chat session with the AI.
+    
+    Args:
+        client: The NGPTClient instance
+        web_search: Whether to enable web search capability
+        no_stream: Whether to disable streaming
+        temperature: Controls randomness in the response
+        top_p: Controls diversity via nucleus sampling
+        max_tokens: Maximum number of tokens to generate in each response
+        log_file: Optional filepath to log conversation to
+        preprompt: Custom system prompt to control AI behavior
+        prettify: Whether to enable markdown rendering
+        renderer: Which markdown renderer to use
+        stream_prettify: Whether to enable streaming with prettify
+    """
     # Get terminal width for better formatting
     try:
         term_width = shutil.get_terminal_size().columns
@@ -670,18 +684,38 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
                 log_handle.flush()
             
             # Print assistant indicator with formatting
-            if not no_stream:
+            if not no_stream and not stream_prettify:
                 print(f"\n{ngpt_header()}: {COLORS['reset']}", end="", flush=True)
-            else:
+            elif not stream_prettify:
                 print(f"\n{ngpt_header()}: {COLORS['reset']}", flush=True)
             
-            # If prettify is enabled, we need to disable streaming to collect the full response
-            should_stream = not no_stream and not prettify
-            
-            # If prettify is enabled with streaming, inform the user
-            if prettify and not no_stream:
+            # If prettify is enabled with regular streaming
+            if prettify and not no_stream and not stream_prettify:
                 print(f"\n{COLORS['yellow']}Note: Streaming disabled to enable markdown rendering.{COLORS['reset']}")
                 print(f"\n{ngpt_header()}: {COLORS['reset']}", flush=True)
+                should_stream = False
+            else:
+                # Regular behavior with stream-prettify taking precedence
+                should_stream = not no_stream
+            
+            # Setup for stream-prettify
+            stream_callback = None
+            live_display = None
+            
+            if stream_prettify and should_stream:
+                # Get the correct header for interactive mode
+                header = ngpt_header()
+                live_display, stream_callback = prettify_streaming_markdown(renderer, is_interactive=True, header_text=header)
+                if not live_display:
+                    # Fallback to normal prettify if live display setup failed
+                    prettify = True
+                    stream_prettify = False
+                    should_stream = False
+                    print(f"{COLORS['yellow']}Falling back to regular prettify mode.{COLORS['reset']}")
+            
+            # Start live display if using stream-prettify
+            if stream_prettify and live_display:
+                live_display.start()
             
             # Get AI response with conversation history
             response = client.chat(
@@ -692,8 +726,13 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
                 temperature=temperature,
                 top_p=top_p,
                 max_tokens=max_tokens,
-                markdown_format=prettify
+                markdown_format=prettify or stream_prettify,
+                stream_callback=stream_callback
             )
+            
+            # Stop live display if using stream-prettify
+            if stream_prettify and live_display:
+                live_display.stop()
             
             # Add AI response to conversation history
             if response:
@@ -727,6 +766,83 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
         if log_handle:
             log_handle.write(f"\n--- End of Session ---\n")
             log_handle.close()
+
+def prettify_streaming_markdown(renderer='rich', is_interactive=False, header_text=None):
+    """Set up streaming markdown rendering.
+    
+    This function creates a live display context for rendering markdown
+    that can be updated in real-time as streaming content arrives.
+    
+    Args:
+        renderer (str): Which renderer to use (currently only 'rich' is supported for streaming)
+        is_interactive (bool): Whether this is being used in interactive mode
+        header_text (str): Header text to include at the top (for interactive mode)
+        
+    Returns:
+        tuple: (live_display, update_function) if successful, (None, None) otherwise
+    """
+    # Only warn if explicitly specifying a renderer other than 'rich' or 'auto'
+    if renderer != 'rich' and renderer != 'auto':
+        print(f"{COLORS['yellow']}Warning: Streaming prettify only supports 'rich' renderer currently.{COLORS['reset']}")
+        print(f"{COLORS['yellow']}Falling back to Rich renderer.{COLORS['reset']}")
+    
+    # Always use rich for streaming prettify
+    renderer = 'rich'
+    
+    if not HAS_RICH:
+        print(f"{COLORS['yellow']}Warning: Rich is not available for streaming prettify.{COLORS['reset']}")
+        print(f"{COLORS['yellow']}Install with: pip install \"ngpt[full]\" or pip install rich{COLORS['reset']}")
+        return None, None
+        
+    try:
+        from rich.live import Live
+        from rich.markdown import Markdown
+        from rich.console import Console
+        from rich.text import Text
+        from rich.panel import Panel
+        import rich.box
+        
+        console = Console()
+        
+        # Create an empty markdown object to start with
+        if is_interactive and header_text:
+            # For interactive mode, include header in a panel
+            # Clean up the header text to avoid duplication - use just "🤖 nGPT" instead of "╭─ 🤖 nGPT"
+            clean_header = "🤖 nGPT"
+            panel_title = Text(clean_header, style="cyan bold")
+            
+            # Create a nicer, more compact panel
+            padding = (1, 1)  # Less horizontal padding (left, right)
+            md_obj = Panel(
+                Markdown(""),
+                title=panel_title,
+                title_align="left",
+                border_style="cyan",
+                padding=padding,
+                width=console.width - 4,  # Make panel slightly narrower than console
+                box=rich.box.ROUNDED
+            )
+        else:
+            md_obj = Markdown("")
+        
+        # Initialize the Live display with an empty markdown
+        live = Live(md_obj, console=console, refresh_per_second=10)
+        
+        # Define an update function that will be called with new content
+        def update_content(content):
+            nonlocal md_obj
+            if is_interactive and header_text:
+                # Update the panel content
+                md_obj.renderable = Markdown(content)
+                live.update(md_obj)
+            else:
+                md_obj = Markdown(content)
+                live.update(md_obj)
+            
+        return live, update_content
+    except Exception as e:
+        print(f"{COLORS['yellow']}Error setting up Rich streaming display: {str(e)}{COLORS['reset']}")
+        return None, None
 
 def main():
     # Colorize description - use a shorter description to avoid line wrapping issues
@@ -785,6 +901,8 @@ def main():
                       help='Set custom system prompt to control AI behavior')
     global_group.add_argument('--prettify', action='store_const', const='auto',
                       help='Render markdown responses and code with syntax highlighting and formatting')
+    global_group.add_argument('--stream-prettify', action='store_true',
+                      help='Enable streaming with markdown rendering (automatically uses Rich renderer)')
     global_group.add_argument('--renderer', choices=['auto', 'rich', 'glow'], default='auto',
                       help='Select which markdown renderer to use with --prettify (auto, rich, or glow)')
     
@@ -1024,6 +1142,14 @@ def main():
             show_available_renderers()
             args.prettify = False
         
+    # Check if --prettify is used with --stream-prettify (conflict)
+    if args.prettify and args.stream_prettify:
+        parser.error("--prettify and --stream-prettify cannot be used together. Choose one option.")
+
+    # Check if --stream-prettify is used but Rich is not available
+    if args.stream_prettify and not has_markdown_renderer('rich'):
+        parser.error("--stream-prettify requires Rich to be installed. Install with: pip install \"ngpt[full]\" or pip install rich")
+
     # Initialize client using the potentially overridden active_config
     client = NGPTClient(**active_config)
     
@@ -1048,9 +1174,19 @@ def main():
         # Handle modes
         if args.interactive:
             # Interactive chat mode
-            interactive_chat_session(client, web_search=args.web_search, no_stream=args.no_stream,
-                                   temperature=args.temperature, top_p=args.top_p, 
-                                   max_tokens=args.max_tokens, log_file=args.log, preprompt=args.preprompt, prettify=args.prettify, renderer=args.renderer)
+            interactive_chat_session(
+                client,
+                web_search=args.web_search,
+                no_stream=args.no_stream, 
+                temperature=args.temperature,
+                top_p=args.top_p,
+                max_tokens=args.max_tokens,
+                log_file=args.log,
+                preprompt=args.preprompt,
+                prettify=args.prettify,
+                renderer=args.renderer,
+                stream_prettify=args.stream_prettify
+            )
         elif args.shell:
             if args.prompt is None:
                 try:
@@ -1099,12 +1235,50 @@ def main():
                     sys.exit(130)
             else:
                 prompt = args.prompt
+
+            # Setup for stream-prettify with code generation
+            stream_callback = None
+            live_display = None
+            should_stream = False
+            
+            if args.stream_prettify:
+                should_stream = True  # Enable streaming
+                # This is the code generation mode, not interactive
+                live_display, stream_callback = prettify_streaming_markdown(args.renderer)
+                if not live_display:
+                    # Fallback to normal prettify if live display setup failed
+                    args.prettify = True
+                    args.stream_prettify = False
+                    should_stream = False
+                    print(f"{COLORS['yellow']}Falling back to regular prettify mode.{COLORS['reset']}")
+            
+            # If regular prettify is enabled with streaming, inform the user
+            if args.prettify and not args.no_stream:
+                print(f"{COLORS['yellow']}Note: Streaming disabled to enable markdown rendering.{COLORS['reset']}")
+            
+            print("\nGenerating code...")
+            
+            # Start live display if using stream-prettify
+            if args.stream_prettify and live_display:
+                live_display.start()
                 
-            generated_code = client.generate_code(prompt, args.language, web_search=args.web_search,
-                                              temperature=args.temperature, top_p=args.top_p,
-                                              max_tokens=args.max_tokens,
-                                              markdown_format=args.prettify)
-            if generated_code:
+            generated_code = client.generate_code(
+                prompt=prompt, 
+                language=args.language, 
+                web_search=args.web_search,
+                temperature=args.temperature, 
+                top_p=args.top_p,
+                max_tokens=args.max_tokens,
+                markdown_format=args.prettify or args.stream_prettify,
+                stream=should_stream,
+                stream_callback=stream_callback
+            )
+            
+            # Stop live display if using stream-prettify
+            if args.stream_prettify and live_display:
+                live_display.stop()
+                
+            if generated_code and not args.stream_prettify:
                 if args.prettify:
                     print("\nGenerated code:")
                     prettify_markdown(generated_code, args.renderer)
@@ -1228,25 +1402,46 @@ def main():
                     {"role": "user", "content": prompt}
                 ]
             
-            # If prettify is enabled, we need to disable streaming to collect the full response
-            should_stream = not args.no_stream and not args.prettify
+            # If stream-prettify is enabled
+            stream_callback = None
+            live_display = None
             
-            # If prettify is enabled with streaming, inform the user
+            if args.stream_prettify:
+                should_stream = True  # Enable streaming
+                # This is the standard mode, not interactive
+                live_display, stream_callback = prettify_streaming_markdown(args.renderer)
+                if not live_display:
+                    # Fallback to normal prettify if live display setup failed
+                    args.prettify = True
+                    args.stream_prettify = False
+                    should_stream = False
+                    print(f"{COLORS['yellow']}Falling back to regular prettify mode.{COLORS['reset']}")
+            
+            # If regular prettify is enabled with streaming, inform the user
             if args.prettify and not args.no_stream:
                 print(f"{COLORS['yellow']}Note: Streaming disabled to enable markdown rendering.{COLORS['reset']}")
-                
+            
+            # Start live display if using stream-prettify
+            if args.stream_prettify and live_display:
+                live_display.start()
+            
             response = client.chat(prompt, stream=should_stream, web_search=args.web_search,
                                temperature=args.temperature, top_p=args.top_p,
                                max_tokens=args.max_tokens, messages=messages,
-                               markdown_format=args.prettify)
+                               markdown_format=args.prettify or args.stream_prettify,
+                               stream_callback=stream_callback)
             
-            # Handle non-stream response (either because no_stream was set or prettify forced it)
+            # Stop live display if using stream-prettify
+            if args.stream_prettify and live_display:
+                live_display.stop()
+                
+            # Handle non-stream response or regular prettify
             if (args.no_stream or args.prettify) and response:
                 if args.prettify:
                     prettify_markdown(response, args.renderer)
                 else:
                     print(response)
-            
+        
         else:
             # Default to chat mode
             if args.prompt is None:
@@ -1267,19 +1462,40 @@ def main():
                     {"role": "user", "content": prompt}
                 ]
             
-            # If prettify is enabled, we need to disable streaming to collect the full response
-            should_stream = not args.no_stream and not args.prettify
+            # If stream-prettify is enabled
+            stream_callback = None
+            live_display = None
             
-            # If prettify is enabled with streaming, inform the user
+            if args.stream_prettify:
+                should_stream = True  # Enable streaming
+                # This is the standard mode, not interactive
+                live_display, stream_callback = prettify_streaming_markdown(args.renderer)
+                if not live_display:
+                    # Fallback to normal prettify if live display setup failed
+                    args.prettify = True
+                    args.stream_prettify = False
+                    should_stream = False
+                    print(f"{COLORS['yellow']}Falling back to regular prettify mode.{COLORS['reset']}")
+            
+            # If regular prettify is enabled with streaming, inform the user
             if args.prettify and not args.no_stream:
                 print(f"{COLORS['yellow']}Note: Streaming disabled to enable markdown rendering.{COLORS['reset']}")
-                
+            
+            # Start live display if using stream-prettify
+            if args.stream_prettify and live_display:
+                live_display.start()
+            
             response = client.chat(prompt, stream=should_stream, web_search=args.web_search,
                                temperature=args.temperature, top_p=args.top_p,
                                max_tokens=args.max_tokens, messages=messages,
-                               markdown_format=args.prettify)
+                               markdown_format=args.prettify or args.stream_prettify,
+                               stream_callback=stream_callback)
             
-            # Handle non-stream response (either because no_stream was set or prettify forced it)
+            # Stop live display if using stream-prettify
+            if args.stream_prettify and live_display:
+                live_display.stop()
+                
+            # Handle non-stream response or regular prettify
             if (args.no_stream or args.prettify) and response:
                 if args.prettify:
                     prettify_markdown(response, args.renderer)
