@@ -30,6 +30,9 @@ A lightweight Python CLI and library for interacting with OpenAI-compatible APIs
 # Install
 pip install ngpt
 
+# Install with additional features
+pip install "ngpt[full]"
+
 # Chat with default settings
 ngpt "Tell me about quantum computing"
 
@@ -100,10 +103,18 @@ Key documentation sections:
 ## Installation
 
 ```bash
+# Basic installation (minimal dependencies)
 pip install ngpt
+
+# Full installation with all features (recommended)
+pip install "ngpt[full]"
 ```
 
 Requires Python 3.8 or newer.
+
+The full installation includes:
+- Enhanced markdown rendering with syntax highlighting
+- Improved interactive input experience with multiline editing
 
 For detailed installation instructions, see the [Installation Guide](https://nazdridoy.github.io/ngpt/installation.html).
 

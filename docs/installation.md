@@ -6,11 +6,11 @@ There are several ways to install nGPT depending on your needs and environment.
 
 - Python 3.8 or newer
 - `requests` library (automatically installed as a dependency)
-- `prompt_toolkit` library (automatically installed as a dependency)
 
 ## Optional Dependencies
 
 - `rich` library - For enhanced markdown rendering with syntax highlighting
+- `prompt_toolkit` library - For improved interactive input experience with multiline editing
 
 ## Installing from PyPI (Recommended)
 
@@ -20,18 +20,20 @@ The simplest way to install nGPT is through the Python Package Index (PyPI):
 pip install ngpt
 ```
 
-This will install the latest stable release of nGPT and all its dependencies.
+This will install the latest stable release of nGPT with basic functionality.
 
-For markdown rendering capabilities, install with the prettify extra:
+For additional capabilities like markdown rendering, syntax highlighting, and enhanced interactive input experience, install with the full extras:
 
 ```bash
-pip install ngpt[prettify]
+pip install "ngpt[full]"
 ```
 
-Alternatively, you can install the optional dependency separately:
+Note that quotes around the package name are required due to the square brackets.
+
+Alternatively, you can install the optional dependencies separately:
 
 ```bash
-pip install rich
+pip install rich prompt_toolkit
 ```
 
 ## Installing in a Virtual Environment
@@ -52,6 +54,9 @@ source ngpt-env/bin/activate
 
 # Install nGPT
 pip install ngpt
+
+# Or with all features
+pip install "ngpt[full]"
 ```
 
 ### Using conda
@@ -65,6 +70,9 @@ conda activate ngpt-env
 
 # Install nGPT
 pip install ngpt
+
+# Or with all features
+pip install "ngpt[full]"
 ```
 
 ## Installing from Source
@@ -80,6 +88,9 @@ cd ngpt
 
 # Install the package in development mode
 pip install -e .
+
+# Or with all features
+pip install -e ".[full]"
 ```
 
 ## Upgrading
@@ -88,6 +99,9 @@ To upgrade to the latest version:
 
 ```bash
 pip install --upgrade ngpt
+
+# Or with all features
+pip install --upgrade "ngpt[full]"
 ```
 
 ## Verifying the Installation

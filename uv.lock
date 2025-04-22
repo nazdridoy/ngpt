@@ -134,25 +134,25 @@ wheels = [
 
 [[package]]
 name = "ngpt"
-version = "2.5.1"
+version = "2.6.0"
 source = { editable = "." }
 dependencies = [
-    { name = "prompt-toolkit" },
     { name = "requests" },
 ]
 
 [package.optional-dependencies]
-prettify = [
+full = [
+    { name = "prompt-toolkit" },
     { name = "rich" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "prompt-toolkit", specifier = ">=3.0.0" },
+    { name = "prompt-toolkit", marker = "extra == 'full'", specifier = ">=3.0.0" },
     { name = "requests", specifier = ">=2.31.0" },
-    { name = "rich", marker = "extra == 'prettify'", specifier = ">=10.0.0" },
+    { name = "rich", marker = "extra == 'full'", specifier = ">=10.0.0" },
 ]
-provides-extras = ["prettify"]
+provides-extras = ["full"]
 
 [[package]]
 name = "prompt-toolkit"
