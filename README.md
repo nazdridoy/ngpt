@@ -48,11 +48,17 @@ ngpt --code "function to calculate the Fibonacci sequence"
 # Generate code with syntax highlighting
 ngpt --code --prettify "function to calculate the Fibonacci sequence"
 
+# Generate code with real-time syntax highlighting
+ngpt --code --stream-prettify "function to calculate the Fibonacci sequence"
+
 # Generate and execute shell commands
 ngpt --shell "list all files in the current directory"
 
 # Display markdown responses with beautiful formatting
 ngpt --prettify "Explain markdown syntax with examples"
+
+# Display markdown responses with real-time formatting
+ngpt --stream-prettify "Explain markdown syntax with examples"
 
 # Use a specific markdown renderer
 ngpt --prettify --renderer=rich "Create a markdown table"
@@ -78,6 +84,7 @@ For more examples and detailed usage, visit the [CLI Usage Guide](https://nazdri
 - 📊 **Streaming Responses**: Real-time output for better user experience
 - 🔍 **Web Search**: Integrated with compatible API endpoints
 - 🎨 **Markdown Rendering**: Beautiful formatting of markdown and code with syntax highlighting
+- ⚡ **Real-time Markdown**: Stream responses with live updating syntax highlighting and formatting
 - ⚙️ **Multiple Configurations**: Cross-platform config system supporting different profiles
 - 💻 **Shell Command Generation**: OS-aware command execution
 - 🧩 **Clean Code Generation**: Output code without markdown or explanations
@@ -255,6 +262,7 @@ You can configure the client using the following options:
 | `--preprompt` | Set custom system prompt to control AI behavior |
 | `--log` | Set filepath to log conversation to (for interactive modes) |
 | `--prettify` | Render markdown responses and code with syntax highlighting |
+| `--stream-prettify` | Enable real-time markdown rendering with syntax highlighting while streaming |
 | `--renderer` | Select which markdown renderer to use with --prettify (auto, rich, or glow) |
 | `--list-renderers` | Show available markdown renderers for use with --prettify |
 | `--config` | Path to a custom configuration file or, when used without a value, enters interactive configuration mode |

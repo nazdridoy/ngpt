@@ -20,6 +20,8 @@ nGPT is a lightweight Python library and command-line interface (CLI) tool desig
 
 - **Markdown Rendering**: Beautiful formatting of markdown responses and syntax highlighting for code.
 
+- **Real-time Markdown Rendering**: Stream responses with live updating syntax highlighting and formatting using the `--stream-prettify` option.
+
 - **Multiple Configuration Support**: Maintain different API configurations for various services or models.
 
 - **Shell Command Generation**: Generate OS-aware commands that work on your specific platform.

@@ -49,6 +49,7 @@ Here are the most commonly used options:
 | `--top_p` | Set top_p (controls diversity, default: 1.0) |
 | `--max_tokens` | Set maximum response length in tokens |
 | `--prettify` | Render markdown responses and code with syntax highlighting |
+| `--stream-prettify` | Enable real-time markdown rendering with syntax highlighting while streaming |
 | `--renderer` | Select which markdown renderer to use (auto, rich, or glow) |
 | `--list-renderers` | Show available markdown renderers on your system |
 | `--config-index` | Index of the configuration to use (default: 0) |
@@ -177,6 +178,30 @@ ngpt -c --prettify "function to calculate the Fibonacci sequence"
 
 When using `--prettify` with code generation, the AI will output code in markdown format with proper syntax highlighting based on the language.
 
+### Real-time Markdown Rendering
+
+Display markdown responses with real-time formatting and syntax highlighting while streaming:
+
+```bash
+ngpt --stream-prettify "Explain quantum computing with code examples"
+```
+
+This provides an enhanced experience by rendering markdown in real-time as content arrives, offering both the benefits of streaming and formatted output simultaneously. This feature uses Rich for live updates and beautiful formatting.
+
+You can also combine this with code generation:
+
+```bash
+ngpt -c --stream-prettify "write a function to implement merge sort in Python"
+```
+
+This is particularly useful for longer code generation tasks, as you can see the code being formatted with syntax highlighting in real-time.
+
+Notes on `--stream-prettify`:
+- Requires Rich to be installed (`pip install "ngpt[full]"` or `pip install rich`)
+- Only works with the Rich renderer (even if you specify another renderer)
+- Works in both regular and interactive modes
+- Creates a more dynamic and responsive UI experience
+
 See available renderers on your system:
 
 ```bash
@@ -294,11 +319,17 @@ ngpt -i --preprompt "You are a data science tutor" --log datasci_tutoring.txt
 # Generate code with syntax highlighting
 ngpt -c --prettify "create a sorting algorithm"
 
+# Generate code with real-time syntax highlighting
+ngpt -c --stream-prettify "implement a binary search tree in JavaScript"
+
 # Render markdown with web search for up-to-date information
 ngpt --prettify --web-search "Create a markdown table of recent SpaceX launches"
 
 # Interactive session with markdown rendering
 ngpt -i --prettify --renderer=rich
+
+# Interactive session with real-time markdown rendering
+ngpt -i --stream-prettify
 ```
 
 ### Using a Custom Configuration File

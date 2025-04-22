@@ -129,6 +129,12 @@ ngpt "Tell me about quantum computing"
 
 # No streaming (wait for full response)
 ngpt -n "Explain the theory of relativity"
+
+# Prettify markdown output
+ngpt --prettify "Create a markdown table comparing different programming languages"
+
+# Real-time markdown formatting with streaming
+ngpt --stream-prettify "Explain machine learning algorithms with examples"
 ```
 
 ### Code Generation
@@ -139,6 +145,12 @@ ngpt -c "function to calculate prime numbers"
 
 # Generate specific language code
 ngpt -c "create a React component that displays a counter" --language jsx
+
+# Generate code with syntax highlighting
+ngpt -c --prettify "implement a binary search tree"
+
+# Generate code with real-time syntax highlighting
+ngpt -c --stream-prettify "write a function to sort an array using quicksort"
 ```
 
 ### Shell Commands

@@ -316,6 +316,28 @@ print(response_high)
 
 ## Advanced CLI Usage
 
+### Working with Real-time Markdown Rendering
+
+Use the stream-prettify feature for an enhanced user experience with formatted markdown in real-time:
+
+```bash
+# Basic streaming markdown
+ngpt --stream-prettify "Compare and contrast different sorting algorithms with examples"
+
+# Real-time code generation with syntax highlighting
+ngpt -c --stream-prettify --language typescript "implement a React hook for managing form state"
+
+# Interactive session with real-time markdown rendering
+ngpt -i --stream-prettify
+```
+
+Combining stream-prettify with web search for up-to-date formatted information:
+
+```bash
+# Get latest news with beautified formatting in real-time
+ngpt --stream-prettify --web-search "What are the latest developments in AI research?"
+```
+
 ### Custom Script with argparse
 
 Create a custom script that uses nGPT with argparse for a better CLI experience:
