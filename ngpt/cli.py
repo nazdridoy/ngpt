@@ -3,6 +3,14 @@ import sys
 import os
 from .client import NGPTClient
 from .config import load_config, get_config_path, load_configs, add_config_entry, remove_config_entry
+from .cli_config import (
+    set_cli_config_option, 
+    get_cli_config_option, 
+    unset_cli_config_option, 
+    apply_cli_config,
+    list_cli_config_options,
+    CLI_CONFIG_OPTIONS
+)
 from . import __version__
 
 # Try to import markdown rendering libraries
@@ -844,6 +852,143 @@ def prettify_streaming_markdown(renderer='rich', is_interactive=False, header_te
         print(f"{COLORS['yellow']}Error setting up Rich streaming display: {str(e)}{COLORS['reset']}")
         return None, None
 
+def show_cli_config_help():
+    """Display help information about CLI configuration."""
+    print(f"\n{COLORS['green']}{COLORS['bold']}CLI Configuration Help:{COLORS['reset']}")
+    print(f"  {COLORS['cyan']}Command syntax:{COLORS['reset']}")
+    print(f"    {COLORS['yellow']}ngpt --cli-config set OPTION VALUE{COLORS['reset']}    - Set a default value for OPTION")
+    print(f"    {COLORS['yellow']}ngpt --cli-config get OPTION{COLORS['reset']}          - Get the current value of OPTION")
+    print(f"    {COLORS['yellow']}ngpt --cli-config get{COLORS['reset']}                 - Show all CLI configuration settings")
+    print(f"    {COLORS['yellow']}ngpt --cli-config unset OPTION{COLORS['reset']}        - Remove OPTION from configuration")
+    print(f"    {COLORS['yellow']}ngpt --cli-config list{COLORS['reset']}                - List all available options")
+    
+    print(f"\n  {COLORS['cyan']}Available options:{COLORS['reset']}")
+    
+    # Group options by context
+    context_groups = {
+        "all": [],
+        "code": [],
+        "interactive": [],
+        "text": [],
+        "shell": []
+    }
+    
+    for option, meta in CLI_CONFIG_OPTIONS.items():
+        for context in meta["context"]:
+            if context in context_groups:
+                if context == "all":
+                    context_groups[context].append(option)
+                    break
+                else:
+                    context_groups[context].append(option)
+    
+    # Print general options (available in all contexts)
+    print(f"    {COLORS['yellow']}General options (all modes):{COLORS['reset']}")
+    for option in sorted(context_groups["all"]):
+        meta = CLI_CONFIG_OPTIONS[option]
+        default = f"(default: {meta['default']})" if meta['default'] is not None else ""
+        exclusive = f" [exclusive with: {', '.join(meta['exclusive'])}]" if "exclusive" in meta else ""
+        print(f"      {COLORS['green']}{option}{COLORS['reset']} - {meta['type']} {default}{exclusive}")
+    
+    # Print mode-specific options
+    for mode, options in [
+        ("code", "Code generation mode"),
+        ("interactive", "Interactive mode"),
+        ("text", "Text mode"),
+        ("shell", "Shell mode")
+    ]:
+        if context_groups[mode]:
+            print(f"\n    {COLORS['yellow']}Options for {options}:{COLORS['reset']}")
+            for option in sorted(context_groups[mode]):
+                # Skip if already listed in general options
+                if option in context_groups["all"]:
+                    continue
+                meta = CLI_CONFIG_OPTIONS[option]
+                default = f"(default: {meta['default']})" if meta['default'] is not None else ""
+                exclusive = f" [exclusive with: {', '.join(meta['exclusive'])}]" if "exclusive" in meta else ""
+                print(f"      {COLORS['green']}{option}{COLORS['reset']} - {meta['type']} {default}{exclusive}")
+    
+    print(f"\n  {COLORS['cyan']}Example usage:{COLORS['reset']}")
+    print(f"    {COLORS['yellow']}ngpt --cli-config set language java{COLORS['reset']}        - Set default language to java for code generation")
+    print(f"    {COLORS['yellow']}ngpt --cli-config set temperature 0.9{COLORS['reset']}      - Set default temperature to 0.9")
+    print(f"    {COLORS['yellow']}ngpt --cli-config set no-stream true{COLORS['reset']}       - Disable streaming by default")
+    print(f"    {COLORS['yellow']}ngpt --cli-config unset language{COLORS['reset']}           - Remove language setting")
+    
+    print(f"\n  {COLORS['cyan']}Notes:{COLORS['reset']}")
+    print(f"    - CLI configuration is stored in {COLORS['yellow']}~/.config/ngpt/ngpt-cli.conf{COLORS['reset']} (or equivalent for your OS)")
+    print(f"    - Settings are applied based on context (e.g., language only applies to code generation mode)")
+    print(f"    - Command-line arguments always override CLI configuration")
+    print(f"    - Some options are mutually exclusive and will not be applied together")
+
+def handle_cli_config(action, option=None, value=None):
+    """Handle CLI configuration commands."""
+    if action == "list":
+        # List all available options
+        print(f"{COLORS['green']}{COLORS['bold']}Available CLI configuration options:{COLORS['reset']}")
+        for option in list_cli_config_options():
+            meta = CLI_CONFIG_OPTIONS[option]
+            default = f"(default: {meta['default']})" if meta['default'] is not None else ""
+            contexts = ', '.join(meta['context'])
+            if "all" in meta['context']:
+                contexts = "all modes"
+            print(f"  {COLORS['cyan']}{option}{COLORS['reset']} - {meta['type']} {default} - Available in: {contexts}")
+        return
+    
+    if action == "get":
+        if option is None:
+            # Get all options
+            success, config = get_cli_config_option()
+            if success and config:
+                print(f"{COLORS['green']}{COLORS['bold']}Current CLI configuration:{COLORS['reset']}")
+                for opt, val in config.items():
+                    if opt in CLI_CONFIG_OPTIONS:
+                        print(f"  {COLORS['cyan']}{opt}{COLORS['reset']} = {val}")
+                    else:
+                        print(f"  {COLORS['yellow']}{opt}{COLORS['reset']} = {val} (unknown option)")
+            else:
+                print(f"{COLORS['yellow']}No CLI configuration set. Use 'ngpt --cli-config set OPTION VALUE' to set options.{COLORS['reset']}")
+        else:
+            # Get specific option
+            success, result = get_cli_config_option(option)
+            if success:
+                if result is None:
+                    print(f"{COLORS['cyan']}{option}{COLORS['reset']} is not set (default: {CLI_CONFIG_OPTIONS.get(option, {}).get('default', 'N/A')})")
+                else:
+                    print(f"{COLORS['cyan']}{option}{COLORS['reset']} = {result}")
+            else:
+                print(f"{COLORS['yellow']}{result}{COLORS['reset']}")
+        return
+    
+    if action == "set":
+        if option is None or value is None:
+            print(f"{COLORS['yellow']}Error: Both OPTION and VALUE are required for 'set' command.{COLORS['reset']}")
+            print(f"Usage: ngpt --cli-config set OPTION VALUE")
+            return
+            
+        success, message = set_cli_config_option(option, value)
+        if success:
+            print(f"{COLORS['green']}{message}{COLORS['reset']}")
+        else:
+            print(f"{COLORS['yellow']}{message}{COLORS['reset']}")
+        return
+    
+    if action == "unset":
+        if option is None:
+            print(f"{COLORS['yellow']}Error: OPTION is required for 'unset' command.{COLORS['reset']}")
+            print(f"Usage: ngpt --cli-config unset OPTION")
+            return
+            
+        success, message = unset_cli_config_option(option)
+        if success:
+            print(f"{COLORS['green']}{message}{COLORS['reset']}")
+        else:
+            print(f"{COLORS['yellow']}{message}{COLORS['reset']}")
+        return
+    
+    # If we get here, the action is not recognized
+    print(f"{COLORS['yellow']}Error: Unknown action '{action}'. Use 'set', 'get', 'unset', or 'list'.{COLORS['reset']}")
+    show_cli_config_help()
+
 def main():
     # Colorize description - use a shorter description to avoid line wrapping issues
     description = f"{COLORS['cyan']}{COLORS['bold']}nGPT{COLORS['reset']} - Interact with AI language models via OpenAI-compatible APIs"
@@ -921,7 +1066,29 @@ def main():
     # Prompt argument
     parser.add_argument('prompt', nargs='?', default=None, help='The prompt to send')
     
+    # Add CLI configuration command
+    config_group.add_argument('--cli-config', nargs='*', metavar='COMMAND',
+                      help='Manage CLI configuration (set, get, unset, list)')
+    
     args = parser.parse_args()
+    
+    # Handle CLI configuration command
+    if args.cli_config is not None:
+        # Show help if no arguments or "help" argument
+        if len(args.cli_config) == 0 or (len(args.cli_config) > 0 and args.cli_config[0].lower() == "help"):
+            show_cli_config_help()
+            return
+            
+        action = args.cli_config[0].lower()
+        option = args.cli_config[1] if len(args.cli_config) > 1 else None
+        value = args.cli_config[2] if len(args.cli_config) > 2 else None
+        
+        if action in ("set", "get", "unset", "list"):
+            handle_cli_config(action, option, value)
+            return
+        else:
+            show_cli_config_help()
+            return
     
     # Validate --all usage
     if args.all and not args.show_config:
@@ -932,8 +1099,28 @@ def main():
         show_available_renderers()
         return
     
-    # Check for mutual exclusivity between --config-index and --provider
-    if args.config_index != 0 and args.provider:
+    # Load CLI configuration early
+    from .cli_config import load_cli_config
+    cli_config = load_cli_config()
+    
+    # Priority order for config selection:
+    # 1. Command-line arguments (args.provider, args.config_index)
+    # 2. CLI configuration (cli_config["provider"], cli_config["config-index"])
+    # 3. Default values (None, 0)
+    
+    # Get provider/config-index from CLI config if not specified in args
+    effective_provider = args.provider
+    effective_config_index = args.config_index
+    
+    # Only apply CLI config for provider/config-index if not explicitly set on command line
+    if not effective_provider and 'provider' in cli_config and '--provider' not in sys.argv:
+        effective_provider = cli_config['provider']
+    
+    if effective_config_index == 0 and 'config-index' in cli_config and '--config-index' not in sys.argv:
+        effective_config_index = cli_config['config-index']
+    
+    # Check for mutual exclusivity between provider and config-index
+    if effective_config_index != 0 and effective_provider:
         parser.error("--config-index and --provider cannot be used together")
 
     # Handle interactive configuration mode
@@ -943,22 +1130,22 @@ def main():
         # Handle configuration removal if --remove flag is present
         if args.remove:
             # Validate that config_index is explicitly provided
-            if '--config-index' not in sys.argv and not args.provider:
+            if '--config-index' not in sys.argv and not effective_provider:
                 parser.error("--remove requires explicitly specifying --config-index or --provider")
             
             # Show config details before asking for confirmation
             configs = load_configs(str(config_path))
             
             # Determine the config index to remove
-            config_index = args.config_index
-            if args.provider:
+            config_index = effective_config_index
+            if effective_provider:
                 # Find config index by provider name
-                matching_configs = [i for i, cfg in enumerate(configs) if cfg.get('provider', '').lower() == args.provider.lower()]
+                matching_configs = [i for i, cfg in enumerate(configs) if cfg.get('provider', '').lower() == effective_provider.lower()]
                 if not matching_configs:
-                    print(f"Error: No configuration found for provider '{args.provider}'")
+                    print(f"Error: No configuration found for provider '{effective_provider}'")
                     return
                 elif len(matching_configs) > 1:
-                    print(f"Multiple configurations found for provider '{args.provider}':")
+                    print(f"Multiple configurations found for provider '{effective_provider}':")
                     for i, idx in enumerate(matching_configs):
                         print(f"  [{i}] Index {idx}: {configs[idx].get('model', 'Unknown model')}")
                     
@@ -1008,15 +1195,15 @@ def main():
         config_index = None
         
         # Determine if we're editing an existing config or creating a new one
-        if args.provider:
+        if effective_provider:
             # Find config by provider name
             configs = load_configs(str(config_path))
-            matching_configs = [i for i, cfg in enumerate(configs) if cfg.get('provider', '').lower() == args.provider.lower()]
+            matching_configs = [i for i, cfg in enumerate(configs) if cfg.get('provider', '').lower() == effective_provider.lower()]
             
             if not matching_configs:
-                print(f"No configuration found for provider '{args.provider}'. Creating a new configuration.")
+                print(f"No configuration found for provider '{effective_provider}'. Creating a new configuration.")
             elif len(matching_configs) > 1:
-                print(f"Multiple configurations found for provider '{args.provider}':")
+                print(f"Multiple configurations found for provider '{effective_provider}':")
                 for i, idx in enumerate(matching_configs):
                     print(f"  [{i}] Index {idx}: {configs[idx].get('model', 'Unknown model')}")
                 
@@ -1032,14 +1219,14 @@ def main():
                 config_index = matching_configs[0]
                 
             print(f"Editing existing configuration at index {config_index}")
-        elif args.config_index != 0 or '--config-index' in sys.argv:
+        elif effective_config_index != 0 or '--config-index' in sys.argv:
             # Check if the index is valid
             configs = load_configs(str(config_path))
-            if args.config_index >= 0 and args.config_index < len(configs):
-                config_index = args.config_index
+            if effective_config_index >= 0 and effective_config_index < len(configs):
+                config_index = effective_config_index
                 print(f"Editing existing configuration at index {config_index}")
             else:
-                print(f"Configuration index {args.config_index} is out of range. Creating a new configuration.")
+                print(f"Configuration index {effective_config_index} is out of range. Creating a new configuration.")
         else:
             # Creating a new config
             configs = load_configs(str(config_path))
@@ -1048,12 +1235,10 @@ def main():
         add_config_entry(config_path, config_index)
         return
     
-    # Load configuration using the specified index or provider (needed for active config display)
-    active_config = load_config(args.config, args.config_index, args.provider)
+    # Load configuration using the effective provider/config-index
+    active_config = load_config(args.config, effective_config_index, effective_provider)
     
     # Command-line arguments override config settings for active config display
-    # This part is kept to ensure the active config display reflects potential overrides,
-    # even though the overrides don't affect the stored configurations displayed with --all.
     if args.api_key:
         active_config["api_key"] = args.api_key
     if args.base_url:
@@ -1070,9 +1255,9 @@ def main():
         print(f"Total configurations: {len(configs)}")
         
         # Determine active configuration and display identifier
-        active_identifier = f"index {args.config_index}"
-        if args.provider:
-            active_identifier = f"provider '{args.provider}'"
+        active_identifier = f"index {effective_config_index}"
+        if effective_provider:
+            active_identifier = f"provider '{effective_provider}'"
         print(f"Active configuration: {active_identifier}")
 
         if args.all:
@@ -1081,8 +1266,8 @@ def main():
             for i, cfg in enumerate(configs):
                 provider = cfg.get('provider', 'N/A')
                 active_str = '(Active)' if (
-                    (args.provider and provider.lower() == args.provider.lower()) or 
-                    (not args.provider and i == args.config_index)
+                    (effective_provider and provider.lower() == effective_provider.lower()) or 
+                    (not effective_provider and i == effective_config_index)
                 ) else ''
                 print(f"\n--- Configuration Index {i} / Provider: {COLORS['green']}{provider}{COLORS['reset']} {active_str} ---")
                 print(f"  API Key: {'[Set]' if cfg.get('api_key') else '[Not Set]'}")
@@ -1112,8 +1297,8 @@ def main():
                         provider_display = f"{provider} {COLORS['yellow']}(duplicate){COLORS['reset']}"
                     
                     active_marker = "*" if (
-                        (args.provider and provider.lower() == args.provider.lower()) or 
-                        (not args.provider and i == args.config_index)
+                        (effective_provider and provider.lower() == effective_provider.lower()) or 
+                        (not effective_provider and i == effective_config_index)
                     ) else " "
                     print(f"[{i}]{active_marker} {COLORS['green']}{provider_display}{COLORS['reset']} - {cfg.get('model', 'N/A')} ({'[API Key Set]' if cfg.get('api_key') else '[API Key Not Set]'})")
                 
@@ -1173,6 +1358,9 @@ def main():
         
         # Handle modes
         if args.interactive:
+            # Apply CLI config for interactive mode
+            args = apply_cli_config(args, "interactive")
+            
             # Interactive chat mode
             interactive_chat_session(
                 client,
@@ -1188,6 +1376,9 @@ def main():
                 stream_prettify=args.stream_prettify
             )
         elif args.shell:
+            # Apply CLI config for shell mode
+            args = apply_cli_config(args, "shell")
+            
             if args.prompt is None:
                 try:
                     print("Enter shell command description: ", end='')
@@ -1226,6 +1417,9 @@ def main():
                     print(f"\nError:\n{e.stderr}")
                     
         elif args.code:
+            # Apply CLI config for code mode
+            args = apply_cli_config(args, "code")
+            
             if args.prompt is None:
                 try:
                     print("Enter code description: ", end='')
@@ -1236,30 +1430,55 @@ def main():
             else:
                 prompt = args.prompt
 
-            # Setup for stream-prettify with code generation
+            # Setup for streaming and prettify logic
             stream_callback = None
             live_display = None
-            should_stream = False
-            
+            should_stream = True # Default to streaming
+            use_stream_prettify = False
+            use_regular_prettify = False
+
+            # Determine final behavior based on flag priority
             if args.stream_prettify:
-                should_stream = True  # Enable streaming
-                # This is the code generation mode, not interactive
-                live_display, stream_callback = prettify_streaming_markdown(args.renderer)
-                if not live_display:
-                    # Fallback to normal prettify if live display setup failed
-                    args.prettify = True
-                    args.stream_prettify = False
+                # Highest priority: stream-prettify
+                if has_markdown_renderer('rich'):
+                    should_stream = True
+                    use_stream_prettify = True
+                    live_display, stream_callback = prettify_streaming_markdown(args.renderer)
+                    if not live_display:
+                        # Fallback if live display fails
+                        use_stream_prettify = False
+                        use_regular_prettify = True
+                        should_stream = False 
+                        print(f"{COLORS['yellow']}Live display setup failed. Falling back to regular prettify mode.{COLORS['reset']}")
+                else:
+                    # Rich not available for stream-prettify
+                    print(f"{COLORS['yellow']}Warning: Rich is not available for --stream-prettify. Install with: pip install \"ngpt[full]\".{COLORS['reset']}")
+                    print(f"{COLORS['yellow']}Falling back to default streaming without prettify.{COLORS['reset']}")
+                    should_stream = True
+                    use_stream_prettify = False
+            elif args.no_stream:
+                # Second priority: no-stream
+                should_stream = False
+                use_regular_prettify = False # No prettify if no streaming
+            elif args.prettify:
+                # Third priority: prettify (requires disabling stream)
+                if has_markdown_renderer(args.renderer):
                     should_stream = False
-                    print(f"{COLORS['yellow']}Falling back to regular prettify mode.{COLORS['reset']}")
-            
-            # If regular prettify is enabled with streaming, inform the user
-            if args.prettify and not args.no_stream:
-                print(f"{COLORS['yellow']}Note: Streaming disabled to enable markdown rendering.{COLORS['reset']}")
+                    use_regular_prettify = True
+                    print(f"{COLORS['yellow']}Note: Streaming disabled to enable regular markdown rendering (--prettify).{COLORS['reset']}")
+                else:
+                    # Renderer not available for prettify
+                    print(f"{COLORS['yellow']}Warning: Renderer '{args.renderer}' not available for --prettify.{COLORS['reset']}")
+                    show_available_renderers()
+                    print(f"{COLORS['yellow']}Falling back to default streaming without prettify.{COLORS['reset']}")
+                    should_stream = True 
+                    use_regular_prettify = False
+            # else: Default is should_stream = True
             
             print("\nGenerating code...")
             
             # Start live display if using stream-prettify
-            if args.stream_prettify and live_display:
+            if use_stream_prettify and live_display:
                 live_display.start()
                 
             generated_code = client.generate_code(
@@ -1269,23 +1488,29 @@ def main():
                 temperature=args.temperature, 
                 top_p=args.top_p,
                 max_tokens=args.max_tokens,
-                markdown_format=args.prettify or args.stream_prettify,
+                # Request markdown from API if any prettify option is active
+                markdown_format=use_regular_prettify or use_stream_prettify,
                 stream=should_stream,
                 stream_callback=stream_callback
             )
             
             # Stop live display if using stream-prettify
-            if args.stream_prettify and live_display:
+            if use_stream_prettify and live_display:
                 live_display.stop()
                 
-            if generated_code and not args.stream_prettify:
-                if args.prettify:
+            # Print non-streamed output if needed
+            if generated_code and not should_stream:
+                if use_regular_prettify:
                     print("\nGenerated code:")
                     prettify_markdown(generated_code, args.renderer)
                 else:
+                    # Should only happen if --no-stream was used without prettify
                     print(f"\nGenerated code:\n{generated_code}")
-            
+        
         elif args.text:
+            # Apply CLI config for text mode
+            args = apply_cli_config(args, "text")
+            
             if args.prompt is not None:
                 prompt = args.prompt
             else:
@@ -1447,6 +1672,9 @@ def main():
         
         else:
             # Default to chat mode
+            # Apply CLI config for default chat mode
+            args = apply_cli_config(args, "all")
+            
             if args.prompt is None:
                 try:
                     print("Enter your prompt: ", end='')
