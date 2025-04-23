@@ -103,8 +103,46 @@ The interactive configuration will prompt you for values and guide you through t
 
 You can also set configuration options directly via command-line arguments:
 
+### Key Configuration Flags
+
+- `--api-key <key>`: Specify the API key directly.
+- `--base-url <url>`: Specify the API endpoint URL.
+- `--model <name>`: Specify the AI model name.
+- `--config <path>`: Use a specific configuration file.
+- `--config-index <index>`: Select a configuration profile by its index (0-based).
+- `--provider <name>`: Select a configuration profile by its provider name.
+- `--show-config [--all]`: Display the current (or all) configuration(s).
+- `--list-models`: List models available for the selected configuration.
+- `--config`: Enter interactive mode to add/edit/remove configurations.
+  - Use with `--config-index <index>` or `--provider <name>` to edit.
+  - Use with `--remove` and `--config-index <index>` or `--provider <name>` to remove.
+
+### Usage Control Flags
+
+- `-i, --interactive`: Start an interactive chat session.
+- `-s, --shell`: Generate and execute shell commands.
+- `-c, --code`: Generate code.
+  - `--language <lang>`: Specify the programming language for code generation (e.g., `python`, `javascript`, default: `python`).
+- `-t, --text`: Use a multiline editor for input.
+- `-n, --no-stream`: Disable streaming output.
+- `--prettify`: Enable formatted markdown/code output (disables streaming).
+  - `--renderer <name>`: Choose the renderer (`auto`, `rich`, `glow`).
+  - `--list-renderers`: Show available renderers.
+- `--stream-prettify`: Enable real-time formatted output while streaming (uses Rich).
+- `--web-search`: Enable web search capability (if supported by the API).
+- `--preprompt <text>`: Set a custom system prompt.
+- `--log <file>`: Log the conversation to a file (in interactive modes).
+- `--temperature <value>`: Set the generation temperature (0.0-2.0).
+- `--top_p <value>`: Set the nucleus sampling top_p value (0.0-1.0).
+- `--max_tokens <number>`: Set the maximum number of tokens for the response.
+
+### Other Flags
+
+- `-v, --version`: Show the nGPT version.
+- `--cli-config <command> [option] [value]`: Manage persistent CLI option defaults (`set`, `get`, `unset`, `list`, `help`). See [CLI Configuration Guide](usage/cli_config.md).
+
 ```bash
-# Use specific API key, base URL, and model for a single command
+# Example: Use specific API key, base URL, and model for a single command
 ngpt --api-key "your-key" --base-url "https://api.example.com/v1/" --model "custom-model" "Your prompt here"
 
 # Select a specific configuration by index
@@ -187,6 +225,12 @@ ngpt --cli-config get [OPTION]
 
 # Remove an option
 ngpt --cli-config unset OPTION
+
+# List available options
+ngpt --cli-config list
+
+# Show help for CLI config
+ngpt --cli-config help
 ```
 
 For a full guide to CLI configuration, see the [CLI Configuration Guide](usage/cli_config.md).

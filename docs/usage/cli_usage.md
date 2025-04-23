@@ -10,6 +10,12 @@ First, ensure you have nGPT installed:
 pip install ngpt
 ```
 
+For all features including rich markdown rendering and interactive mode:
+
+```bash
+pip install "ngpt[full]"
+```
+
 ## Basic Usage
 
 The most basic way to use nGPT from the command line is to provide a prompt:
@@ -30,30 +36,63 @@ Where:
 - `[OPTIONS]` are command-line flags that modify behavior
 - `[PROMPT]` is your text prompt to the AI (optional with certain flags)
 
-## Common Options
+## All CLI Options
 
-Here are the most commonly used options:
+Below is a comprehensive list of all available command-line options, organized by category:
+
+### Core Mode Options
 
 | Option | Description |
 |--------|-------------|
-| `-i, --interactive` | Start an interactive chat session with conversation memory |
-| `-n, --no-stream` | Return the whole response without streaming |
-| `-s, --shell` | Generate and execute shell commands |
-| `-c, --code` | Generate clean code without markdown formatting |
-| `-t, --text` | Open interactive multiline editor for complex prompts |
-| `-v, --version` | Show version information |
-| `--preprompt` | Set custom system prompt to control AI behavior |
-| `--log` | Set filepath to log conversation to (for interactive modes) |
-| `--web-search` | Enable web search capability (if supported by your API) |
-| `--temperature` | Set temperature (controls randomness, default: 0.7) |
-| `--top_p` | Set top_p (controls diversity, default: 1.0) |
-| `--max_tokens` | Set maximum response length in tokens |
-| `--prettify` | Render markdown responses and code with syntax highlighting |
-| `--stream-prettify` | Enable real-time markdown rendering with syntax highlighting while streaming |
-| `--renderer` | Select which markdown renderer to use (auto, rich, or glow) |
-| `--list-renderers` | Show available markdown renderers on your system |
-| `--config-index` | Index of the configuration to use (default: 0) |
-| `--provider` | Provider name to identify the configuration to use (alternative to --config-index) |
+| `-i, --interactive` | Start an interactive chat session with conversation memory and special commands |
+| `-s, --shell` | Generate and execute shell commands appropriate for your operating system |
+| `-c, --code` | Generate clean code without markdown formatting or explanations |
+| `-t, --text` | Open interactive multiline editor for complex prompts with syntax highlighting |
+| `-n, --no-stream` | Return the whole response without streaming (useful for scripts) |
+
+### Configuration Management
+
+| Option | Description |
+|--------|-------------|
+| `--api-key <key>` | API key for the service (overrides stored configuration) |
+| `--base-url <url>` | Base URL for the API endpoint (overrides stored configuration) |
+| `--model <name>` | Model to use for this request (overrides stored configuration) |
+| `--config <path>` | Path to a custom configuration file or, when used without a value, enters interactive configuration mode |
+| `--config-index <index>` | Index of the configuration to use (default: 0) |
+| `--provider <name>` | Provider name to identify the configuration to use (alternative to --config-index) |
+| `--show-config` | Show current configuration details and exit |
+| `--all` | Used with `--show-config` to display all configurations instead of just the active one |
+| `--list-models` | List all available models for the selected configuration (can be combined with --config-index) |
+| `--remove` | Remove the configuration at the specified index (requires --config and --config-index or --provider) |
+| `--cli-config <cmd>` | Manage persistent CLI option defaults with commands: `set`, `get`, `unset`, `list`, `help` |
+
+### Response Formatting
+
+| Option | Description |
+|--------|-------------|
+| `--prettify` | Render markdown responses and code with syntax highlighting (disables streaming) |
+| `--stream-prettify` | Enable real-time markdown rendering with syntax highlighting while streaming (uses Rich) |
+| `--renderer <name>` | Select which markdown renderer to use with --prettify (auto, rich, or glow) |
+| `--list-renderers` | Show available markdown renderers for use with --prettify |
+
+### Generation Control
+
+| Option | Description |
+|--------|-------------|
+| `--preprompt <text>` | Set custom system prompt to control AI behavior and guide responses |
+| `--web-search` | Enable web search capability if supported by your API endpoint |
+| `--temperature <value>` | Set temperature parameter controlling randomness (0.0-2.0, default: 0.7) |
+| `--top_p <value>` | Set top_p parameter controlling diversity (0.0-1.0, default: 1.0) |
+| `--max_tokens <number>` | Set maximum response length in tokens |
+| `--language <lang>` | Programming language to generate code in when using -c/--code (default: python) |
+
+### Utility Options
+
+| Option | Description |
+|--------|-------------|
+| `--log <file>` | Set filepath to log conversation to (for interactive modes) |
+| `-v, --version` | Show version information and exit |
+| `-h, --help` | Show help message and exit |
 
 ## Feature Details
 
@@ -87,7 +126,25 @@ You can log your conversation to a file for later reference:
 ngpt -i --log conversation.log
 ```
 
-This saves the entire conversation, including both user inputs and AI responses, to the specified file.
+This saves the entire conversation, including both user inputs and AI responses, to the specified file. 
+
+#### Combining with Other Options
+
+Interactive mode can be combined with other options for enhanced functionality:
+
+```bash
+# Interactive mode with custom system prompt
+ngpt -i --preprompt "You are a Python programming tutor"
+
+# Interactive mode with web search
+ngpt -i --web-search
+
+# Interactive mode with pretty markdown rendering
+ngpt -i --prettify
+
+# Interactive mode with real-time markdown rendering
+ngpt -i --stream-prettify
+```
 
 ### Custom System Prompts
 
@@ -111,7 +168,7 @@ Custom prompts can be used to:
 - Specify output format preferences
 - Set constraints or guidelines
 
-### Generating Shell Commands
+### Shell Command Generation
 
 Generate and execute shell commands appropriate for your operating system:
 
@@ -120,6 +177,60 @@ ngpt -s "find all PDF files in the current directory"
 ```
 
 nGPT will generate an appropriate command based on your operating system, display it, and ask for confirmation before executing it.
+
+#### OS-Awareness
+
+The shell command generation is OS-aware and will generate appropriate commands for:
+- Windows (cmd.exe or PowerShell)
+- macOS (bash/zsh)
+- Linux (bash/zsh)
+
+For example:
+```bash
+# On Windows might generate
+ngpt -s "list all files" 
+# Generates: dir
+
+# On Linux/macOS might generate
+ngpt -s "list all files"
+# Generates: ls -la
+```
+
+#### Command Confirmation
+
+For safety, nGPT always asks for confirmation before executing commands:
+
+1. The generated command is displayed
+2. You're prompted to confirm (y/N) [Default NO]
+3. Only after confirmation is the command executed
+
+#### Bypassing Confirmation (Advanced)
+
+For automation in scripts, you can bypass the confirmation prompt by piping "y" to the command:
+```bash
+echo "y" | ngpt -s "list files in /tmp directory"
+```
+
+**Note:** Use this with caution as it will execute whatever command is generated without review.
+
+#### Command Examples
+
+```bash
+# Find large files
+ngpt -s "find files larger than 100MB"
+
+# System maintenance
+ngpt -s "clean up temporary files"
+
+# Network diagnostics
+ngpt -s "check if port 8080 is open"
+
+# Process management
+ngpt -s "find processes using too much memory"
+
+# Package management
+ngpt -s "install the latest version of numpy"
+```
 
 ### Generating Code
 
@@ -131,6 +242,62 @@ ngpt -c "function that calculates the Fibonacci sequence"
 
 This returns only the code, without any surrounding markdown formatting or explanations.
 
+#### Language Selection
+
+You can specify the programming language using the `--language` option:
+
+```bash
+# Generate code in JavaScript
+ngpt -c --language javascript "function to sort an array of numbers"
+
+# Generate code in Java
+ngpt -c --language java "class representing a simple bank account"
+
+# Generate code in TypeScript
+ngpt -c --language typescript "async function to fetch data from an API"
+
+# Generate code in Go
+ngpt -c --language go "function to read a file"
+
+# Generate code in Rust
+ngpt -c --language rust "struct and implementation for a linked list"
+```
+
+The default language is Python if not specified.
+
+#### Saving Generated Code
+
+You can pipe the output directly to a file:
+
+```bash
+# Save generated Python code to a file
+ngpt -c "function to calculate prime numbers" > primes.py
+
+# Save generated JavaScript code
+ngpt -c --language javascript "function to validate email" > validate.js
+```
+
+#### Combining with Other Options
+
+Code generation can be combined with other options:
+
+```bash
+# Generate code with syntax highlighting
+ngpt -c --prettify "implement quicksort algorithm"
+
+# Generate code with real-time syntax highlighting
+ngpt -c --stream-prettify "create a binary search tree class"
+
+# Generate code with web search capability
+ngpt -c --web-search "implement the latest React hooks pattern"
+
+# Generate code with custom system prompt
+ngpt -c --preprompt "Focus on writing clean, well-documented code with clear comments" "implement dijkstra's algorithm"
+
+# Set temperature for more creative coding solutions
+ngpt -c --temperature 0.8 "generate different ways to solve the fibonacci sequence"
+```
+
 ### Multiline Text Input
 
 Open an interactive editor for entering complex, multiline prompts:
@@ -140,7 +307,8 @@ ngpt -t
 ```
 
 This opens an editor where you can:
-- Write and edit multiline text
+- Write and edit multiline text with proper indentation
+- Paste long or ill-formatted text
 - Press Ctrl+D or F10 to submit the text
 - Press Esc to cancel
 
@@ -152,61 +320,89 @@ Display markdown responses with beautiful formatting and syntax highlighting:
 ngpt --prettify "Explain markdown syntax with examples"
 ```
 
-This instructs the AI to generate properly formatted markdown responses, which are then rendered with appropriate formatting, including:
-- Syntax highlighting for code blocks
-- Proper rendering of tables
-- Formatted headers, lists, and other markdown elements
+#### Renderer Options
 
-You can specify which markdown renderer to use:
+nGPT supports multiple renderers for displaying formatted markdown:
+
+1. **Rich** (Python library): 
+   - Works in most terminals
+   - Supports syntax highlighting
+   - Animated streaming with `--stream-prettify`
+   
+2. **Glow** (terminal-based):
+   - More advanced markdown rendering
+   - Better table support
+   - Must be installed separately (https://github.com/charmbracelet/glow)
+
+3. **Auto** (default):
+   - Automatically selects the best available renderer
+   - Falls back to plain text if no renderers are available
 
 ```bash
-# Use Rich (Python library) renderer
+# Use Rich renderer
 ngpt --prettify --renderer=rich "Create a markdown table comparing programming languages"
 
-# Use Glow (terminal-based) renderer
+# Use Glow renderer
 ngpt --prettify --renderer=glow "Write documentation with code examples"
 
 # Use automatic selection (default is Rich if available)
 ngpt --prettify --renderer=auto "Explain blockchain with code examples"
 ```
 
-Combine with code generation for syntax-highlighted code:
+#### Real-time Markdown Streaming
 
-```bash
-ngpt -c --prettify "function to calculate the Fibonacci sequence"
-```
-
-When using `--prettify` with code generation, the AI will output code in markdown format with proper syntax highlighting based on the language.
-
-### Real-time Markdown Rendering
-
-Display markdown responses with real-time formatting and syntax highlighting while streaming:
+For a more dynamic experience, you can watch as formatted markdown and syntax highlighting are applied in real-time while the response is streaming:
 
 ```bash
 ngpt --stream-prettify "Explain quantum computing with code examples"
 ```
 
-This provides an enhanced experience by rendering markdown in real-time as content arrives, offering both the benefits of streaming and formatted output simultaneously. This feature uses Rich for live updates and beautiful formatting.
-
-You can also combine this with code generation:
+This provides both the benefits of streaming (seeing the response as it's generated) and formatting (proper markdown rendering and syntax highlighting).
 
 ```bash
-ngpt -c --stream-prettify "write a function to implement merge sort in Python"
+# Differences between --prettify and --stream-prettify
+ngpt --prettify "Explain algorithms"         # Shows fully formatted result at the end
+ngpt --stream-prettify "Explain algorithms"  # Shows formatted result as it arrives
 ```
-
-This is particularly useful for longer code generation tasks, as you can see the code being formatted with syntax highlighting in real-time.
-
 Notes on `--stream-prettify`:
 - Requires Rich to be installed (`pip install "ngpt[full]"` or `pip install rich`)
 - Only works with the Rich renderer (even if you specify another renderer)
 - Works in both regular and interactive modes
 - Creates a more dynamic and responsive UI experience
 
-See available renderers on your system:
+#### Checking Available Renderers
+
+To see which renderers are available on your system:
 
 ```bash
 ngpt --list-renderers
 ```
+
+This will display information about which renderers are installed and which one will be used as the default.
+
+### Environment Variables
+
+nGPT respects several environment variables that can be used to configure its behavior without modifying the configuration file or using command-line arguments:
+
+```bash
+# API credentials
+export OPENAI_API_KEY="your-api-key"
+export OPENAI_BASE_URL="https://api.alternative.com/v1/"
+export OPENAI_MODEL="gpt-4"
+
+```
+
+#### Environment Variable Precedence
+
+Environment variables take precedence over configuration file values but are overridden by command-line arguments:
+
+1. Command-line arguments (highest priority)
+2. Environment variables
+3. CLI configuration (ngpt-cli.conf)
+4. Main configuration file (ngpt.conf)
+5. Default values (lowest priority)
+
+For automation and scripting, environment variables are often the most convenient way to set credentials.
 
 ### Using Web Search
 
@@ -216,74 +412,126 @@ Enable web search capability (if your API endpoint supports it):
 ngpt --web-search "What are the latest developments in quantum computing?"
 ```
 
-This allows the AI to access current information from the web when generating a response.
+This allows the AI to access current information from the web when generating a response. This is particularly useful for:
+
+- Getting up-to-date information on current events
+- Answering questions about recent developments
+- Finding the latest documentation or reference material
+- Fact-checking information against online sources
+
+Note that web search capability depends on your API provider supporting this feature.
+
+```bash
+# Combine web search with other options
+ngpt --web-search --prettify "Create a summary of today's top news"
+
+# Use web search in interactive mode
+ngpt -i --web-search
+
+# Use web search for code generation
+ngpt -c --web-search "implement the latest JavaScript fetch API pattern"
+```
 
 ## Configuration Options
 
-### Viewing Current Configuration
+### Command Line Configuration
 
-Show your current active configuration:
+The `--cli-config` option provides a way to set persistent default values for command-line options:
 
 ```bash
-ngpt --show-config
+# Set default values
+ngpt --cli-config set temperature 0.8
+ngpt --cli-config set renderer rich
+ngpt --cli-config set language javascript
+
+# View current settings
+ngpt --cli-config get
+
+# Get a specific setting
+ngpt --cli-config get temperature
+
+# Remove a setting
+ngpt --cli-config unset language
+
+# List all available options that can be configured
+ngpt --cli-config list
+
+# Show help information about CLI configuration
+ngpt --cli-config help
 ```
 
-Show all stored configurations:
+Key features:
+- Stored settings apply automatically to future commands
+- Context-sensitive options (e.g., language only applies in code generation mode)
+- Settings follow priority order: command-line > environment variables > CLI config > main config > defaults
+
+### Configuration Management
+
+#### Viewing Configuration
+
+View your current active configuration:
 
 ```bash
+# Show active configuration details
+ngpt --show-config
+
+# Show all stored configurations
 ngpt --show-config --all
 ```
 
-### Setting Configuration Options
+#### Selecting Configurations
 
-Select a specific configuration by index:
+Select a specific stored configuration by index or provider name:
 
 ```bash
+# Use configuration at index 1
 ngpt --config-index 1 "Your prompt here"
-```
 
-Select a specific configuration by provider name:
-
-```bash
+# Use configuration with provider name "Gemini"
 ngpt --provider Gemini "Your prompt here"
 ```
 
-Specify API credentials directly:
+#### Direct Configuration Override
+
+Specify API credentials directly for a single command (overrides stored configuration):
 
 ```bash
 ngpt --api-key "your-key" --base-url "https://api.example.com/v1/" --model "model-name" "Your prompt here"
 ```
 
-### Interactive Configuration
+#### Interactive Configuration
 
-Add a new configuration interactively:
+The `--config` option without arguments enters interactive configuration mode:
 
 ```bash
+# Add a new configuration
 ngpt --config
-```
 
-Edit an existing configuration by index:
-
-```bash
+# Edit an existing configuration at index 1
 ngpt --config --config-index 1
-```
 
-Edit an existing configuration by provider name:
-
-```bash
+# Edit an existing configuration by provider name
 ngpt --config --provider Gemini
-```
 
-Remove a configuration by index:
-
-```bash
+# Remove a configuration at index 2
 ngpt --config --remove --config-index 2
+
+# Remove a configuration by provider name
+ngpt --config --remove --provider Gemini
 ```
 
-Remove a configuration by provider name:
+In interactive mode:
+- When editing an existing configuration, press Enter to keep the current values
+- When creating a new configuration, press Enter to use default values
+- For security, your API key is not displayed when editing configurations
+- When removing a configuration, you'll be asked to confirm before deletion
+
+#### Custom Configuration File
+
+Use a configuration file at a non-standard location:
 
 ```bash
-ngpt --config --remove --provider Gemini
+ngpt --config /path/to/custom-config.json "Your prompt here"
 ```
 
 ### Model Management
@@ -291,13 +539,29 @@ ngpt --config --remove --provider Gemini
 List all available models for the current configuration:
 
 ```bash
+# List models for active configuration
 ngpt --list-models
+
+# List models for a specific configuration by index
+ngpt --list-models --config-index 1
+
+# List models for a specific configuration by provider name
+ngpt --list-models --provider Gemini
 ```
 
-List models for a specific configuration:
+This is useful for:
+- Discovering what models are available from your provider
+- Confirming API connectivity
+- Checking model names before setting them in your configuration
+
+### Version Information
+
+Display the version of nGPT and related environment details:
 
 ```bash
-ngpt --list-models --config-index 1
+ngpt -v
+# or
+ngpt --version
 ```
 
 ## Advanced Usage

@@ -272,13 +272,15 @@ You can configure the client using the following options:
 | `--config` | Path to a custom configuration file or, when used without a value, enters interactive configuration mode |
 | `--config-index` | Index of the configuration to use (default: 0) |
 | `--provider` | Provider name to identify the configuration to use (alternative to --config-index) |
-| `--remove` | Remove the configuration at the specified index (requires --config and --config-index) |
+| `--remove` | Remove the configuration at the specified index (requires --config and --config-index or --provider) |
 | `--show-config` | Show configuration details and exit |
 | `--all` | Used with `--show-config` to display all configurations |
 | `-i, --interactive` | Start an interactive chat session with stylish UI, conversation history, and special commands |
 | `-s, --shell` | Generate and execute shell commands |
 | `-c, --code` | Generate clean code output |
 | `-t, --text` | Open interactive multiline editor for complex prompts |
+| `--language` | Programming language to generate code in (for code mode, default: python) |
+| `--cli-config` | Manage CLI configuration settings (set, get, unset, list, help) |
 | `-v, --version` | Show version information |
 
 For a complete reference of all available options, see the [CLI Usage Guide](https://nazdridoy.github.io/ngpt/usage/cli_usage.html).
