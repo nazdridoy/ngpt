@@ -7,6 +7,9 @@
 
 A lightweight Python CLI and library for interacting with OpenAI-compatible APIs, supporting both official and self-hosted LLM endpoints.
 
+![2025-04-23_16-18-01](https://github.com/user-attachments/assets/b8e58926-5165-4352-b48b-9f4a982da86e)
+
+
 ## Table of Contents
 - [Quick Start](#quick-start)
 - [Features](#features)
