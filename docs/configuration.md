@@ -152,6 +152,45 @@ ngpt --show-config
 ngpt --show-config --all
 ```
 
+## CLI Configuration
+
+nGPT provides a CLI configuration system that allows you to set default values for command-line options, so you don't need to specify the same options repeatedly.
+
+### Configuration File Location
+
+The CLI configuration is stored in a separate JSON file at:
+
+- **Linux**: `~/.config/ngpt/ngpt-cli.conf`
+- **macOS**: `~/Library/Application Support/ngpt/ngpt-cli.conf`
+- **Windows**: `%APPDATA%\ngpt\ngpt-cli.conf`
+
+### Configuration Priority
+
+Options are applied in the following order (highest priority first):
+
+1. Command-line arguments
+2. Environment variables
+3. CLI configuration (ngpt-cli.conf)
+4. Main configuration file (ngpt.conf)
+5. Default values
+
+### Managing CLI Settings
+
+You can manage CLI configuration with the `--cli-config` command:
+
+```bash
+# Set a default value
+ngpt --cli-config set OPTION VALUE
+
+# Get current value(s)
+ngpt --cli-config get [OPTION]
+
+# Remove an option
+ngpt --cli-config unset OPTION
+```
+
+For a full guide to CLI configuration, see the [CLI Configuration Guide](usage/cli_config.md).
+
 ## Examples
 
 ### Using Multiple Providers

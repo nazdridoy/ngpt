@@ -18,6 +18,7 @@ A lightweight Python CLI and library for interacting with OpenAI-compatible APIs
   - [Python Library](#as-a-library)
 - [Configuration](#configuration)
   - [Command Line Options](#command-line-options)
+  - [CLI Configuration](#cli-configuration)
   - [Interactive Configuration](#interactive-configuration)
   - [Configuration File](#configuration-file)
   - [Configuration Priority](#configuration-priority)
@@ -279,6 +280,72 @@ You can configure the client using the following options:
 
 For a complete reference of all available options, see the [CLI Usage Guide](https://nazdridoy.github.io/ngpt/usage/cli_usage.html).
 
+### CLI Configuration
+
+NGPT offers a CLI configuration system that allows you to set default values for command-line options:
+
+```bash
+# Set default options
+ngpt --cli-config set language typescript
+ngpt --cli-config set temperature 0.9
+ngpt --cli-config set prettify true
+
+# View current settings
+ngpt --cli-config get
+
+# Get a specific setting
+ngpt --cli-config get language
+
+# Remove a setting
+ngpt --cli-config unset prettify
+
+# List all available options
+ngpt --cli-config list
+
+# Show help information
+ngpt --cli-config help
+```
+
+Key features of CLI configuration:
+- **Context-Aware**: Settings are applied based on the current command mode (e.g., `language` only applies in code generation mode `-c`).
+- **Priority**: When determining option values, NGPT uses the following priority order (highest to lowest):
+  1. Command-line arguments
+  2. Environment variables
+  3. CLI configuration (ngpt-cli.conf)
+  4. Main configuration file (ngpt.conf)
+  5. Default values
+- **Mutual Exclusivity**: For options like `no-stream`, `prettify`, and `stream-prettify`, setting one to `True` automatically sets the others to `False` in the configuration file, ensuring consistency.
+- **Smart Selection**: The `provider` setting is used to select which configuration profile to use, offering a persistent way to select your preferred API.
+
+Available options include:
+- General options (all modes): `provider`, `temperature`, `top_p`, `max_tokens`, `preprompt`, `renderer`, `config-index`, `web-search`
+- Mode-specific options: `language` (code mode only), `log` (interactive and text modes)
+- Mutually exclusive options: `no-stream`, `prettify`, `stream-prettify`
+
+#### Practical Examples
+
+```bash
+# Set Gemini as your default provider
+ngpt --cli-config set provider Gemini
+# Now you can run commands without specifying --provider
+ngpt "Explain quantum computing"
+
+# Configure code generation for TypeScript
+ngpt --cli-config set language typescript
+# Now in code mode, TypeScript will be used by default
+ngpt -c "Write a function to sort an array"
+
+# Set a higher temperature for more creative responses
+ngpt --cli-config set temperature 0.9
+```
+
+The CLI configuration is stored in:
+- Linux: `~/.config/ngpt/ngpt-cli.conf`
+- macOS: `~/Library/Application Support/ngpt/ngpt-cli.conf`
+- Windows: `%APPDATA%\ngpt\ngpt-cli.conf`
+
+For more details, see the [CLI Configuration Guide](https://nazdridoy.github.io/ngpt/usage/cli_config.html).
+
 ### Interactive Configuration
 
 The `--config` option without arguments enters interactive configuration mode, allowing you to add or edit configurations:
@@ -351,10 +418,11 @@ For details on the configuration file format and structure, see the [Configurati
 
 nGPT determines configuration values in the following order (highest priority first):
 
-1. Command line arguments (`--api-key`, `--base-url`, `--model`)
+1. Command line arguments (`--api-key`, `--base-url`, `--model`, etc.)
 2. Environment variables (`OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL`)
-3. Configuration file (selected by `--config-index`, defaults to index 0)
-4. Default values
+3. CLI configuration file (`ngpt-cli.conf`, managed with `--cli-config`)
+4. Main configuration file `ngpt.conf` or `custom-config-file`
+5. Default values
 
 ## Contributing
 
