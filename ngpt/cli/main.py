@@ -27,6 +27,7 @@ def show_cli_config_help():
     """Display help information about CLI configuration."""
     print(f"\n{COLORS['green']}{COLORS['bold']}CLI Configuration Help:{COLORS['reset']}")
     print(f"  {COLORS['cyan']}Command syntax:{COLORS['reset']}")
+    print(f"    {COLORS['yellow']}ngpt --cli-config help{COLORS['reset']}                - Show this help message")
     print(f"    {COLORS['yellow']}ngpt --cli-config set OPTION VALUE{COLORS['reset']}    - Set a default value for OPTION")
     print(f"    {COLORS['yellow']}ngpt --cli-config get OPTION{COLORS['reset']}          - Get the current value of OPTION")
     print(f"    {COLORS['yellow']}ngpt --cli-config get{COLORS['reset']}                 - Show all CLI configuration settings")
@@ -83,16 +84,25 @@ def show_cli_config_help():
     print(f"    {COLORS['yellow']}ngpt --cli-config set language java{COLORS['reset']}        - Set default language to java for code generation")
     print(f"    {COLORS['yellow']}ngpt --cli-config set temperature 0.9{COLORS['reset']}      - Set default temperature to 0.9")
     print(f"    {COLORS['yellow']}ngpt --cli-config set no-stream true{COLORS['reset']}       - Disable streaming by default")
+    print(f"    {COLORS['yellow']}ngpt --cli-config get temperature{COLORS['reset']}          - Check the current temperature setting")
+    print(f"    {COLORS['yellow']}ngpt --cli-config get{COLORS['reset']}                      - Show all current CLI settings")
     print(f"    {COLORS['yellow']}ngpt --cli-config unset language{COLORS['reset']}           - Remove language setting")
     
     print(f"\n  {COLORS['cyan']}Notes:{COLORS['reset']}")
-    print(f"    - CLI configuration is stored in {COLORS['yellow']}~/.config/ngpt/ngpt-cli.conf{COLORS['reset']} (or equivalent for your OS)")
+    print(f"    - CLI configuration is stored in:")
+    print(f"      • Linux: {COLORS['yellow']}~/.config/ngpt/ngpt-cli.conf{COLORS['reset']}")
+    print(f"      • macOS: {COLORS['yellow']}~/Library/Application Support/ngpt/ngpt-cli.conf{COLORS['reset']}")
+    print(f"      • Windows: {COLORS['yellow']}%APPDATA%\\ngpt\\ngpt-cli.conf{COLORS['reset']}")
     print(f"    - Settings are applied based on context (e.g., language only applies to code generation mode)")
     print(f"    - Command-line arguments always override CLI configuration")
     print(f"    - Some options are mutually exclusive and will not be applied together")
 
 def handle_cli_config(action, option=None, value=None):
     """Handle CLI configuration commands."""
+    if action == "help":
+        show_cli_config_help()
+        return
+    
     if action == "list":
         # List all available options
         print(f"{COLORS['green']}{COLORS['bold']}Available CLI configuration options:{COLORS['reset']}")
@@ -254,7 +264,7 @@ def main():
         option = args.cli_config[1] if len(args.cli_config) > 1 else None
         value = args.cli_config[2] if len(args.cli_config) > 2 else None
         
-        if action in ("set", "get", "unset", "list"):
+        if action in ("set", "get", "unset", "list", "help"):
             handle_cli_config(action, option, value)
             return
         else:
