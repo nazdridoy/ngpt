@@ -224,6 +224,110 @@ groq_response = groq_client.chat("Hello from Groq")
 ollama_response = ollama_client.chat("Hello from Ollama")
 ```
 
+## CLI Components Reuse
+
+nGPT's CLI utilities can be reused in your own CLI applications. Here's how to leverage the components in `cli.py`:
+
+### Interactive Chat Sessions
+
+You can integrate nGPT's interactive chat functionality into your own CLI applications:
+
+```python
+from ngpt import NGPTClient, load_config
+from ngpt.cli import interactive_chat_session
+
+# Initialize the client
+config = load_config()
+client = NGPTClient(**config)
+
+# Start an interactive chat session
+interactive_chat_session(
+    client=client,
+    web_search=True,
+    temperature=0.7,
+    prettify=True,
+    renderer='rich'
+)
+```
+
+### Markdown Rendering
+
+Reuse the markdown rendering capabilities:
+
+```python
+from ngpt.cli import prettify_markdown, has_markdown_renderer
+
+# Check if a specific renderer is available
+if has_markdown_renderer(renderer='rich'):
+    # Render markdown text
+    markdown_text = "# Hello, World!\n\n```python\nprint('Hello, World!')\n```"
+    formatted_text = prettify_markdown(markdown_text, renderer='rich')
+    print(formatted_text)
+```
+
+### Real-time Markdown Streaming
+
+Implement real-time markdown rendering in your applications:
+
+```python
+from ngpt import NGPTClient, load_config
+from ngpt.cli import prettify_streaming_markdown
+
+# Initialize the client
+config = load_config()
+client = NGPTClient(**config)
+
+# Get the markdown streamer
+markdown_streamer = prettify_streaming_markdown(
+    renderer='rich',
+    header_text="Streaming Response:"
+)
+
+# Use the streamer with the client
+response_text = client.chat(
+    "Explain quantum computing with code examples",
+    stream=True,
+    stream_callback=markdown_streamer.update_content
+)
+```
+
+### CLI Configuration Management
+
+Leverage nGPT's CLI configuration system:
+
+```python
+from ngpt.cli import handle_cli_config
+
+# Get a configuration setting
+temperature = handle_cli_config('get', 'temperature')
+print(f"Current temperature: {temperature}")
+
+# Set a configuration setting
+handle_cli_config('set', 'temperature', '0.8')
+
+# List all settings
+settings = handle_cli_config('list')
+print("Available settings:", settings)
+```
+
+### Terminal Formatting Utilities
+
+Use nGPT's terminal formatting for your own CLI applications:
+
+```python
+from ngpt.cli import ColoredHelpFormatter
+import argparse
+
+# Create an argument parser with custom formatting
+parser = argparse.ArgumentParser(
+    description="My custom CLI application",
+    formatter_class=ColoredHelpFormatter
+)
+
+# Add arguments with colored help
+parser.add_argument("--option", help="This help text will be formatted with colors")
+```
+
 ## Complete Examples
 
 ### Simple Chat Bot
@@ -347,6 +451,70 @@ except requests.exceptions.RequestException as e:
     print(f"Request Error: {e}")
 except Exception as e:
     print(f"Unexpected Error: {e}")
+```
+
+## Creating Custom CLI Tools Using nGPT
+
+Here's an example of creating your own CLI tool that leverages nGPT's functionality:
+
+```python
+#!/usr/bin/env python
+import argparse
+from ngpt import NGPTClient, load_config
+from ngpt.cli import (
+    prettify_markdown,
+    prettify_streaming_markdown,
+    interactive_chat_session,
+    ColoredHelpFormatter
+)
+
+def main():
+    # Create argument parser with custom formatting
+    parser = argparse.ArgumentParser(
+        description="My custom AI assistant powered by nGPT",
+        formatter_class=ColoredHelpFormatter
+    )
+    
+    # Add arguments
+    parser.add_argument("prompt", nargs="?", help="The prompt to send to the AI")
+    parser.add_argument("-i", "--interactive", action="store_true", help="Start interactive mode")
+    parser.add_argument("-p", "--prettify", action="store_true", help="Prettify markdown output")
+    
+    args = parser.parse_args()
+    
+    # Load configuration and initialize client
+    config = load_config()
+    client = NGPTClient(**config)
+    
+    if args.interactive:
+        # Reuse nGPT's interactive chat session
+        interactive_chat_session(
+            client=client,
+            prettify=args.prettify,
+            renderer='rich'
+        )
+    elif args.prompt:
+        if args.prettify:
+            # Use real-time markdown rendering
+            streamer = prettify_streaming_markdown(renderer='rich')
+            response = client.chat(
+                args.prompt,
+                stream=True,
+                stream_callback=streamer.update_content
+            )
+        else:
+            # Regular streaming output
+            print("AI: ", end="", flush=True)
+            full_response = ""
+            for chunk in client.chat(args.prompt, stream=True):
+                print(chunk, end="", flush=True)
+                full_response += chunk
+            print()  # Final newline
+    else:
+        parser.print_help()
+
+if __name__ == "__main__":
+    main()
 ```
 
 ## Next Steps

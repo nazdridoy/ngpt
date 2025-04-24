@@ -1,46 +1,97 @@
 # Installation Guide
 
-There are several ways to install nGPT depending on your needs and environment.
+This guide provides detailed instructions for installing nGPT on various platforms.
 
-## Requirements
+## Basic Installation
 
-- Python 3.8 or newer
-- `requests` library (automatically installed as a dependency)
+### Using pip
 
-## Optional Dependencies
-
-- `rich` library - For enhanced markdown rendering with syntax highlighting
-- `prompt_toolkit` library - For improved interactive input experience with multiline editing
-
-## Installing from PyPI (Recommended)
-
-The simplest way to install nGPT is through the Python Package Index (PyPI):
+nGPT can be installed using pip:
 
 ```bash
 pip install ngpt
 ```
 
-This will install the latest stable release of nGPT with basic functionality.
+### Using uv
 
-For additional capabilities like markdown rendering, syntax highlighting, and enhanced interactive input experience, install with the full extras:
-
-```bash
-pip install "ngpt[full]"
-```
-
-Note that quotes around the package name are required due to the square brackets.
-
-Alternatively, you can install the optional dependencies separately:
+For faster installation and better dependency resolution, you can use [uv](https://github.com/astral-sh/uv):
 
 ```bash
-pip install rich prompt_toolkit
+# Install uv if you don't have it yet
+curl -sSf https://astral.sh/uv/install.sh | sh
+
+# Install ngpt with uv
+uv pip install ngpt
 ```
 
-## Installing in a Virtual Environment
+### Using uv tool (Recommended for CLI usage)
 
-It's often good practice to install Python packages in a virtual environment to avoid conflicts:
+Since nGPT is primarily used as a command-line tool, you can install it globally using uv's tool installer:
 
-### Using venv
+```bash
+# Install uv if you don't have it yet
+curl -sSf https://astral.sh/uv/install.sh | sh
+
+# Install ngpt as a global tool
+uv tool install ngpt
+```
+
+This method:
+- Installs nGPT globally so it's available from any directory
+- Isolates the installation from your other Python environments
+- Automatically manages dependencies
+- Provides the fastest installation experience
+
+Any of these methods will install nGPT with all its dependencies, including support for markdown rendering and interactive sessions.
+
+## Requirements
+
+nGPT requires:
+
+- Python 3.8 or newer
+- `requests` library for API communication
+- `rich` library for markdown formatting and syntax highlighting
+- `prompt_toolkit` library for interactive features
+
+All required dependencies are automatically installed when you install nGPT.
+
+## Platform-Specific Notes
+
+### Linux/macOS
+
+On Linux and macOS, you can install nGPT using either pip or uv:
+
+```bash
+# Using pip
+pip install ngpt
+
+# Using uv
+uv pip install ngpt
+```
+
+Or, if you prefer using pipx for isolated application installations:
+
+```bash
+pipx install ngpt
+```
+
+### Windows
+
+On Windows, you can install nGPT using pip or uv:
+
+```bash
+# Using pip
+pip install ngpt
+
+# Using uv
+uv pip install ngpt
+```
+
+### Installation in a Virtual Environment
+
+It's often a good practice to install packages in a virtual environment:
+
+#### Using pip with venv
 
 ```bash
 # Create a virtual environment
@@ -49,64 +100,47 @@ python -m venv ngpt-env
 # Activate the environment
 # On Windows:
 ngpt-env\Scripts\activate
-# On macOS and Linux:
+# On Linux/macOS:
 source ngpt-env/bin/activate
 
 # Install nGPT
 pip install ngpt
-
-# Or with all features
-pip install "ngpt[full]"
 ```
 
-### Using conda
+#### Using uv with virtualenv
+
+uv can create and manage virtual environments:
 
 ```bash
-# Create a conda environment
-conda create -n ngpt-env python=3.10
+# Create and activate a virtual environment + install in one step
+uv venv ngpt-env
+source ngpt-env/bin/activate  # On Linux/macOS
+# Or on Windows:
+# ngpt-env\Scripts\activate
 
-# Activate the environment
-conda activate ngpt-env
-
-# Install nGPT
-pip install ngpt
-
-# Or with all features
-pip install "ngpt[full]"
+# Install ngpt
+uv pip install ngpt
 ```
 
-## Installing from Source
+## Optional: Installing from Source
 
-To install the latest development version from source:
+If you want to install the latest development version from the source code:
 
 ```bash
 # Clone the repository
 git clone https://github.com/nazdridoy/ngpt.git
-
-# Navigate to the project directory
 cd ngpt
 
-# Install the package in development mode
+# Using pip
 pip install -e .
 
-# Or with all features
-pip install -e ".[full]"
+# Or using uv
+uv pip install -e .
 ```
 
-## Upgrading
+## Verifying Installation
 
-To upgrade to the latest version:
-
-```bash
-pip install --upgrade ngpt
-
-# Or with all features
-pip install --upgrade "ngpt[full]"
-```
-
-## Verifying the Installation
-
-After installation, you can verify that nGPT is installed correctly by checking the version:
+To verify that nGPT is installed correctly, run:
 
 ```bash
 ngpt --version
@@ -114,11 +148,114 @@ ngpt --version
 
 You should see the version number of nGPT displayed.
 
-## Next Steps
+## Updating nGPT
 
-After installation, you can:
-- Configure your API keys and preferences using `ngpt --config`
-- Start using the CLI tool with `ngpt "Your prompt here"`
-- Import the library in your Python projects: `from ngpt import NGPTClient`
+To update to the latest version:
 
-For more information, see the [Library Usage](usage/library_usage.md) and [CLI Usage](usage/cli_usage.md) guides. 
+```bash
+# Using pip
+pip install --upgrade ngpt
+
+# Using uv
+uv pip install --upgrade ngpt
+```
+
+## Glow for Enhanced Markdown (Optional)
+
+For an enhanced markdown rendering experience, you can install the Glow terminal markdown viewer:
+
+### macOS
+
+```bash
+brew install glow
+```
+
+### Linux
+
+```bash
+# Debian/Ubuntu
+sudo apt-get install glow
+
+# Arch Linux
+yay -S glow
+
+# Using Go
+go install github.com/charmbracelet/glow@latest
+```
+
+### Windows
+
+```bash
+# Using Scoop
+scoop install glow
+
+# Using Chocolatey
+choco install glow
+```
+
+nGPT will automatically detect and use Glow if it's installed on your system, but it's not required as the built-in Rich renderer provides excellent markdown formatting.
+
+## API Keys
+
+After installation, you'll need to configure your API key. See the [Configuration Guide](configuration.md) for details.
+
+## Troubleshooting
+
+### Common Installation Issues
+
+#### Package not found
+
+If you encounter "Package not found" errors, make sure your package manager is up to date:
+
+```bash
+# For pip
+pip install --upgrade pip
+
+# For uv
+curl -sSf https://astral.sh/uv/install.sh | sh
+```
+
+#### Permission Errors
+
+If you see permission errors when installing:
+
+```bash
+# Using pip
+# On Linux/macOS
+pip install --user ngpt
+
+# Or use a virtual environment (recommended)
+python -m venv ngpt-env
+source ngpt-env/bin/activate
+pip install ngpt
+
+# Using uv (avoids many permission issues)
+uv pip install --user ngpt
+# Or with virtual environment
+uv venv ngpt-env
+source ngpt-env/bin/activate
+uv pip install ngpt
+```
+
+#### Rich or Prompt Toolkit Issues
+
+If you experience issues with the Rich library or Prompt Toolkit:
+
+```bash
+# Using pip
+pip uninstall rich prompt_toolkit
+pip install rich prompt_toolkit
+pip install ngpt
+
+# Using uv
+uv pip uninstall rich prompt_toolkit
+uv pip install rich prompt_toolkit
+uv pip install ngpt
+```
+
+### Getting Help
+
+If you continue to experience installation issues:
+
+1. Check the [GitHub Issues](https://github.com/nazdridoy/ngpt/issues) to see if others have encountered the same problem
+2. Open a new issue if your problem hasn't been reported 

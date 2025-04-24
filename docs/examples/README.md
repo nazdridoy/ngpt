@@ -7,6 +7,7 @@ This directory contains comprehensive examples demonstrating how to use nGPT in 
 - [Basic Examples](basic.md) - Simple examples to get started with nGPT
 - [Advanced Examples](advanced.md) - More complex examples with advanced features
 - [Custom Integrations](integrations.md) - Examples of integrating nGPT into larger applications
+- [CLI Component Examples](cli_components.md) - Examples of building custom CLI tools using nGPT components
 
 ## Getting Started
 
@@ -46,6 +47,17 @@ These examples demonstrate how to integrate nGPT into larger applications:
 - Chatbot development
 - Workflow automation
 
+### CLI Component Examples
+
+These examples show how to use nGPT's CLI components to build your own command-line tools:
+
+- Custom code generation tools
+- Specialized chat assistants
+- Documentation generators
+- Tools with persistent configuration
+- Translation utilities
+- Image analysis applications
+
 ## Quick Reference
 
 Here's a quick reference to the most important examples:
@@ -66,6 +78,15 @@ print(code)
 # Shell command example
 command = client.generate_shell_command("find all files modified in the last week")
 print(command)
+
+# CLI component reuse example
+from ngpt.cli import prettify_markdown, ColoredHelpFormatter
+import argparse
+
+parser = argparse.ArgumentParser(
+    description="My custom AI tool",
+    formatter_class=ColoredHelpFormatter
+)
 ```
 
 Explore the individual example pages for more detailed code samples and explanations. 

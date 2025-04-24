@@ -4,12 +4,13 @@ This section contains comprehensive documentation on how to use nGPT, both as a 
 
 ## Table of Contents
 
-- [Library Usage](library_usage.md) - Learn how to integrate nGPT into your Python projects
 - [CLI Usage](cli_usage.md) - Learn how to use nGPT from the command line
+- [Library Usage](library_usage.md) - Learn how to integrate nGPT into your Python projects
+- [CLI Framework](cli_framework.md) - Learn how to build your own CLI tools with nGPT components
 
 ## Overview
 
-nGPT offers two primary ways to use it:
+nGPT offers three primary ways to use it:
 
 ### 1. Command-Line Interface (CLI)
 
@@ -36,6 +37,19 @@ nGPT can be imported as a Python library, allowing you to:
 - And more...
 
 See the [Library Usage](library_usage.md) guide for detailed documentation and examples.
+
+### 3. CLI Framework
+
+nGPT can be used as a framework to build your own command-line tools:
+
+- Leverage pre-built components for terminal UI 
+- Create interactive chat applications with conversation history
+- Implement beautiful markdown rendering with syntax highlighting
+- Use real-time streaming with live updates
+- Add persistent configuration management
+- And more...
+
+See the [CLI Framework](cli_framework.md) guide for detailed documentation and the [CLI Component Examples](../examples/cli_components.md) for practical examples.
 
 ## Quick Reference
 
@@ -77,6 +91,30 @@ print(code)
 # Generate shell command
 command = client.generate_shell_command("list all PDF files recursively")
 print(command)
+```
+
+### CLI Framework Quick Start
+
+```python
+from ngpt import NGPTClient, load_config
+from ngpt.cli import interactive_chat_session, ColoredHelpFormatter
+import argparse
+
+# Create parser with colorized help
+parser = argparse.ArgumentParser(
+    description="My custom AI assistant",
+    formatter_class=ColoredHelpFormatter
+)
+
+# Initialize client
+client = NGPTClient(**load_config())
+
+# Use nGPT interactive session with custom prompt
+interactive_chat_session(
+    client=client,
+    preprompt="You are a specialized AI assistant for my custom tool",
+    prettify=True
+)
 ```
 
 For more detailed information, see the specific usage guides. 

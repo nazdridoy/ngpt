@@ -19,6 +19,7 @@ A lightweight Python CLI and library for interacting with OpenAI-compatible APIs
   - [Documentation](https://nazdridoy.github.io/ngpt/)
   - [CLI Tool](#as-a-cli-tool)
   - [Python Library](#as-a-library)
+  - [CLI Framework](#as-a-cli-framework)
 - [Configuration](#configuration)
   - [Command Line Options](#command-line-options)
   - [CLI Configuration](#cli-configuration)
@@ -31,11 +32,14 @@ A lightweight Python CLI and library for interacting with OpenAI-compatible APIs
 ## Quick Start
 
 ```bash
-# Install
+# Install with pip
 pip install ngpt
 
-# Install with additional features
-pip install "ngpt[full]"
+# Or install with uv (faster)
+uv pip install ngpt
+
+# Or install globally as a CLI tool (recommended)
+uv tool install ngpt
 
 # Chat with default settings
 ngpt "Tell me about quantum computing"
@@ -81,8 +85,8 @@ For more examples and detailed usage, visit the [CLI Usage Guide](https://nazdri
 
 ## Features
 
-- ✅ **Dual Mode**: Use as a CLI tool or import as a Python library
-- 🪶 **Lightweight**: Minimal dependencies (just `requests`)
+- ✅ **Versatile**: Use as a CLI tool, Python library, or CLI framework for building custom tools
+- 🪶 **Lightweight**: Minimal dependencies with everything you need included
 - 🔄 **API Flexibility**: Works with OpenAI, Ollama, Groq, and any compatible endpoint
 - 💬 **Interactive Chat**: Continuous conversation with memory in modern UI
 - 📊 **Streaming Responses**: Real-time output for better user experience
@@ -95,6 +99,7 @@ For more examples and detailed usage, visit the [CLI Usage Guide](https://nazdri
 - 📝 **Rich Multiline Editor**: Interactive multiline text input with syntax highlighting and intuitive controls
 - 🎭 **System Prompts**: Customize model behavior with custom system prompts
 - 📃 **Conversation Logging**: Save your conversations to text files for later reference
+- 🧰 **CLI Components**: Reusable components for building custom AI-powered command-line tools
 
 See the [Feature Overview](https://nazdridoy.github.io/ngpt/overview.html) for more details.
 
@@ -108,24 +113,24 @@ Key documentation sections:
 - [Installation Guide](https://nazdridoy.github.io/ngpt/installation.html)
 - [CLI Usage Guide](https://nazdridoy.github.io/ngpt/usage/cli_usage.html)
 - [Library Usage Guide](https://nazdridoy.github.io/ngpt/usage/library_usage.html)
+- [CLI Framework Guide](https://nazdridoy.github.io/ngpt/usage/cli_framework.html)
 - [Configuration Guide](https://nazdridoy.github.io/ngpt/configuration.html)
 - [Examples & Tutorials](https://nazdridoy.github.io/ngpt/examples/basic.html)
 
 ## Installation
 
 ```bash
-# Basic installation (minimal dependencies)
+# Installation with pip
 pip install ngpt
 
-# Full installation with all features (recommended)
-pip install "ngpt[full]"
+# Or install with uv (faster installation)
+uv pip install ngpt
+
+# Or install globally as a CLI tool (recommended for command-line usage)
+uv tool install ngpt
 ```
 
 Requires Python 3.8 or newer.
-
-The full installation includes:
-- Enhanced markdown rendering with syntax highlighting
-- Improved interactive input experience with multiline editing
 
 For detailed installation instructions, see the [Installation Guide](https://nazdridoy.github.io/ngpt/installation.html).
 
@@ -245,6 +250,47 @@ print(code)
 ```
 
 For advanced usage patterns and integrations, check out the [Advanced Examples](https://nazdridoy.github.io/ngpt/examples/advanced.html).
+
+### As a CLI Framework
+
+nGPT can also be used as a framework to build your own AI-powered command-line tools. You can leverage nGPT's pre-built CLI components to quickly develop sophisticated CLI applications.
+
+```python
+from ngpt import NGPTClient, load_config
+from ngpt.cli import interactive_chat_session, prettify_markdown, ColoredHelpFormatter
+import argparse
+
+# Create a custom CLI tool with colorized help
+parser = argparse.ArgumentParser(
+    description="Specialized Code Assistant",
+    formatter_class=ColoredHelpFormatter
+)
+parser.add_argument("prompt", nargs="?", help="Code description")
+parser.add_argument("--language", "-l", default="python", help="Programming language")
+parser.add_argument("--interactive", "-i", action="store_true", help="Start interactive mode")
+args = parser.parse_args()
+
+# Initialize client
+client = NGPTClient(**load_config())
+
+# Use interactive session for conversation
+if args.interactive:
+    system_prompt = f"You are an expert {args.language} developer. Provide clear, detailed answers."
+    interactive_chat_session(client=client, preprompt=system_prompt, prettify=True)
+elif args.prompt:
+    # Generate and prettify code
+    code = client.generate_code(args.prompt, language=args.language)
+    print(prettify_markdown(f"```{args.language}\n{code}\n```"))
+```
+
+This allows you to build specialized AI tools like:
+- Code generators for specific languages or frameworks
+- Domain-specific assistants (SQL, legal, finance, etc.)
+- Documentation generators
+- Translation tools
+- And much more
+
+For detailed information about building CLI tools with nGPT, see the [CLI Framework Guide](https://nazdridoy.github.io/ngpt/usage/cli_framework.html) and explore the [CLI Component Examples](https://nazdridoy.github.io/ngpt/examples/cli_components.html).
 
 ## Configuration
 
