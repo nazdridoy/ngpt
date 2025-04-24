@@ -1,0 +1,161 @@
+import argparse
+import sys
+from .. import __version__
+from .formatters import COLORS, ColoredHelpFormatter
+from .renderers import has_markdown_renderer, warn_if_no_markdown_renderer
+
+def setup_argument_parser():
+    """Set up and return a fully configured argument parser for nGPT CLI."""
+    # Colorize description - use a shorter description to avoid line wrapping issues
+    description = f"{COLORS['cyan']}{COLORS['bold']}nGPT{COLORS['reset']} - Interact with AI language models via OpenAI-compatible APIs"
+    
+    # Minimalist, clean epilog design
+    epilog = f"\n{COLORS['yellow']}nGPT {COLORS['bold']}v{__version__}{COLORS['reset']}  •  {COLORS['green']}Docs: {COLORS['bold']}https://nazdridoy.github.io/ngpt/usage/cli_usage.html{COLORS['reset']}"
+    
+    parser = argparse.ArgumentParser(description=description, formatter_class=ColoredHelpFormatter, epilog=epilog)
+    
+    # Add custom error method with color
+    original_error = parser.error
+    def error_with_color(message):
+        parser.print_usage(sys.stderr)
+        parser.exit(2, f"{COLORS['bold']}{COLORS['yellow']}error: {COLORS['reset']}{message}\n")
+    parser.error = error_with_color
+    
+    # Custom version action with color
+    class ColoredVersionAction(argparse.Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            print(f"{COLORS['green']}{COLORS['bold']}nGPT{COLORS['reset']} version {COLORS['yellow']}{__version__}{COLORS['reset']}")
+            parser.exit()
+    
+    # Version flag
+    parser.add_argument('-v', '--version', action=ColoredVersionAction, nargs=0, help='Show version information and exit')
+    
+    # Config options
+    config_group = parser.add_argument_group('Configuration Options')
+    config_group.add_argument('--config', nargs='?', const=True, help='Path to a custom config file or, if no value provided, enter interactive configuration mode to create a new config')
+    config_group.add_argument('--config-index', type=int, default=0, help='Index of the configuration to use or edit (default: 0)')
+    config_group.add_argument('--provider', help='Provider name to identify the configuration to use')
+    config_group.add_argument('--remove', action='store_true', help='Remove the configuration at the specified index (requires --config and --config-index)')
+    config_group.add_argument('--show-config', action='store_true', help='Show the current configuration(s) and exit')
+    config_group.add_argument('--all', action='store_true', help='Show details for all configurations (requires --show-config)')
+    config_group.add_argument('--list-models', action='store_true', help='List all available models for the current configuration and exit')
+    config_group.add_argument('--list-renderers', action='store_true', help='Show available markdown renderers for use with --prettify')
+    
+    # Global options
+    global_group = parser.add_argument_group('Global Options')
+    global_group.add_argument('--api-key', help='API key for the service')
+    global_group.add_argument('--base-url', help='Base URL for the API')
+    global_group.add_argument('--model', help='Model to use')
+    global_group.add_argument('--web-search', action='store_true', 
+                      help='Enable web search capability (Note: Your API endpoint must support this feature)')
+    global_group.add_argument('-n', '--no-stream', action='store_true',
+                      help='Return the whole response without streaming')
+    global_group.add_argument('--temperature', type=float, default=0.7,
+                      help='Set temperature (controls randomness, default: 0.7)')
+    global_group.add_argument('--top_p', type=float, default=1.0,
+                      help='Set top_p (controls diversity, default: 1.0)')
+    global_group.add_argument('--max_tokens', type=int, 
+                      help='Set max response length in tokens')
+    global_group.add_argument('--log', metavar='FILE',
+                      help='Set filepath to log conversation to (For interactive modes)')
+    global_group.add_argument('--preprompt', 
+                      help='Set custom system prompt to control AI behavior')
+    global_group.add_argument('--prettify', action='store_const', const='auto',
+                      help='Render markdown responses and code with syntax highlighting and formatting')
+    global_group.add_argument('--stream-prettify', action='store_true',
+                      help='Enable streaming with markdown rendering (automatically uses Rich renderer)')
+    global_group.add_argument('--renderer', choices=['auto', 'rich', 'glow'], default='auto',
+                      help='Select which markdown renderer to use with --prettify (auto, rich, or glow)')
+    
+    # Mode flags (mutually exclusive)
+    mode_group = parser.add_argument_group('Modes (mutually exclusive)')
+    mode_exclusive_group = mode_group.add_mutually_exclusive_group()
+    mode_exclusive_group.add_argument('-i', '--interactive', action='store_true', help='Start an interactive chat session')
+    mode_exclusive_group.add_argument('-s', '--shell', action='store_true', help='Generate and execute shell commands')
+    mode_exclusive_group.add_argument('-c', '--code', action='store_true', help='Generate code')
+    mode_exclusive_group.add_argument('-t', '--text', action='store_true', help='Enter multi-line text input (submit with Ctrl+D)')
+    # Note: --show-config is handled separately and implicitly acts as a mode
+    
+    # Language option for code mode
+    parser.add_argument('--language', default="python", help='Programming language to generate code in (for code mode)')
+    
+    # Prompt argument
+    parser.add_argument('prompt', nargs='?', default=None, help='The prompt to send')
+    
+    # Add CLI configuration command
+    config_group.add_argument('--cli-config', nargs='*', metavar='COMMAND',
+                      help='Manage CLI configuration (set, get, unset, list)')
+    
+    return parser
+
+def parse_args():
+    """Parse command line arguments using the configured parser."""
+    parser = setup_argument_parser()
+    return parser.parse_args()
+
+def validate_args(args):
+    """Validate parsed arguments for correctness and compatibility."""
+    # Validate --all usage
+    if args.all and not args.show_config:
+        raise ValueError("--all can only be used with --show-config")
+    
+    # Check if --prettify is used with --stream-prettify (conflict)
+    if args.prettify and args.stream_prettify:
+        raise ValueError("--prettify and --stream-prettify cannot be used together. Choose one option.")
+    
+    # Check if --stream-prettify is used but Rich is not available
+    if args.stream_prettify and not has_markdown_renderer('rich'):
+        raise ValueError("--stream-prettify requires Rich to be installed. Install with: pip install \"ngpt[full]\" or pip install rich")
+    
+    return args
+
+def validate_markdown_renderer(args):
+    """Validate that required markdown renderers are available.
+    
+    Args:
+        args: The parsed command line arguments.
+    
+    Returns:
+        tuple: (has_renderer, args)
+            - has_renderer: Boolean indicating if a renderer is available
+            - args: Potentially modified args with prettify disabled if no renderer is available
+    """
+    has_renderer = True
+    if args.prettify:
+        has_renderer = warn_if_no_markdown_renderer(args.renderer)
+        if not has_renderer:
+            # Set a flag to disable prettify since we already warned the user
+            print(f"{COLORS['yellow']}Continuing without markdown rendering.{COLORS['reset']}")
+            args.prettify = False
+    
+    return has_renderer, args
+
+def handle_cli_config_args(args):
+    """Process CLI configuration arguments and determine command parameters.
+    
+    Args:
+        args: The parsed command line arguments.
+        
+    Returns:
+        tuple: (should_handle, action, option, value)
+            - should_handle: True if --cli-config was specified and should be handled
+            - action: The action to perform (set, get, unset, list, help)
+            - option: The option name (or None)
+            - value: The option value (or None)
+    """
+    if args.cli_config is None:
+        return (False, None, None, None)
+    
+    # Show help if no arguments or "help" argument
+    if len(args.cli_config) == 0 or (len(args.cli_config) > 0 and args.cli_config[0].lower() == "help"):
+        return (True, "help", None, None)
+    
+    action = args.cli_config[0].lower()
+    option = args.cli_config[1] if len(args.cli_config) > 1 else None
+    value = args.cli_config[2] if len(args.cli_config) > 2 else None
+    
+    if action in ("set", "get", "unset", "list", "help"):
+        return (True, action, option, value)
+    else:
+        # Unknown action, show help
+        return (True, "help", None, None) 

@@ -10,6 +10,7 @@ nGPT's CLI module has been modularized into several components that you can inco
 - **Markdown Rendering**: Beautiful formatting for markdown with syntax highlighting (`ngpt.cli.renderers`)
 - **Real-time Streaming**: Tools for handling streaming content with live updates (`ngpt.cli.ui`)
 - **CLI Configuration System**: Robust configuration management (`ngpt.cli.main`)
+- **Argument Parsing**: Sophisticated argument parsing and validation (`ngpt.cli.args`)
 - **Terminal Utilities**: Helpers for colorized output and terminal formatting (`ngpt.cli.formatters`)
 - **Mode-specific functionality**: Specialized code, shell, chat and text mode handlers (`ngpt.cli.modes`)
 
@@ -27,6 +28,40 @@ This will install nGPT with all required dependencies, including:
 - `prompt_toolkit` for interactive features
 
 ## Available Components
+
+### Argument Parsing
+
+The `args` module provides utilities for building colorful, sophisticated command-line interfaces:
+
+```python
+from ngpt.cli.args import setup_argument_parser, validate_args, validate_markdown_renderer
+
+# Create and configure the parser
+parser = setup_argument_parser()
+args = parser.parse_args()
+
+# Validate arguments for correctness and compatibility
+try:
+    args = validate_args(args)
+except ValueError as e:
+    print(f"Error: {e}")
+    sys.exit(1)
+    
+# Check if markdown renderer is available
+has_renderer, args = validate_markdown_renderer(args)
+if not has_renderer:
+    print("Warning: No markdown renderer available. Using plain text.")
+```
+
+The argument parsing module provides these key functions:
+
+- `setup_argument_parser()`: Creates a fully configured argument parser with rich formatting
+- `parse_args()`: Parses command-line arguments
+- `validate_args(args)`: Validates parsed arguments for correctness and compatibility
+- `validate_markdown_renderer(args)`: Checks if markdown rendering is available
+- `handle_cli_config_args(args)`: Processes CLI configuration commands
+
+This modular approach makes it easy to create sophisticated CLI tools with consistent behavior.
 
 ### Interactive Chat Session
 

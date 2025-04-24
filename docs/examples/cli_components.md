@@ -18,19 +18,17 @@ Here's a simple CLI tool that uses nGPT to generate and explain code:
 
 ```python
 #!/usr/bin/env python3
-import argparse
 import sys
 from ngpt import NGPTClient, load_config
-from ngpt.cli.formatters import ColoredHelpFormatter
+from ngpt.cli.args import setup_argument_parser, validate_args
 from ngpt.cli.renderers import prettify_markdown, has_markdown_renderer
 
 def main():
     # Create parser with colorized help
-    parser = argparse.ArgumentParser(
-        description="Simple code generation tool",
-        formatter_class=ColoredHelpFormatter
-    )
+    parser = setup_argument_parser()
     
+    # Customize the parser for our specific needs
+    parser.description = "Simple code generation tool"
     parser.add_argument("prompt", help="Code description")
     parser.add_argument("--language", "-l", default="python", help="Programming language")
     parser.add_argument("--explain", "-e", action="store_true", help="Include explanation")

@@ -100,6 +100,7 @@ For more examples and detailed usage, visit the [CLI Usage Guide](https://nazdri
 - 🎭 **System Prompts**: Customize model behavior with custom system prompts
 - 📃 **Conversation Logging**: Save your conversations to text files for later reference
 - 🧰 **CLI Components**: Reusable components for building custom AI-powered command-line tools
+- 🔌 **Modular Architecture**: Well-structured codebase with clean separation of concerns
 
 See the [Feature Overview](https://nazdridoy.github.io/ngpt/overview.html) for more details.
 
@@ -257,16 +258,14 @@ nGPT can also be used as a framework to build your own AI-powered command-line t
 
 ```python
 from ngpt import NGPTClient, load_config
-from ngpt.cli.main import interactive_chat_session
+from ngpt.cli.interactive import interactive_chat_session
 from ngpt.cli.renderers import prettify_markdown
-from ngpt.cli.formatters import ColoredHelpFormatter
-import argparse
+from ngpt.cli.args import setup_argument_parser
+import sys
 
 # Create a custom CLI tool with colorized help
-parser = argparse.ArgumentParser(
-    description="Specialized Code Assistant",
-    formatter_class=ColoredHelpFormatter
-)
+parser = setup_argument_parser()
+parser.description = "Specialized Code Assistant"
 parser.add_argument("prompt", nargs="?", help="Code description")
 parser.add_argument("--language", "-l", default="python", help="Programming language")
 parser.add_argument("--interactive", "-i", action="store_true", help="Start interactive mode")
@@ -283,6 +282,9 @@ elif args.prompt:
     # Generate and prettify code
     code = client.generate_code(args.prompt, language=args.language)
     print(prettify_markdown(f"```{args.language}\n{code}\n```"))
+else:
+    parser.print_help()
+    sys.exit(1)
 ```
 
 This allows you to build specialized AI tools like:
