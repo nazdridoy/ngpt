@@ -7,7 +7,7 @@ from typing import Dict, Optional, Any, List, Union, Tuple
 # CLI config options with their types and default values
 CLI_CONFIG_OPTIONS = {
     "language": {"type": "str", "default": "python", "context": ["code"]},
-    "provider": {"type": "str", "default": None, "context": ["all"]},
+    "provider": {"type": "str", "default": None, "context": ["all"], "exclusive": ["config-index"]},
     "temperature": {"type": "float", "default": 0.7, "context": ["all"]},
     "top_p": {"type": "float", "default": 1.0, "context": ["all"]},
     "max_tokens": {"type": "int", "default": None, "context": ["all"]},
@@ -17,7 +17,7 @@ CLI_CONFIG_OPTIONS = {
     "prettify": {"type": "bool", "default": False, "context": ["all"], "exclusive": ["no-stream", "stream-prettify"]},
     "stream-prettify": {"type": "bool", "default": False, "context": ["all"], "exclusive": ["no-stream", "prettify"]},
     "renderer": {"type": "str", "default": "auto", "context": ["all"]},
-    "config-index": {"type": "int", "default": 0, "context": ["all"]},
+    "config-index": {"type": "int", "default": 0, "context": ["all"], "exclusive": ["provider"]},
     "web-search": {"type": "bool", "default": False, "context": ["all"]},
 }
 
@@ -113,13 +113,19 @@ def set_cli_config_option(option: str, value: Any) -> Tuple[bool, str]:
         else:
             return False, f"Error: Unsupported option type '{option_type}'"
         
-        # Handle mutual exclusivity for boolean options
-        if option_type == "bool" and "exclusive" in CLI_CONFIG_OPTIONS[option]:
-            if parsed_value:  # If setting this option to True
-                # Set all other exclusive options to False
+        # Handle mutual exclusivity for options
+        if "exclusive" in CLI_CONFIG_OPTIONS[option]:
+            if option_type == "bool":
+                # For boolean options: only apply exclusivity when setting to True
+                if parsed_value:
+                    for excl_option in CLI_CONFIG_OPTIONS[option]["exclusive"]:
+                        config[excl_option] = False
+                # If setting to False, don't alter exclusive options
+            else:
+                # For non-boolean options: If setting this option to any value, remove exclusive options
                 for excl_option in CLI_CONFIG_OPTIONS[option]["exclusive"]:
-                    config[excl_option] = False
-            # No special handling needed if setting to False, just update the value
+                    if excl_option in config:
+                        del config[excl_option]
         
         # Set the value in the config
         config[option] = parsed_value
@@ -203,6 +209,9 @@ def apply_cli_config(args: Any, mode: str) -> Any:
     # Get command-line arguments provided by the user
     explicit_args = set(arg for arg in sys.argv[1:] if arg.startswith('--'))
 
+    # Keep track of applied exclusive options
+    applied_exclusives = set()
+
     # For each option in CLI config, check if it should be applied
     for option, value in cli_config.items():
         # Skip if not a valid option
@@ -221,6 +230,13 @@ def apply_cli_config(args: Any, mode: str) -> Any:
         # Check common variants like --option
         cli_option = f"--{option}"
         if cli_option in explicit_args:
+            # Add to applied_exclusives if this option has exclusivity constraints
+            if "exclusive" in CLI_CONFIG_OPTIONS[option]:
+                applied_exclusives.update(CLI_CONFIG_OPTIONS[option]["exclusive"])
+            continue
+        
+        # Skip if an exclusive option has already been applied
+        if option in applied_exclusives:
             continue
         
         # Check exclusivity constraints against *explicitly set* args
@@ -234,6 +250,9 @@ def apply_cli_config(args: Any, mode: str) -> Any:
                     break # Skip applying this CLI config value
             if skip:
                 continue
+            
+            # If we're applying this option, add its exclusives to the tracking set
+            applied_exclusives.update(CLI_CONFIG_OPTIONS[option]["exclusive"])
                 
         # Apply the value from CLI config
         # Ensure the attribute exists on args before setting
