@@ -21,7 +21,8 @@ Here's a simple CLI tool that uses nGPT to generate and explain code:
 import argparse
 import sys
 from ngpt import NGPTClient, load_config
-from ngpt.cli import ColoredHelpFormatter, prettify_markdown, has_markdown_renderer
+from ngpt.cli.formatters import ColoredHelpFormatter
+from ngpt.cli.renderers import prettify_markdown, has_markdown_renderer
 
 def main():
     # Create parser with colorized help
@@ -94,7 +95,9 @@ Create a custom chat application with specialized capabilities:
 import argparse
 import sys
 from ngpt import NGPTClient, load_config
-from ngpt.cli import interactive_chat_session, ColoredHelpFormatter, has_markdown_renderer
+from ngpt.cli.interactive import interactive_chat_session
+from ngpt.cli.formatters import ColoredHelpFormatter
+from ngpt.cli.renderers import has_markdown_renderer
 
 def main():
     parser = argparse.ArgumentParser(
@@ -180,7 +183,8 @@ import argparse
 import sys
 from pathlib import Path
 from ngpt import NGPTClient, load_config
-from ngpt.cli import prettify_streaming_markdown, ColoredHelpFormatter, has_markdown_renderer
+from ngpt.cli.renderers import prettify_streaming_markdown, has_markdown_renderer
+from ngpt.cli.formatters import ColoredHelpFormatter
 
 def main():
     parser = argparse.ArgumentParser(
@@ -310,7 +314,9 @@ Here's an example of using nGPT's multiline editor for collecting user input:
 import argparse
 import sys
 from ngpt import NGPTClient, load_config
-from ngpt.cli import multiline_editor, prettify_markdown, ColoredHelpFormatter
+from ngpt.cli.ui import multiline_editor
+from ngpt.cli.renderers import prettify_markdown
+from ngpt.cli.formatters import ColoredHelpFormatter
 
 def main():
     parser = argparse.ArgumentParser(
@@ -398,7 +404,8 @@ Create a CLI tool with persistent configuration:
 import argparse
 import sys
 from ngpt import NGPTClient, load_config
-from ngpt.cli import handle_cli_config, ColoredHelpFormatter
+from ngpt.cli.main import handle_cli_config
+from ngpt.cli.formatters import ColoredHelpFormatter
 
 def main():
     parser = argparse.ArgumentParser(
@@ -551,7 +558,8 @@ import sys
 import os
 from pathlib import Path
 from ngpt import NGPTClient, load_config
-from ngpt.cli import prettify_markdown, supports_ansi_colors, ColoredHelpFormatter
+from ngpt.cli.renderers import prettify_markdown, supports_ansi_colors
+from ngpt.cli.formatters import ColoredHelpFormatter
 
 def main():
     parser = argparse.ArgumentParser(
@@ -657,7 +665,7 @@ import base64
 import os
 from pathlib import Path
 from ngpt import NGPTClient, load_config
-from ngpt.cli import prettify_streaming_markdown, ColoredHelpFormatter, has_markdown_renderer
+from ngpt.cli.renderers import prettify_streaming_markdown, has_markdown_renderer
 
 def encode_image(image_path):
     """Encode image file as base64 string."""

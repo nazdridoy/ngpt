@@ -4,13 +4,14 @@ This guide explains how to leverage nGPT's CLI components to build your own comm
 
 ## Overview
 
-nGPT's `cli.py` module contains several reusable components that you can incorporate into your own CLI applications:
+nGPT's CLI module has been modularized into several components that you can incorporate into your own CLI applications:
 
-- **Interactive Chat Interface**: A fully-featured chat UI with history management
-- **Markdown Rendering**: Beautiful formatting for markdown with syntax highlighting
-- **Real-time Streaming**: Tools for handling streaming content with live updates
-- **CLI Configuration System**: Robust configuration management
-- **Terminal Utilities**: Helpers for colorized output and terminal formatting
+- **Interactive Chat Interface**: A fully-featured chat UI with history management (`ngpt.cli.interactive`)
+- **Markdown Rendering**: Beautiful formatting for markdown with syntax highlighting (`ngpt.cli.renderers`)
+- **Real-time Streaming**: Tools for handling streaming content with live updates (`ngpt.cli.ui`)
+- **CLI Configuration System**: Robust configuration management (`ngpt.cli.main`)
+- **Terminal Utilities**: Helpers for colorized output and terminal formatting (`ngpt.cli.formatters`)
+- **Mode-specific functionality**: Specialized code, shell, chat and text mode handlers (`ngpt.cli.modes`)
 
 ## Getting Started
 
@@ -33,7 +34,7 @@ The `interactive_chat_session` function provides a complete interactive chat exp
 
 ```python
 from ngpt import NGPTClient, load_config
-from ngpt.cli import interactive_chat_session
+from ngpt.cli.interactive import interactive_chat_session
 
 # Initialize client
 config = load_config()
@@ -80,7 +81,7 @@ except Exception as e:
 nGPT provides utilities for rendering markdown with syntax highlighting:
 
 ```python
-from ngpt.cli import prettify_markdown, has_markdown_renderer
+from ngpt.cli.renderers import prettify_markdown, has_markdown_renderer
 
 # Check if renderer is available
 if has_markdown_renderer(renderer='rich'):
@@ -99,7 +100,7 @@ Available renderers include:
 You can check available renderers:
 
 ```python
-from ngpt.cli import show_available_renderers
+from ngpt.cli.renderers import show_available_renderers
 show_available_renderers()
 ```
 
@@ -126,7 +127,7 @@ else:
 For real-time rendering of streaming content, the `prettify_streaming_markdown` function returns an object with an `update_content` method:
 
 ```python
-from ngpt.cli import prettify_streaming_markdown
+from ngpt.cli.renderers import prettify_streaming_markdown
 from ngpt import NGPTClient, load_config
 
 client = NGPTClient(**load_config())
@@ -153,7 +154,7 @@ This creates a live-updating display that refreshes as new content arrives. The 
 nGPT provides tools for managing CLI configurations:
 
 ```python
-from ngpt.cli import handle_cli_config, show_cli_config_help
+from ngpt.cli.main import handle_cli_config, show_cli_config_help
 
 # Show help
 show_cli_config_help()
@@ -187,13 +188,13 @@ except Exception as e:
 Colorize your CLI output with terminal utilities:
 
 ```python
-from ngpt.cli import ColoredHelpFormatter, supports_ansi_colors
+from ngpt.cli.formatters import ColoredHelpFormatter, supports_ansi_colors, COLORS
 import argparse
 
 # Check if terminal supports colors
 if supports_ansi_colors():
     # Use colored output
-    print("\033[1;32mSuccess!\033[0m")
+    print(f"{COLORS['green']}Success!{COLORS['reset']}")
 else:
     # Fallback to plain text
     print("Success!")
@@ -220,13 +221,9 @@ import argparse
 import sys
 from pathlib import Path
 from ngpt import NGPTClient, load_config
-from ngpt.cli import (
-    ColoredHelpFormatter,
-    interactive_chat_session,
-    prettify_markdown,
-    prettify_streaming_markdown,
-    has_markdown_renderer
-)
+from ngpt.cli.formatters import ColoredHelpFormatter
+from ngpt.cli.interactive import interactive_chat_session
+from ngpt.cli.renderers import prettify_markdown, prettify_streaming_markdown, has_markdown_renderer
 
 def main():
     # Set up argument parser with colorized help
@@ -352,7 +349,7 @@ nGPT supports multiple markdown renderers:
 Using the Rich library for terminal output:
 
 ```python
-from ngpt.cli import prettify_markdown
+from ngpt.cli.renderers import prettify_markdown
 
 # Rich renderer with custom styling
 formatted = prettify_markdown(markdown_text, renderer='rich')
@@ -364,7 +361,7 @@ print(formatted)
 If you have the Glow CLI tool installed:
 
 ```python
-from ngpt.cli import prettify_markdown, has_glow_installed
+from ngpt.cli.renderers import prettify_markdown, has_glow_installed
 
 if has_glow_installed():
     formatted = prettify_markdown(markdown_text, renderer='glow')
@@ -385,7 +382,7 @@ print(formatted)
 nGPT provides utilities to detect terminal capabilities:
 
 ```python
-from ngpt.cli import supports_ansi_colors
+from ngpt.cli.formatters import supports_ansi_colors
 
 if supports_ansi_colors():
     # Use colored output
@@ -422,17 +419,12 @@ This example creates a specialized web search tool using nGPT components:
 import argparse
 import sys
 from ngpt import NGPTClient, load_config
-from ngpt.cli import (
-    ColoredHelpFormatter,
-    prettify_streaming_markdown,
-    has_markdown_renderer
-)
+from ngpt.cli.renderers import prettify_streaming_markdown, has_markdown_renderer
 
 def main():
     # Set up colorized argument parser
     parser = argparse.ArgumentParser(
-        description="AI-powered web search tool",
-        formatter_class=ColoredHelpFormatter
+        description="AI-powered web search tool"
     )
     
     parser.add_argument("query", nargs="?", help="Search query")
@@ -514,7 +506,7 @@ logging.basicConfig(
 )
 
 # Use nGPT components with logging available
-from ngpt.cli import prettify_markdown
+from ngpt.cli.renderers import prettify_markdown
 try:
     result = prettify_markdown(text)
 except Exception as e:

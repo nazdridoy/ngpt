@@ -257,7 +257,9 @@ nGPT can also be used as a framework to build your own AI-powered command-line t
 
 ```python
 from ngpt import NGPTClient, load_config
-from ngpt.cli import interactive_chat_session, prettify_markdown, ColoredHelpFormatter
+from ngpt.cli.main import interactive_chat_session
+from ngpt.cli.renderers import prettify_markdown
+from ngpt.cli.formatters import ColoredHelpFormatter
 import argparse
 
 # Create a custom CLI tool with colorized help
