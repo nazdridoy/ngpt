@@ -124,6 +124,7 @@ You can also set configuration options directly via command-line arguments:
 - `-c, --code`: Generate code.
   - `--language <lang>`: Specify the programming language for code generation (e.g., `python`, `javascript`, default: `python`).
 - `-t, --text`: Use a multiline editor for input.
+- `--stdin`: Read from stdin and use content in your prompt with {} placeholder.
 - `--no-stream`: Disable streaming output.
 - `--prettify`: Enable formatted markdown/code output (disables streaming).
   - `--renderer <name>`: Choose the renderer (`auto`, `rich`, `glow`).
@@ -162,6 +163,9 @@ ngpt --interactive --log conversation.log
 
 # Create a temporary log file automatically
 ngpt --log "Tell me about quantum computing"
+
+# Process text from stdin using the {} placeholder
+echo "What is this text about?" | ngpt --stdin "Analyze the following text: {}"
 ```
 
 ## Environment Variables

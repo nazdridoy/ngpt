@@ -103,6 +103,7 @@ For more examples and detailed usage, visit the [CLI Usage Guide](https://nazdri
 - 💬 **Interactive Chat**: Continuous conversation with memory in modern UI
 - 📊 **Streaming Responses**: Real-time output for better user experience
 - 🔍 **Web Search**: Integrated with compatible API endpoints
+- 📥 **Stdin Processing**: Process piped content by using `{}` placeholder in prompts
 - 🎨 **Markdown Rendering**: Beautiful formatting of markdown and code with syntax highlighting
 - ⚡ **Real-time Markdown**: Stream responses with live updating syntax highlighting and formatting
 - ⚙️ **Multiple Configurations**: Cross-platform config system supporting different profiles
@@ -314,38 +315,51 @@ For detailed information about building CLI tools with nGPT, see the [CLI Framew
 
 ### Command Line Options
 
-You can configure the client using the following options:
+You can configure nGPT using the following options:
+
+#### Mode Options (Mutually Exclusive)
 
 | Option | Description |
 |--------|-------------|
-| `--api-key` | API key for the service |
-| `--base-url` | Base URL for the API |
-| `--model` | Model to use |
-| `--list-models` | List all available models for the selected configuration (can be combined with --config-index) |
-| `--web-search` | Enable web search capability |
+| `-i, --interactive` | Start an interactive chat session with conversation memory and special commands |
+| `-s, --shell` | Generate and execute shell commands appropriate for your operating system |
+| `-c, --code` | Generate clean code without markdown formatting or explanations |
+| `-t, --text` | Open interactive multiline editor for complex prompts with syntax highlighting |
+| `--stdin` | Read from stdin and use content with prompt. Use {} in prompt as placeholder for stdin content |
+
+#### Global Options
+
+| Option | Description |
+|--------|-------------|
+| `--api-key KEY` | API key for the service |
+| `--base-url URL` | Base URL for the API |
+| `--model MODEL` | Model to use |
+| `--web-search` | Enable web search capability (if your API endpoint supports it) |
+| `--temperature VALUE` | Set temperature (controls randomness, default: 0.7) |
+| `--top_p VALUE` | Set top_p (controls diversity, default: 1.0) |
+| `--max_tokens NUMBER` | Set maximum response length in tokens |
+| `--preprompt TEXT` | Set custom system prompt to control AI behavior |
+| `--language LANG` | Programming language to generate code in (for code mode, default: python) |
 | `--no-stream` | Return the whole response without streaming |
-| `--temperature` | Set temperature (controls randomness, default: 0.7) |
-| `--top_p` | Set top_p (controls diversity, default: 1.0) |
-| `--max_tokens` | Set maximum response length in tokens |
-| `--preprompt` | Set custom system prompt to control AI behavior |
-| `--log` | Enable logging: use `--log` to create a temporary log file, or `--log PATH` for a specific location |
-| `--prettify` | Render markdown responses and code with syntax highlighting |
-| `--stream-prettify` | Enable real-time markdown rendering with syntax highlighting while streaming |
-| `--renderer` | Select which markdown renderer to use with --prettify (auto, rich, or glow) |
-| `--list-renderers` | Show available markdown renderers for use with --prettify |
-| `--config` | Path to a custom configuration file or, when used without a value, enters interactive configuration mode |
-| `--config-index` | Index of the configuration to use (default: 0) |
-| `--provider` | Provider name to identify the configuration to use (alternative to --config-index) |
+| `--prettify` | Render markdown responses and code with syntax highlighting and formatting |
+| `--stream-prettify` | Enable streaming with markdown rendering (automatically uses Rich renderer) |
+| `--renderer {auto,rich,glow}` | Select which markdown renderer to use with --prettify (default: auto) |
+| `--log [FILE]` | Set filepath to log conversation to, or create a temporary log file if no path provided |
+
+#### Configuration Options
+
+| Option | Description |
+|--------|-------------|
+| `--config [PATH]` | Path to a custom config file or, if no value provided, enter interactive configuration mode |
+| `--config-index INDEX` | Index of the configuration to use or edit (default: 0) |
+| `--provider NAME` | Provider name to identify the configuration to use |
 | `--remove` | Remove the configuration at the specified index (requires --config and --config-index or --provider) |
-| `--show-config` | Show configuration details and exit |
-| `--all` | Used with `--show-config` to display all configurations |
-| `-i, --interactive` | Start an interactive chat session with stylish UI, conversation history, and special commands |
-| `-s, --shell` | Generate and execute shell commands |
-| `-c, --code` | Generate clean code output |
-| `-t, --text` | Open interactive multiline editor for complex prompts |
-| `--language` | Programming language to generate code in (for code mode, default: python) |
-| `--cli-config` | Manage CLI configuration settings (set, get, unset, list, help) |
-| `-v, --version` | Show version information |
+| `--show-config` | Show the current configuration(s) and exit |
+| `--all` | Show details for all configurations (requires --show-config) |
+| `--list-models` | List all available models for the current configuration and exit |
+| `--list-renderers` | Show available markdown renderers for use with --prettify |
+| `--cli-config [COMMAND]` | Manage CLI configuration (set, get, unset, list, help) |
+| `-v, --version` | Show version information and exit |
 
 For a complete reference of all available options, see the [CLI Usage Guide](https://nazdridoy.github.io/ngpt/usage/cli_usage.html).
 
