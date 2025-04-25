@@ -28,28 +28,47 @@ def setup_argument_parser():
             parser.exit()
     
     # Version flag
-    parser.add_argument('-v', '--version', action=ColoredVersionAction, nargs=0, help='Show version information and exit')
+    parser.add_argument('-v', '--version', action=ColoredVersionAction, nargs=0, 
+                        help='Show version information and exit')
+    # Language option for code mode
+    parser.add_argument('--language', default="python", 
+                        help='Programming language to generate code in (for code mode)')
     
+    # Prompt argument
+    parser.add_argument('prompt', nargs='?', default=None, 
+                        help='The prompt to send')
+
     # Config options
     config_group = parser.add_argument_group('Configuration Options')
-    config_group.add_argument('--config', nargs='?', const=True, help='Path to a custom config file or, if no value provided, enter interactive configuration mode to create a new config')
-    config_group.add_argument('--config-index', type=int, default=0, help='Index of the configuration to use or edit (default: 0)')
-    config_group.add_argument('--provider', help='Provider name to identify the configuration to use')
-    config_group.add_argument('--remove', action='store_true', help='Remove the configuration at the specified index (requires --config and --config-index)')
-    config_group.add_argument('--show-config', action='store_true', help='Show the current configuration(s) and exit')
-    config_group.add_argument('--all', action='store_true', help='Show details for all configurations (requires --show-config)')
-    config_group.add_argument('--list-models', action='store_true', help='List all available models for the current configuration and exit')
-    config_group.add_argument('--list-renderers', action='store_true', help='Show available markdown renderers for use with --prettify')
-    
+    config_group.add_argument('--config', nargs='?', const=True, 
+                              help='Path to a custom config file or, if no value provided, enter interactive configuration mode to create a new config')
+    config_group.add_argument('--config-index', type=int, default=0, 
+                              help='Index of the configuration to use or edit (default: 0)')
+    config_group.add_argument('--provider', 
+                              help='Provider name to identify the configuration to use')
+    config_group.add_argument('--remove', action='store_true', 
+                              help='Remove the configuration at the specified index (requires --config and --config-index or --provider)')
+    config_group.add_argument('--show-config', action='store_true', 
+                              help='Show the current configuration(s) and exit')
+    config_group.add_argument('--all', action='store_true', 
+                              help='Show details for all configurations (requires --show-config)')
+    config_group.add_argument('--list-models', action='store_true', 
+                              help='List all available models for the current configuration and exit')
+    config_group.add_argument('--list-renderers', action='store_true', 
+                              help='Show available markdown renderers for use with --prettify')
+    config_group.add_argument('--cli-config', nargs='*', metavar='COMMAND', 
+                              help='Manage CLI configuration (set, get, unset, list, help)')
+
     # Global options
     global_group = parser.add_argument_group('Global Options')
-    global_group.add_argument('--api-key', help='API key for the service')
-    global_group.add_argument('--base-url', help='Base URL for the API')
-    global_group.add_argument('--model', help='Model to use')
+    global_group.add_argument('--api-key', 
+                              help='API key for the service')
+    global_group.add_argument('--base-url', 
+                              help='Base URL for the API')
+    global_group.add_argument('--model', 
+                              help='Model to use')
     global_group.add_argument('--web-search', action='store_true', 
                       help='Enable web search capability (Note: Your API endpoint must support this feature)')
-    global_group.add_argument('--no-stream', action='store_true',
-                      help='Return the whole response without streaming')
     global_group.add_argument('--temperature', type=float, default=0.7,
                       help='Set temperature (controls randomness, default: 0.7)')
     global_group.add_argument('--top_p', type=float, default=1.0,
@@ -60,6 +79,8 @@ def setup_argument_parser():
                       help='Set filepath to log conversation to, or create a temporary log file if no path provided')
     global_group.add_argument('--preprompt', 
                       help='Set custom system prompt to control AI behavior')
+    global_group.add_argument('--no-stream', action='store_true',
+                      help='Return the whole response without streaming')
     global_group.add_argument('--prettify', action='store_const', const='auto',
                       help='Render markdown responses and code with syntax highlighting and formatting')
     global_group.add_argument('--stream-prettify', action='store_true',
@@ -70,21 +91,15 @@ def setup_argument_parser():
     # Mode flags (mutually exclusive)
     mode_group = parser.add_argument_group('Modes (mutually exclusive)')
     mode_exclusive_group = mode_group.add_mutually_exclusive_group()
-    mode_exclusive_group.add_argument('-i', '--interactive', action='store_true', help='Start an interactive chat session')
-    mode_exclusive_group.add_argument('-s', '--shell', action='store_true', help='Generate and execute shell commands')
-    mode_exclusive_group.add_argument('-c', '--code', action='store_true', help='Generate code')
-    mode_exclusive_group.add_argument('-t', '--text', action='store_true', help='Enter multi-line text input (submit with Ctrl+D)')
+    mode_exclusive_group.add_argument('-i', '--interactive', action='store_true', 
+                                      help='Start an interactive chat session')
+    mode_exclusive_group.add_argument('-s', '--shell', action='store_true', 
+                                      help='Generate and execute shell commands')
+    mode_exclusive_group.add_argument('-c', '--code', action='store_true', 
+                                      help='Generate code')
+    mode_exclusive_group.add_argument('-t', '--text', action='store_true', 
+                                      help='Enter multi-line text input (submit with Ctrl+D)')
     # Note: --show-config is handled separately and implicitly acts as a mode
-    
-    # Language option for code mode
-    parser.add_argument('--language', default="python", help='Programming language to generate code in (for code mode)')
-    
-    # Prompt argument
-    parser.add_argument('prompt', nargs='?', default=None, help='The prompt to send')
-    
-    # Add CLI configuration command
-    config_group.add_argument('--cli-config', nargs='*', metavar='COMMAND',
-                      help='Manage CLI configuration (set, get, unset, list)')
     
     return parser
 
