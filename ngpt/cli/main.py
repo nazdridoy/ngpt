@@ -330,10 +330,20 @@ def main():
             
             return
         
-        # Regular config addition/editing (existing code)
-        # If --config-index was not explicitly specified, create a new entry by passing None
-        # This will cause add_config_entry to create a new entry at the end of the list
-        # Otherwise, edit the existing config at the specified index
+        # Check if --config-index was explicitly specified in command line args
+        config_index_explicit = '--config-index' in sys.argv
+        provider_explicit = '--provider' in sys.argv
+        
+        # When only --config is used (without explicit --config-index or --provider),
+        # always create a new configuration regardless of CLI config settings
+        if not config_index_explicit and not provider_explicit:
+            # Always create a new config when just --config is used
+            configs = load_configs(str(config_path))
+            print(f"Creating new configuration at index {len(configs)}")
+            add_config_entry(config_path, None)
+            return
+        
+        # If explicitly specified indexes or provider, continue with editing behavior
         config_index = None
         
         # Determine if we're editing an existing config or creating a new one
@@ -361,7 +371,7 @@ def main():
                 config_index = matching_configs[0]
                 
             print(f"Editing existing configuration at index {config_index}")
-        elif effective_config_index != 0 or '--config-index' in sys.argv:
+        elif effective_config_index != 0 or config_index_explicit:
             # Check if the index is valid
             configs = load_configs(str(config_path))
             if effective_config_index >= 0 and effective_config_index < len(configs):
