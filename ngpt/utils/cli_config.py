@@ -212,7 +212,13 @@ def apply_cli_config(args: Any, mode: str) -> Any:
     # Keep track of applied exclusive options
     applied_exclusives = set()
 
-    # For each option in CLI config, check if it should be applied
+    # First pass: Check explicitly set args and track their exclusive options
+    for option in CLI_CONFIG_OPTIONS:
+        cli_option = f"--{option}"
+        if cli_option in explicit_args and "exclusive" in CLI_CONFIG_OPTIONS[option]:
+            applied_exclusives.update(CLI_CONFIG_OPTIONS[option]["exclusive"])
+
+    # Second pass: Apply CLI config options
     for option, value in cli_config.items():
         # Skip if not a valid option
         if option not in CLI_CONFIG_OPTIONS:
@@ -227,12 +233,8 @@ def apply_cli_config(args: Any, mode: str) -> Any:
         arg_name = option.replace("-", "_")
         
         # Skip if explicitly set via command line
-        # Check common variants like --option
         cli_option = f"--{option}"
         if cli_option in explicit_args:
-            # Add to applied_exclusives if this option has exclusivity constraints
-            if "exclusive" in CLI_CONFIG_OPTIONS[option]:
-                applied_exclusives.update(CLI_CONFIG_OPTIONS[option]["exclusive"])
             continue
         
         # Skip if an exclusive option has already been applied
@@ -240,7 +242,6 @@ def apply_cli_config(args: Any, mode: str) -> Any:
             continue
         
         # Check exclusivity constraints against *explicitly set* args
-        # Don't apply a CLI config option if an exclusive option was explicitly set
         if "exclusive" in CLI_CONFIG_OPTIONS[option]:
             skip = False
             for excl_option in CLI_CONFIG_OPTIONS[option]["exclusive"]:
@@ -250,14 +251,23 @@ def apply_cli_config(args: Any, mode: str) -> Any:
                     break # Skip applying this CLI config value
             if skip:
                 continue
-            
-            # If we're applying this option, add its exclusives to the tracking set
-            applied_exclusives.update(CLI_CONFIG_OPTIONS[option]["exclusive"])
-                
+        
         # Apply the value from CLI config
         # Ensure the attribute exists on args before setting
         if hasattr(args, arg_name):
             setattr(args, arg_name, value)
+            
+            # For boolean options that are True, explicitly disable their exclusive options
+            option_type = CLI_CONFIG_OPTIONS[option]["type"]
+            if option_type == "bool" and value is True and "exclusive" in CLI_CONFIG_OPTIONS[option]:
+                for excl_option in CLI_CONFIG_OPTIONS[option]["exclusive"]:
+                    # Convert to argparse naming and set to False if the attribute exists
+                    excl_arg_name = excl_option.replace("-", "_")
+                    if hasattr(args, excl_arg_name):
+                        setattr(args, excl_arg_name, False)
+                        
+                # Add exclusives to tracking set to prevent them from being applied
+                applied_exclusives.update(CLI_CONFIG_OPTIONS[option]["exclusive"])
     
     return args
 
