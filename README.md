@@ -196,7 +196,8 @@ For more CLI examples and detailed usage information, see the [CLI Usage Guide](
 ### As a Library
 
 ```python
-from ngpt import NGPTClient, load_config
+from ngpt import NGPTClient
+from ngpt.utils.config import load_config
 
 # Load the first configuration (index 0) from config file
 config = load_config(config_index=0)
@@ -260,7 +261,8 @@ For advanced usage patterns and integrations, check out the [Advanced Examples](
 nGPT can also be used as a framework to build your own AI-powered command-line tools. You can leverage nGPT's pre-built CLI components to quickly develop sophisticated CLI applications.
 
 ```python
-from ngpt import NGPTClient, load_config
+from ngpt import NGPTClient
+from ngpt.utils.config import load_config
 from ngpt.cli.interactive import interactive_chat_session
 from ngpt.cli.renderers import prettify_markdown
 from ngpt.cli.args import setup_argument_parser

@@ -61,6 +61,7 @@ response = client.chat(
     messages: Optional[List[Dict[str, str]]] = None,
     web_search: bool = False,
     markdown_format: bool = False,
+    stream_callback: Optional[callable] = None,
     **kwargs
 ) -> str
 ```
@@ -77,6 +78,7 @@ response = client.chat(
 | `messages` | `Optional[List[Dict[str, str]]]` | `None` | Optional list of message objects to override default behavior |
 | `web_search` | `bool` | `False` | Whether to enable web search capability |
 | `markdown_format` | `bool` | `False` | If True, allows markdown formatting in responses |
+| `stream_callback` | `Optional[callable]` | `None` | Optional callback function for handling streaming updates |
 | `**kwargs` | `Any` | `{}` | Additional arguments to pass to the API |
 
 ### Returns
@@ -120,6 +122,17 @@ print(response)
 # Enable markdown formatting for rich text responses
 response = client.chat("Create a table comparing programming languages", markdown_format=True)
 print(response)  # Response will contain markdown formatting like tables, code blocks, etc.
+
+# Using a callback function for streaming updates
+def process_chunk(accumulated_text):
+    # Process the accumulated text so far
+    print(f"Received {len(accumulated_text)} characters so far")
+    
+response = client.chat(
+    "Explain quantum computing",
+    stream=True,
+    stream_callback=process_chunk
+)
 ```
 
 ## Generate Shell Command
@@ -129,7 +142,10 @@ Generates a shell command based on the prompt, optimized for the user's operatin
 ```python
 command = client.generate_shell_command(
     prompt: str,
-    web_search: bool = False
+    web_search: bool = False,
+    temperature: float = 0.4,
+    top_p: float = 0.95,
+    max_tokens: Optional[int] = None
 ) -> str
 ```
 
@@ -139,6 +155,9 @@ command = client.generate_shell_command(
 |-----------|------|---------|-------------|
 | `prompt` | `str` | Required | Description of the command to generate |
 | `web_search` | `bool` | `False` | Whether to enable web search capability |
+| `temperature` | `float` | `0.4` | Controls randomness in the response |
+| `top_p` | `float` | `0.95` | Controls diversity via nucleus sampling |
+| `max_tokens` | `Optional[int]` | `None` | Maximum number of tokens to generate |
 
 ### Returns
 
@@ -175,7 +194,9 @@ code = client.generate_code(
     temperature: float = 0.4,
     top_p: float = 0.95,
     max_tokens: Optional[int] = None,
-    markdown_format: bool = False
+    markdown_format: bool = False,
+    stream: bool = False,
+    stream_callback: Optional[callable] = None
 ) -> str
 ```
 
@@ -190,6 +211,8 @@ code = client.generate_code(
 | `top_p` | `float` | `0.95` | Controls diversity via nucleus sampling |
 | `max_tokens` | `Optional[int]` | `None` | Maximum number of tokens to generate |
 | `markdown_format` | `bool` | `False` | If True, returns code with markdown formatting including syntax highlighting |
+| `stream` | `bool` | `False` | Whether to stream the response in chunks |
+| `stream_callback` | `Optional[callable]` | `None` | Optional callback function for handling streaming updates |
 
 ### Returns
 
@@ -223,6 +246,18 @@ react_code = client.generate_code(
     "create a React component that fetches and displays data from an API",
     language="jsx",
     web_search=True
+)
+
+# Generate code with streaming for real-time updates
+def update_ui(code_so_far):
+    # Update a UI with the code generated so far
+    print(f"Generated {len(code_so_far)} characters...")
+
+client.generate_code(
+    "implement a quicksort algorithm",
+    language="python",
+    stream=True,
+    stream_callback=update_ui
 )
 ```
 
@@ -285,4 +320,10 @@ except requests.exceptions.ConnectionError:
     print("Connection error. Check your internet and base URL.")
 except Exception as e:
     print(f"An unexpected error occurred: {e}")
-``` 
+```
+
+## See Also
+
+- [Configuration](config.md) - Documentation for managing API configurations
+- [CLI Components](cli.md) - Documentation for using CLI components with the client
+- [CLI Configuration](cli_config.md) - Documentation for CLI configuration utilities 

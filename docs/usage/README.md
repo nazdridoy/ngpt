@@ -7,6 +7,7 @@ This section contains comprehensive documentation on how to use nGPT, both as a 
 - [CLI Usage](cli_usage.md) - Learn how to use nGPT from the command line
 - [Library Usage](library_usage.md) - Learn how to integrate nGPT into your Python projects
 - [CLI Framework](cli_framework.md) - Learn how to build your own CLI tools with nGPT components
+- [CLI Configuration](cli_config.md) - Learn how to configure default CLI options
 
 ## Overview
 
@@ -49,7 +50,7 @@ nGPT can be used as a framework to build your own command-line tools:
 - Add persistent configuration management
 - And more...
 
-See the [CLI Framework](cli_framework.md) guide for detailed documentation and the [CLI Component Examples](../examples/cli_components.md) for practical examples.
+See the [CLI Framework](cli_framework.md) guide for detailed documentation.
 
 ## Quick Reference
 
@@ -97,7 +98,8 @@ print(command)
 
 ```python
 from ngpt import NGPTClient, load_config
-from ngpt.cli import interactive_chat_session, ColoredHelpFormatter
+from ngpt.cli.interactive import interactive_chat_session
+from ngpt.cli.formatters import ColoredHelpFormatter
 import argparse
 
 # Create parser with colorized help

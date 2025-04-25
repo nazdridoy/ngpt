@@ -88,6 +88,42 @@ ngpt "Tell me about quantum computing"
 
 This works because NGPT checks the CLI configuration for `provider` (or `config-index`) before loading the main configuration profile, and then uses that value when selecting which profile to load.
 
+## Programmatic Access to CLI Configuration
+
+You can also access and modify the CLI configuration programmatically in your applications:
+
+```python
+from ngpt.utils.cli_config import (
+    load_cli_config,
+    set_cli_config_option,
+    get_cli_config_option,
+    unset_cli_config_option,
+    apply_cli_config
+)
+
+# Load the CLI configuration
+cli_config = load_cli_config()
+print(f"Current CLI config: {cli_config}")
+
+# Set a configuration option
+success, message = set_cli_config_option('temperature', '0.8')
+print(message)  # "Option 'temperature' set to '0.8'"
+
+# Get a configuration option
+success, value = get_cli_config_option('temperature')
+print(f"Temperature value: {value}")  # "Temperature value: 0.8"
+
+# Unset a configuration option
+success, message = unset_cli_config_option('temperature')
+print(message)  # "Option 'temperature' removed from configuration"
+
+# Apply CLI configuration to arguments
+args = parser.parse_args()
+args = apply_cli_config(args)
+```
+
+For more information about the CLI configuration API, see the [CLI Framework Documentation](./cli_framework.md).
+
 ## Examples
 
 ### Setting Default Options

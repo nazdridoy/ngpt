@@ -174,6 +174,38 @@ ngpt -i
 ngpt -t
 ```
 
+## Using CLI Config
+
+nGPT now supports persistent CLI configuration:
+
+```bash
+# Set default configuration options
+ngpt --cli-config set temperature 0.7
+ngpt --cli-config set language typescript
+
+# Use the defaults (no need to specify options)
+ngpt -c "function to sort an array"  # Will use typescript
+```
+
+## Using Different Modes
+
+nGPT now supports different modes which can also be utilized in your code:
+
+```python
+from ngpt import NGPTClient, load_config
+from ngpt.cli.modes.chat import chat_mode
+from ngpt.cli.modes.code import code_mode
+
+config = load_config()
+client = NGPTClient(**config)
+
+# Use chat mode
+chat_mode(client, "Tell me about quantum computing", prettify=True)
+
+# Use code mode
+code_mode(client, "function to calculate factorial", language="python")
+```
+
 ## Using Web Search
 
 If your API provider supports web search capability:

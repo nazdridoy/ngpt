@@ -770,4 +770,4 @@ If the `ngpt` command is not found after installation:
 5. **Improve efficiency**:
    - Use `-n` (no streaming) for faster responses in scripts
    - Use interactive mode when having a conversation
-   - Exit interactive sessions when not in use to save API costs 
+   - Exit interactive sessions when not in use to save API costs

@@ -355,9 +355,16 @@ Create a custom script that uses nGPT with argparse for a better CLI experience:
 import argparse
 import sys
 from ngpt import NGPTClient, load_config
+from ngpt.cli.formatters import COLORS, ColoredHelpFormatter
+from ngpt.cli.renderers import prettify_streaming_markdown
+from ngpt.cli.modes.code import code_mode
+from ngpt.cli.modes.shell import shell_mode
 
 def main():
-    parser = argparse.ArgumentParser(description="Enhanced nGPT Interface")
+    parser = argparse.ArgumentParser(
+        description="Enhanced nGPT Interface",
+        formatter_class=ColoredHelpFormatter
+    )
     parser.add_argument("prompt", nargs="?", help="The prompt to send")
     parser.add_argument("-f", "--file", help="Read prompt from file")
     parser.add_argument("-o", "--output", help="Save response to file")
@@ -367,6 +374,7 @@ def main():
     parser.add_argument("-s", "--shell", action="store_true", help="Generate shell command")
     parser.add_argument("--code", action="store_true", help="Generate code")
     parser.add_argument("--language", default="python", help="Language for code generation")
+    parser.add_argument("--prettify", action="store_true", help="Enable markdown formatting")
     
     args = parser.parse_args()
     
@@ -376,7 +384,7 @@ def main():
             with open(args.file, 'r') as f:
                 prompt = f.read()
         except Exception as e:
-            print(f"Error reading file: {e}", file=sys.stderr)
+            print(f"{COLORS['yellow']}Error reading file: {e}{COLORS['reset']}", file=sys.stderr)
             return 1
     elif args.prompt:
         prompt = args.prompt
@@ -394,33 +402,51 @@ def main():
             
         client = NGPTClient(**config)
     except Exception as e:
-        print(f"Error initializing client: {e}", file=sys.stderr)
+        print(f"{COLORS['yellow']}Error initializing client: {e}{COLORS['reset']}", file=sys.stderr)
         return 1
     
     # Process based on mode
     try:
         if args.shell:
-            response = client.generate_shell_command(prompt)
+            # Use shell mode
+            shell_mode(client, prompt)
         elif args.code:
-            response = client.generate_code(prompt, language=args.language)
+            # Use code mode
+            code_mode(client, prompt, language=args.language)
         else:
-            response = client.chat(prompt, temperature=args.temperature, stream=not args.output)
-        
-        # Output handling
-        if args.output:
-            with open(args.output, 'w') as f:
-                f.write(response)
-            print(f"Response saved to {args.output}")
-        else:
-            if not args.shell and not args.code and args.output is None:
-                # Already printed through streaming
-                pass
+            # Standard chat mode
+            if args.prettify:
+                # Set up streaming markdown renderer
+                streamer = prettify_streaming_markdown(renderer='rich')
+                response = client.chat(
+                    prompt, 
+                    temperature=args.temperature,
+                    stream=True,
+                    stream_callback=streamer.update_content
+                )
+                if args.output:
+                    with open(args.output, 'w') as f:
+                        f.write(response)
+                    print(f"{COLORS['green']}Response saved to {args.output}{COLORS['reset']}")
             else:
-                print(response)
+                # Simple mode
+                if args.output:
+                    # No streaming if saving to file
+                    response = client.chat(prompt, temperature=args.temperature, stream=False)
+                    with open(args.output, 'w') as f:
+                        f.write(response)
+                    print(f"{COLORS['green']}Response saved to {args.output}{COLORS['reset']}")
+                else:
+                    # Stream to console
+                    full_response = ""
+                    for chunk in client.chat(prompt, temperature=args.temperature, stream=True):
+                        print(chunk, end="", flush=True)
+                        full_response += chunk
+                    print()  # Final newline
                 
         return 0
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        print(f"{COLORS['yellow']}Error: {e}{COLORS['reset']}", file=sys.stderr)
         return 1
 
 if __name__ == "__main__":
@@ -444,6 +470,9 @@ chmod +x enhanced_ngpt.py
 
 # Use a specific model and configuration
 ./enhanced_ngpt.py -c 1 -m gpt-4o "Explain neural networks"
+
+# Use with markdown formatting
+./enhanced_ngpt.py -p "Explain quantum computing with code examples"
 ```
 
 ## Next Steps

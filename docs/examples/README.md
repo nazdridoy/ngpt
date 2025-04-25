@@ -80,13 +80,22 @@ command = client.generate_shell_command("find all files modified in the last wee
 print(command)
 
 # CLI component reuse example
-from ngpt.cli import prettify_markdown, ColoredHelpFormatter
+from ngpt.cli.formatters import ColoredHelpFormatter
+from ngpt.cli.renderers import prettify_markdown
 import argparse
 
 parser = argparse.ArgumentParser(
     description="My custom AI tool",
     formatter_class=ColoredHelpFormatter
 )
+
+# Using CLI modes example
+from ngpt.cli.modes.chat import chat_mode
+from ngpt.cli.modes.code import code_mode
+from ngpt.cli.modes.shell import shell_mode
+
+# Interactive session example
+from ngpt.cli.interactive import interactive_chat_session
 ```
 
 Explore the individual example pages for more detailed code samples and explanations. 

@@ -203,6 +203,36 @@ config = load_config(config_index=0)
 print(f"Using provider: {config.get('provider', 'Unknown')}")
 ```
 
+### CLI Configuration Management
+
+nGPT also provides a CLI configuration system that you can use programmatically:
+
+```python
+from ngpt.utils.cli_config import (
+    load_cli_config,
+    set_cli_config_option,
+    get_cli_config_option,
+    unset_cli_config_option,
+    apply_cli_config
+)
+
+# Load the CLI configuration
+cli_config = load_cli_config()
+print(f"CLI Config: {cli_config}")
+
+# Set a configuration option
+success, message = set_cli_config_option('temperature', '0.8')
+print(message)
+
+# Get a configuration option
+success, value = get_cli_config_option('temperature')
+print(f"Temperature: {value}")
+
+# Unset a configuration option
+success, message = unset_cli_config_option('temperature')
+print(message)
+```
+
 ### Using Multiple API Endpoints
 
 Switch between different API providers:
@@ -226,7 +256,7 @@ ollama_response = ollama_client.chat("Hello from Ollama")
 
 ## CLI Components Reuse
 
-nGPT's CLI utilities can be reused in your own CLI applications. Here's how to leverage the components in `cli.py`:
+nGPT's CLI utilities can be reused in your own CLI applications. The CLI components have been restructured and are now organized in the `ngpt.cli` package:
 
 ### Interactive Chat Sessions
 
@@ -234,7 +264,7 @@ You can integrate nGPT's interactive chat functionality into your own CLI applic
 
 ```python
 from ngpt import NGPTClient, load_config
-from ngpt.cli import interactive_chat_session
+from ngpt.cli.interactive import interactive_chat_session
 
 # Initialize the client
 config = load_config()
@@ -255,7 +285,8 @@ interactive_chat_session(
 Reuse the markdown rendering capabilities:
 
 ```python
-from ngpt.cli import prettify_markdown, has_markdown_renderer
+from ngpt.cli.renderers import has_markdown_renderer
+from ngpt.cli.formatters import prettify_markdown
 
 # Check if a specific renderer is available
 if has_markdown_renderer(renderer='rich'):
@@ -271,7 +302,7 @@ Implement real-time markdown rendering in your applications:
 
 ```python
 from ngpt import NGPTClient, load_config
-from ngpt.cli import prettify_streaming_markdown
+from ngpt.cli.renderers import prettify_streaming_markdown
 
 # Initialize the client
 config = load_config()
@@ -296,7 +327,7 @@ response_text = client.chat(
 Leverage nGPT's CLI configuration system:
 
 ```python
-from ngpt.cli import handle_cli_config
+from ngpt.cli.main import handle_cli_config
 
 # Get a configuration setting
 temperature = handle_cli_config('get', 'temperature')
@@ -315,7 +346,7 @@ print("Available settings:", settings)
 Use nGPT's terminal formatting for your own CLI applications:
 
 ```python
-from ngpt.cli import ColoredHelpFormatter
+from ngpt.cli.formatters import ColoredHelpFormatter, COLORS
 import argparse
 
 # Create an argument parser with custom formatting
@@ -326,6 +357,37 @@ parser = argparse.ArgumentParser(
 
 # Add arguments with colored help
 parser.add_argument("--option", help="This help text will be formatted with colors")
+
+# Use color constants in your application
+print(f"{COLORS['green']}Success!{COLORS['reset']}")
+```
+
+### Using Different Modes
+
+nGPT now has different modes for various operations:
+
+```python
+from ngpt import NGPTClient, load_config
+from ngpt.cli.modes.chat import chat_mode
+from ngpt.cli.modes.code import code_mode
+from ngpt.cli.modes.shell import shell_mode
+from ngpt.cli.modes.text import text_mode
+
+# Initialize the client
+config = load_config()
+client = NGPTClient(**config)
+
+# Use chat mode
+chat_mode(client, "Tell me about quantum computing", prettify=True)
+
+# Use code mode
+code_mode(client, "function to calculate Fibonacci sequence", language="python")
+
+# Use shell mode
+shell_mode(client, "find all txt files in current directory")
+
+# Use text mode
+text_mode(client, "Write a summary of quantum computing")
 ```
 
 ## Complete Examples
@@ -461,12 +523,9 @@ Here's an example of creating your own CLI tool that leverages nGPT's functional
 #!/usr/bin/env python
 import argparse
 from ngpt import NGPTClient, load_config
-from ngpt.cli import (
-    prettify_markdown,
-    prettify_streaming_markdown,
-    interactive_chat_session,
-    ColoredHelpFormatter
-)
+from ngpt.cli.formatters import prettify_markdown, ColoredHelpFormatter
+from ngpt.cli.renderers import prettify_streaming_markdown
+from ngpt.cli.interactive import interactive_chat_session
 
 def main():
     # Create argument parser with custom formatting

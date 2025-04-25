@@ -406,7 +406,8 @@ Create a CLI tool with persistent configuration:
 import argparse
 import sys
 from ngpt import NGPTClient
-from ngpt.utils.cli_config import handle_cli_config
+from ngpt.utils.config import load_config
+from ngpt.cli.main import handle_cli_config
 from ngpt.cli.formatters import ColoredHelpFormatter
 
 def main():
@@ -670,6 +671,7 @@ from pathlib import Path
 from ngpt import NGPTClient
 from ngpt.utils.config import load_config
 from ngpt.cli.renderers import prettify_streaming_markdown, has_markdown_renderer
+from ngpt.cli.formatters import ColoredHelpFormatter
 
 def encode_image(image_path):
     """Encode image file as base64 string."""

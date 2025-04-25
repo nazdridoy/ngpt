@@ -2,6 +2,8 @@
 
 nGPT provides a set of utilities for managing configuration files and settings. These functions allow you to load, create, edit, and remove configurations, as well as determine the appropriate paths for configuration files.
 
+> **Note:** This documentation covers the general API configuration utilities. For CLI-specific configuration management, see the [CLI Configuration](cli_config.md) documentation.
+
 ## Configuration Paths
 
 ### get_config_dir()
@@ -335,6 +337,35 @@ else:
     print(f"'{update_provider}' is already used by another configuration")
 ```
 
+## CLI Configuration Integration
+
+nGPT provides a separate set of utilities for managing CLI-specific configuration settings. These are documented in [CLI Configuration](cli_config.md).
+
+```python
+# Import API configuration utilities
+from ngpt.utils.config import load_config, get_config_path
+
+# Import CLI configuration utilities
+from ngpt.utils.cli_config import load_cli_config, set_cli_config_option
+
+# Use both configuration systems together
+api_config = load_config()  # Load API configuration
+cli_config = load_cli_config()  # Load CLI configuration
+
+client = NGPTClient(**api_config)  # Create client with API config
+
+# Use CLI configuration for settings
+temperature = cli_config.get('temperature', 0.7)
+language = cli_config.get('language', 'python')
+
+# Generate code with both configurations applied
+code = client.generate_code(
+    "function to sort a list",
+    language=language,
+    temperature=float(temperature)
+)
+```
+
 ## Complete Examples
 
 ### Managing Multiple Configurations
@@ -404,7 +435,14 @@ nGPT determines configuration values in the following order (highest priority fi
 
 1. Command-line arguments (when using the CLI)
 2. Environment variables
-3. Configuration file values
-4. Default values
+3. CLI configuration settings (for CLI-specific options)
+4. Configuration file values
+5. Default values
 
-This allows for flexible configuration management across different environments and use cases. 
+This allows for flexible configuration management across different environments and use cases.
+
+## See Also
+
+- [CLI Configuration](cli_config.md) - Documentation for CLI-specific configuration utilities
+- [NGPTClient API](client.md) - Reference for the client API that uses these configurations
+- [CLI Components](cli.md) - Documentation for CLI components that use these configurations 

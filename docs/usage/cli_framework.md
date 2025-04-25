@@ -191,7 +191,7 @@ This creates a live-updating display that refreshes as new content arrives. The 
 nGPT provides tools for managing CLI configurations:
 
 ```python
-from ngpt.utils.cli_config import handle_cli_config, show_cli_config_help
+from ngpt.cli.main import handle_cli_config, show_cli_config_help
 
 # Show help
 show_cli_config_help()
@@ -248,6 +248,38 @@ parser.add_argument("--option", help="This help text will be formatted with colo
 
 The `ColoredHelpFormatter` automatically adapts to the terminal's capabilities and will fall back to standard formatting if colors aren't supported.
 
+### Using Mode-specific Functionality
+
+nGPT provides specialized mode handlers for different types of operations:
+
+```python
+from ngpt import NGPTClient
+from ngpt.utils.config import load_config
+from ngpt.cli.modes.chat import chat_mode
+from ngpt.cli.modes.code import code_mode
+from ngpt.cli.modes.shell import shell_mode
+from ngpt.cli.modes.text import text_mode
+
+# Initialize the client
+client = NGPTClient(**load_config())
+
+# Chat mode - general conversation
+chat_mode(client, prompt="Tell me about quantum computing", 
+          prettify=True, renderer="rich")
+
+# Code mode - generate code in specific language
+code_mode(client, prompt="Create a binary search tree", 
+          language="python", stream=True)
+          
+# Shell mode - generate and execute shell commands
+shell_mode(client, prompt="Find all PNG files in current directory")
+
+# Text mode - handle multiline text input
+text_mode(client, prettify=True)
+```
+
+Each mode handler encapsulates the specialized behavior for that particular mode of operation.
+
 ## Complex Example: Building a Custom AI CLI
 
 Here's a complete example of building a specialized AI CLI tool using nGPT components:
@@ -259,7 +291,7 @@ import sys
 from pathlib import Path
 from ngpt import NGPTClient
 from ngpt.utils.config import load_config
-from ngpt.cli.formatters import ColoredHelpFormatter
+from ngpt.cli.formatters import ColoredHelpFormatter, COLORS
 from ngpt.cli.interactive import interactive_chat_session
 from ngpt.cli.renderers import prettify_markdown, prettify_streaming_markdown, has_markdown_renderer
 
@@ -285,12 +317,13 @@ def main():
         config = load_config()
         client = NGPTClient(**config)
     except Exception as e:
-        print(f"Error initializing AI client: {e}", file=sys.stderr)
+        print(f"{COLORS['yellow']}Error initializing AI client: {e}{COLORS['reset']}", 
+              file=sys.stderr)
         sys.exit(1)
     
     # Interactive mode
     if args.interactive:
-        print("CodeAI Interactive Mode - Type /help for commands")
+        print(f"{COLORS['green']}CodeAI Interactive Mode - Type /help for commands{COLORS['reset']}")
         preprompt = f"You are an expert {args.language} developer. Provide concise, clear code examples."
         interactive_chat_session(
             client=client,
@@ -309,19 +342,19 @@ def main():
             prompt = f"Explain this {args.language} code:\n\n{code}"
             
             if args.prettify and has_markdown_renderer():
-                print("Analyzing code...")
+                print(f"{COLORS['cyan']}Analyzing code...{COLORS['reset']}")
                 streamer = prettify_streaming_markdown(renderer='rich')
                 full_response = ""
                 for chunk in client.chat(prompt, stream=True):
                     full_response += chunk
                     streamer.update_content(full_response)
             else:
-                print("Analyzing code...")
+                print(f"{COLORS['cyan']}Analyzing code...{COLORS['reset']}")
                 response = client.chat(prompt)
-                print("\nExplanation:")
+                print(f"\n{COLORS['green']}Explanation:{COLORS['reset']}")
                 print(response)
         except Exception as e:
-            print(f"Error: {e}", file=sys.stderr)
+            print(f"{COLORS['yellow']}Error: {e}{COLORS['reset']}", file=sys.stderr)
             sys.exit(1)
         return
     
@@ -331,7 +364,7 @@ def main():
         
         if args.file:
             # Generate code and save to file
-            print(f"Generating {args.language} code...")
+            print(f"{COLORS['cyan']}Generating {args.language} code...{COLORS['reset']}")
             code = client.generate_code(
                 args.prompt,
                 language=args.language
@@ -340,13 +373,14 @@ def main():
             try:
                 with open(args.file, 'w') as f:
                     f.write(code)
-                print(f"Code written to {args.file}")
+                print(f"{COLORS['green']}Code written to {args.file}{COLORS['reset']}")
             except Exception as e:
-                print(f"Error writing to file: {e}", file=sys.stderr)
+                print(f"{COLORS['yellow']}Error writing to file: {e}{COLORS['reset']}", 
+                      file=sys.stderr)
                 sys.exit(1)
         else:
             # Generate and display code
-            print(f"Generating {args.language} code...\n")
+            print(f"{COLORS['cyan']}Generating {args.language} code...{COLORS['reset']}\n")
             
             if args.prettify and has_markdown_renderer():
                 markdown = f"```{args.language}\n"
@@ -411,6 +445,8 @@ if has_glow_installed():
 Let nGPT choose the best available renderer:
 
 ```python
+from ngpt.cli.renderers import prettify_markdown
+
 formatted = prettify_markdown(markdown_text, renderer='auto')
 print(formatted)
 ```
@@ -458,7 +494,8 @@ import argparse
 import sys
 from ngpt import NGPTClient
 from ngpt.utils.config import load_config
-from ngpt.cli.renderers import prettify_streaming_markdown, has_markdown_renderer
+from ngpt.cli.renderers import has_markdown_renderer, prettify_streaming_markdown
+from ngpt.cli.formatters import COLORS
 
 def main():
     # Set up colorized argument parser
@@ -480,7 +517,7 @@ def main():
         config = load_config()
         client = NGPTClient(**config)
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        print(f"{COLORS['yellow']}Error: {e}{COLORS['reset']}", file=sys.stderr)
         sys.exit(1)
     
     # System prompt that encourages citations
@@ -491,7 +528,7 @@ def main():
     3. Direct quotes should be in blockquotes
     Use markdown formatting for better readability."""
     
-    print(f"Searching for: {args.query}\n")
+    print(f"{COLORS['cyan']}Searching for: {args.query}{COLORS['reset']}\n")
     
     # Create messages with system prompt
     messages = [
@@ -517,7 +554,7 @@ def main():
             streamer.update_content(full_response)
     else:
         # Regular streaming output
-        print("Results:")
+        print(f"{COLORS['green']}Results:{COLORS['reset']}")
         for chunk in client.chat(
             "",
             messages=messages,
@@ -534,6 +571,25 @@ if __name__ == "__main__":
 ## Logging and Debugging
 
 nGPT CLI components work with Python's standard logging module. You can configure logging for better debugging:
+
+```python
+import logging
+from ngpt.utils.log import create_logger
+
+# Set up logging
+logger = create_logger("/path/to/log.txt")
+logger.open()
+
+# Log events
+logger.log_system("System initialization")
+logger.log_user("User input: Hello")
+logger.log_assistant("Assistant response: Hi there")
+
+# Close logger when done
+logger.close()
+```
+
+You can also use Python's standard logging module:
 
 ```python
 import logging
@@ -603,16 +659,5 @@ When using nGPT CLI components, follow these error handling best practices:
    else:
        # Fallback to plain text
    ```
-
-## Conclusion
-
-These examples demonstrate how nGPT's CLI components can be reused to build a wide variety of specialized AI-powered command-line tools. The modular design allows you to leverage high-quality components for:
-
-- Beautiful terminal UI with colored output
-- Interactive sessions with conversation history
-- Markdown rendering with syntax highlighting
-- Persistent configuration management
-- Streaming responses with live updates
-- Multiline text editing with syntax highlighting
 
 To learn more about the available components and their capabilities, see the [CLI Framework Guide](../usage/cli_framework.md) and the [API Reference](../api/cli.md). 

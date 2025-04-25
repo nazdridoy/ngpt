@@ -132,6 +132,7 @@ import os
 import json
 from datetime import datetime
 from ngpt import NGPTClient, load_config
+from ngpt.cli.formatters import COLORS
 
 def save_to_research_db(topic, query, response):
     """Save research results to a JSON database file."""
@@ -179,7 +180,7 @@ def main():
             with open(args.file, 'r') as f:
                 query = f.read().strip()
         except Exception as e:
-            print(f"Error reading file: {e}", file=sys.stderr)
+            print(f"{COLORS['yellow']}Error reading file: {e}{COLORS['reset']}", file=sys.stderr)
             return 1
     elif args.query:
         query = args.query
@@ -203,7 +204,7 @@ Organize your response with clear headings and bullet points where appropriate."
         config = load_config()
         client = NGPTClient(**config)
     except Exception as e:
-        print(f"Error initializing nGPT client: {e}", file=sys.stderr)
+        print(f"{COLORS['yellow']}Error initializing nGPT client: {e}{COLORS['reset']}", file=sys.stderr)
         return 1
     
     # Prepare messages
@@ -225,7 +226,7 @@ Organize your response with clear headings and bullet points where appropriate."
         if args.output:
             with open(args.output, 'w') as f:
                 f.write(response)
-            print(f"\nResearch results saved to: {args.output}")
+            print(f"\n{COLORS['green']}Research results saved to: {args.output}{COLORS['reset']}")
         else:
             print("\n" + "=" * 50)
             print(response)
@@ -233,11 +234,11 @@ Organize your response with clear headings and bullet points where appropriate."
         
         # Save to research database
         db_file = save_to_research_db(args.topic, query, response)
-        print(f"Results also saved to research database: {db_file}")
+        print(f"{COLORS['green']}Results also saved to research database: {db_file}{COLORS['reset']}")
         
         return 0
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        print(f"{COLORS['yellow']}Error: {e}{COLORS['reset']}", file=sys.stderr)
         return 1
 
 if __name__ == "__main__":
@@ -274,6 +275,7 @@ import argparse
 import sys
 import requests
 from ngpt import NGPTClient, load_config
+from ngpt.cli.formatters import COLORS
 
 def fetch_github_issue(repo, issue_number, token=None):
     """Fetch issue details from GitHub API."""
@@ -355,7 +357,7 @@ def main():
         if args.output:
             with open(args.output, 'w') as f:
                 f.write(summary)
-            print(f"Analysis saved to: {args.output}")
+            print(f"{COLORS['green']}Analysis saved to: {args.output}{COLORS['reset']}")
         else:
             print("\n" + "=" * 50)
             print(summary)
@@ -364,14 +366,14 @@ def main():
         return 0
     except requests.exceptions.HTTPError as e:
         if e.response.status_code == 404:
-            print(f"Error: Issue #{args.issue} not found in repository {args.repo}", file=sys.stderr)
+            print(f"{COLORS['yellow']}Error: Issue #{args.issue} not found in repository {args.repo}{COLORS['reset']}", file=sys.stderr)
         elif e.response.status_code == 401:
-            print("Error: Authentication failed. Check your GitHub token", file=sys.stderr)
+            print(f"{COLORS['yellow']}Error: Authentication failed. Check your GitHub token{COLORS['reset']}", file=sys.stderr)
         else:
-            print(f"HTTP Error: {e}", file=sys.stderr)
+            print(f"{COLORS['yellow']}HTTP Error: {e}{COLORS['reset']}", file=sys.stderr)
         return 1
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        print(f"{COLORS['yellow']}Error: {e}{COLORS['reset']}", file=sys.stderr)
         return 1
 
 if __name__ == "__main__":
@@ -410,6 +412,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QTextEdit, QPushButton,
                             QInputDialog, QMessageBox, QSplitter, QMenu, QAction)
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from ngpt import NGPTClient, load_config
+from ngpt.cli.modes.code import code_mode
 
 class AIAssistThread(QThread):
     """Thread for non-blocking AI operations."""
