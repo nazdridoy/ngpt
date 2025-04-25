@@ -49,7 +49,7 @@ The configuration file uses a JSON list format that allows you to store multiple
 You can manipulate configurations programmatically using the configuration module:
 
 ```python
-from ngpt.config import load_config, get_config_path, get_config_dir
+from ngpt.utils.config import load_config, get_config_path, get_config_dir
 
 # Get the directory where configs are stored
 config_dir = get_config_dir()

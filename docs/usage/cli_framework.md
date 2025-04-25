@@ -9,7 +9,7 @@ nGPT's CLI module has been modularized into several components that you can inco
 - **Interactive Chat Interface**: A fully-featured chat UI with history management (`ngpt.cli.interactive`)
 - **Markdown Rendering**: Beautiful formatting for markdown with syntax highlighting (`ngpt.cli.renderers`)
 - **Real-time Streaming**: Tools for handling streaming content with live updates (`ngpt.cli.ui`)
-- **CLI Configuration System**: Robust configuration management (`ngpt.cli.main`)
+- **CLI Configuration System**: Robust configuration management (`ngpt.utils.cli_config` and `ngpt.utils.config`)
 - **Argument Parsing**: Sophisticated argument parsing and validation (`ngpt.cli.args`)
 - **Terminal Utilities**: Helpers for colorized output and terminal formatting (`ngpt.cli.formatters`)
 - **Mode-specific functionality**: Specialized code, shell, chat and text mode handlers (`ngpt.cli.modes`)
@@ -68,7 +68,8 @@ This modular approach makes it easy to create sophisticated CLI tools with consi
 The `interactive_chat_session` function provides a complete interactive chat experience:
 
 ```python
-from ngpt import NGPTClient, load_config
+from ngpt import NGPTClient
+from ngpt.utils.config import load_config
 from ngpt.cli.interactive import interactive_chat_session
 
 # Initialize client
@@ -163,7 +164,8 @@ For real-time rendering of streaming content, the `prettify_streaming_markdown` 
 
 ```python
 from ngpt.cli.renderers import prettify_streaming_markdown
-from ngpt import NGPTClient, load_config
+from ngpt import NGPTClient
+from ngpt.utils.config import load_config
 
 client = NGPTClient(**load_config())
 
@@ -189,7 +191,7 @@ This creates a live-updating display that refreshes as new content arrives. The 
 nGPT provides tools for managing CLI configurations:
 
 ```python
-from ngpt.cli.main import handle_cli_config, show_cli_config_help
+from ngpt.utils.cli_config import handle_cli_config, show_cli_config_help
 
 # Show help
 show_cli_config_help()
@@ -255,7 +257,8 @@ Here's a complete example of building a specialized AI CLI tool using nGPT compo
 import argparse
 import sys
 from pathlib import Path
-from ngpt import NGPTClient, load_config
+from ngpt import NGPTClient
+from ngpt.utils.config import load_config
 from ngpt.cli.formatters import ColoredHelpFormatter
 from ngpt.cli.interactive import interactive_chat_session
 from ngpt.cli.renderers import prettify_markdown, prettify_streaming_markdown, has_markdown_renderer
@@ -453,7 +456,8 @@ This example creates a specialized web search tool using nGPT components:
 #!/usr/bin/env python
 import argparse
 import sys
-from ngpt import NGPTClient, load_config
+from ngpt import NGPTClient
+from ngpt.utils.config import load_config
 from ngpt.cli.renderers import prettify_streaming_markdown, has_markdown_renderer
 
 def main():
@@ -560,3 +564,55 @@ nGPT's CLI components provide a rich toolkit for building your own AI-powered co
 - Colorized terminal output
 
 For more examples, see the [CLI Component Examples](../examples/cli_components.md) section. 
+
+## Error Handling Best Practices
+
+When using nGPT CLI components, follow these error handling best practices:
+
+1. **Check for Dependencies**:
+   ```python
+   try:
+       import rich
+   except ImportError:
+       print("Warning: Rich library not found. Install with: pip install rich", file=sys.stderr)
+       # Fallback behavior
+   ```
+
+2. **Handle API Errors**:
+   ```python
+   try:
+       response = client.chat(prompt)
+   except Exception as e:
+       print(f"Error communicating with AI service: {e}", file=sys.stderr)
+       sys.exit(1)
+   ```
+
+3. **Graceful Keyboard Interrupts**:
+   ```python
+   try:
+       # Your code here
+   except KeyboardInterrupt:
+       print("Operation cancelled by user.")
+       sys.exit(0)
+   ```
+
+4. **Verify Rendering Capabilities**:
+   ```python
+   if has_markdown_renderer(renderer='rich'):
+       # Use rich rendering
+   else:
+       # Fallback to plain text
+   ```
+
+## Conclusion
+
+These examples demonstrate how nGPT's CLI components can be reused to build a wide variety of specialized AI-powered command-line tools. The modular design allows you to leverage high-quality components for:
+
+- Beautiful terminal UI with colored output
+- Interactive sessions with conversation history
+- Markdown rendering with syntax highlighting
+- Persistent configuration management
+- Streaming responses with live updates
+- Multiline text editing with syntax highlighting
+
+To learn more about the available components and their capabilities, see the [CLI Framework Guide](../usage/cli_framework.md) and the [API Reference](../api/cli.md). 

@@ -23,9 +23,12 @@ Thank you for your interest in contributing to NGPT! This document provides guid
 
 - `ngpt/` - Main package directory
   - `__init__.py` - Package initialization
-  - `cli.py` - Command-line interface implementation
-  - `config.py` - Configuration management
-  - `client.py` - Client implementation
+  - `cli/` - Command-line interface implementation (parser, modes, formatters, etc.)
+  - `utils/` - Utility modules (logging, configuration, etc.)
+    - `log.py` - Logging functionality
+    - `config.py` - API endpoint configuration management
+    - `cli_config.py` - CLI option configuration management
+  - `client.py` - Client implementation for API interaction
 - `.github/` - GitHub workflows and templates
 - `pyproject.toml` - Project configuration and dependencies
 

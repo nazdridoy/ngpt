@@ -32,7 +32,7 @@ nGPT's API consists of two main components:
 from ngpt import NGPTClient, load_config
 
 # Import configuration utilities
-from ngpt.config import (
+from ngpt.utils.config import (
     load_configs,
     get_config_path,
     get_config_dir,

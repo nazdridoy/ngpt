@@ -176,7 +176,7 @@ for model in models:
 ### Working with Configuration Files
 
 ```python
-from ngpt.config import (
+from ngpt.utils.config import (
     load_config, 
     load_configs, 
     get_config_path, 

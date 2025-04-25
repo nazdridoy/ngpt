@@ -9,7 +9,7 @@ nGPT provides a set of utilities for managing configuration files and settings. 
 Returns the directory where configuration files are stored based on the operating system.
 
 ```python
-from ngpt.config import get_config_dir
+from ngpt.utils.config import get_config_dir
 from pathlib import Path
 
 config_dir: Path = get_config_dir()
@@ -25,7 +25,7 @@ A `Path` object representing the configuration directory:
 #### Examples
 
 ```python
-from ngpt.config import get_config_dir
+from ngpt.utils.config import get_config_dir
 
 # Get the configuration directory
 config_dir = get_config_dir()
@@ -43,7 +43,7 @@ else:
 Returns the path to the configuration file.
 
 ```python
-from ngpt.config import get_config_path
+from ngpt.utils.config import get_config_path
 from pathlib import Path
 
 config_path: Path = get_config_path(custom_path: Optional[str] = None)
@@ -62,7 +62,7 @@ A `Path` object representing the path to the configuration file.
 #### Examples
 
 ```python
-from ngpt.config import get_config_path
+from ngpt.utils.config import get_config_path
 
 # Get the default configuration file path
 config_path = get_config_path()
@@ -80,7 +80,7 @@ print(f"Custom configuration file: {custom_config_path}")
 Loads all configurations from the configuration file.
 
 ```python
-from ngpt.config import load_configs
+from ngpt.utils.config import load_configs
 from typing import List, Dict, Any
 
 configs: List[Dict[str, Any]] = load_configs(custom_path: Optional[str] = None)
@@ -103,7 +103,7 @@ A list of configuration dictionaries, each containing:
 #### Examples
 
 ```python
-from ngpt.config import load_configs
+from ngpt.utils.config import load_configs
 
 # Load all configurations
 configs = load_configs()
@@ -125,7 +125,7 @@ custom_configs = load_configs("/path/to/custom/config.json")
 Loads a specific configuration by index or provider name and applies environment variables.
 
 ```python
-from ngpt.config import load_config
+from ngpt.utils.config import load_config
 from typing import Dict, Any
 
 config: Dict[str, Any] = load_config(
@@ -150,7 +150,7 @@ A dictionary with configuration values, potentially overridden by environment va
 #### Examples
 
 ```python
-from ngpt.config import load_config
+from ngpt.utils.config import load_config
 
 # Load the default configuration (index 0)
 config = load_config()
@@ -178,7 +178,7 @@ custom_config = load_config(custom_path="/path/to/custom/config.json")
 Creates a default configuration file with a single configuration entry.
 
 ```python
-from ngpt.config import create_default_config
+from ngpt.utils.config import create_default_config
 from pathlib import Path
 
 create_default_config(config_path: Path)
@@ -193,7 +193,7 @@ create_default_config(config_path: Path)
 #### Examples
 
 ```python
-from ngpt.config import create_default_config, get_config_path
+from ngpt.utils.config import create_default_config, get_config_path
 from pathlib import Path
 
 # Create a default configuration file at the default location
@@ -212,7 +212,7 @@ create_default_config(custom_path)
 Adds a new configuration entry or updates an existing one at the specified index.
 
 ```python
-from ngpt.config import add_config_entry
+from ngpt.utils.config import add_config_entry
 from pathlib import Path
 
 add_config_entry(
@@ -231,7 +231,7 @@ add_config_entry(
 #### Examples
 
 ```python
-from ngpt.config import add_config_entry, get_config_path
+from ngpt.utils.config import add_config_entry, get_config_path
 
 # Add a new configuration entry
 config_path = get_config_path()
@@ -248,7 +248,7 @@ add_config_entry(config_path, config_index=1)  # This will prompt for input inte
 Removes a configuration entry at the specified index.
 
 ```python
-from ngpt.config import remove_config_entry
+from ngpt.utils.config import remove_config_entry
 from pathlib import Path
 
 success: bool = remove_config_entry(
@@ -272,7 +272,7 @@ success: bool = remove_config_entry(
 #### Examples
 
 ```python
-from ngpt.config import remove_config_entry, get_config_path
+from ngpt.utils.config import remove_config_entry, get_config_path
 
 # Remove a configuration entry
 config_path = get_config_path()
@@ -289,7 +289,7 @@ else:
 Checks if a provider name is unique among configurations.
 
 ```python
-from ngpt.config import is_provider_unique
+from ngpt.utils.config import is_provider_unique
 from typing import List, Dict, Any, Optional
 
 is_unique: bool = is_provider_unique(
@@ -314,7 +314,7 @@ is_unique: bool = is_provider_unique(
 #### Examples
 
 ```python
-from ngpt.config import load_configs, is_provider_unique
+from ngpt.utils.config import load_configs, is_provider_unique
 
 # Load all configurations
 configs = load_configs()
@@ -340,7 +340,7 @@ else:
 ### Managing Multiple Configurations
 
 ```python
-from ngpt.config import (
+from ngpt.utils.config import (
     get_config_path,
     load_configs,
     add_config_entry,
@@ -386,7 +386,7 @@ nGPT respects environment variables for configuration values. The following vari
 
 ```python
 import os
-from ngpt.config import load_config
+from ngpt.utils.config import load_config
 
 # Set environment variables
 os.environ["OPENAI_API_KEY"] = "your-api-key"

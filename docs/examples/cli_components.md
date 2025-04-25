@@ -19,7 +19,8 @@ Here's a simple CLI tool that uses nGPT to generate and explain code:
 ```python
 #!/usr/bin/env python3
 import sys
-from ngpt import NGPTClient, load_config
+from ngpt import NGPTClient
+from ngpt.utils.config import load_config
 from ngpt.cli.args import setup_argument_parser, validate_args
 from ngpt.cli.renderers import prettify_markdown, has_markdown_renderer
 
@@ -92,7 +93,8 @@ Create a custom chat application with specialized capabilities:
 #!/usr/bin/env python3
 import argparse
 import sys
-from ngpt import NGPTClient, load_config
+from ngpt import NGPTClient
+from ngpt.utils.config import load_config
 from ngpt.cli.interactive import interactive_chat_session
 from ngpt.cli.formatters import ColoredHelpFormatter
 from ngpt.cli.renderers import has_markdown_renderer
@@ -180,7 +182,8 @@ Create a documentation generator with live markdown rendering:
 import argparse
 import sys
 from pathlib import Path
-from ngpt import NGPTClient, load_config
+from ngpt import NGPTClient
+from ngpt.utils.config import load_config
 from ngpt.cli.renderers import prettify_streaming_markdown, has_markdown_renderer
 from ngpt.cli.formatters import ColoredHelpFormatter
 
@@ -311,7 +314,8 @@ Here's an example of using nGPT's multiline editor for collecting user input:
 #!/usr/bin/env python3
 import argparse
 import sys
-from ngpt import NGPTClient, load_config
+from ngpt import NGPTClient
+from ngpt.utils.config import load_config
 from ngpt.cli.ui import multiline_editor
 from ngpt.cli.renderers import prettify_markdown
 from ngpt.cli.formatters import ColoredHelpFormatter
@@ -401,8 +405,8 @@ Create a CLI tool with persistent configuration:
 #!/usr/bin/env python3
 import argparse
 import sys
-from ngpt import NGPTClient, load_config
-from ngpt.cli.main import handle_cli_config
+from ngpt import NGPTClient
+from ngpt.utils.cli_config import handle_cli_config
 from ngpt.cli.formatters import ColoredHelpFormatter
 
 def main():
@@ -555,7 +559,8 @@ import argparse
 import sys
 import os
 from pathlib import Path
-from ngpt import NGPTClient, load_config
+from ngpt import NGPTClient
+from ngpt.utils.config import load_config
 from ngpt.cli.renderers import prettify_markdown, supports_ansi_colors
 from ngpt.cli.formatters import ColoredHelpFormatter
 
@@ -662,7 +667,8 @@ import sys
 import base64
 import os
 from pathlib import Path
-from ngpt import NGPTClient, load_config
+from ngpt import NGPTClient
+from ngpt.utils.config import load_config
 from ngpt.cli.renderers import prettify_streaming_markdown, has_markdown_renderer
 
 def encode_image(image_path):
