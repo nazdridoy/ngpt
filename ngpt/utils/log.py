@@ -1,7 +1,6 @@
 import os
 import sys
 import datetime
-import tempfile
 from pathlib import Path
 from typing import Optional, TextIO, Dict, Any
 

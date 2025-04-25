@@ -1,6 +1,5 @@
 import sys
 import shutil
-from .formatters import COLORS
 
 # Optional imports for enhanced UI
 try:

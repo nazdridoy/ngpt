@@ -2,7 +2,7 @@ import os
 import sys
 import json
 from pathlib import Path
-from typing import Dict, Optional, Any, List, Union, Tuple
+from typing import Dict, Any, List, Union, Tuple
 
 # CLI config options with their types and default values
 CLI_CONFIG_OPTIONS = {

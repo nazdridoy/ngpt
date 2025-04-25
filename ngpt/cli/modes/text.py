@@ -1,7 +1,6 @@
 from ..formatters import COLORS
 from ..renderers import prettify_markdown, prettify_streaming_markdown
 from ..ui import get_multiline_input
-from ...utils.log import create_logger
 
 def text_mode(client, args, logger=None):
     """Handle the multi-line text input mode.

@@ -1,6 +1,5 @@
 from ..formatters import COLORS
 from ..renderers import prettify_markdown, prettify_streaming_markdown, has_markdown_renderer, show_available_renderers
-from ...utils.log import create_logger
 import sys
 
 def code_mode(client, args, logger=None):

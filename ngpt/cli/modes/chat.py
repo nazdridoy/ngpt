@@ -1,6 +1,5 @@
 from ..formatters import COLORS
 from ..renderers import prettify_markdown, prettify_streaming_markdown
-from ...utils.log import create_logger
 import sys
 
 def chat_mode(client, args, logger=None):

@@ -15,9 +15,9 @@ from ..utils.cli_config import (
 from ..utils.log import create_logger
 from .. import __version__
 
-from .formatters import COLORS, ColoredHelpFormatter
-from .renderers import has_markdown_renderer, warn_if_no_markdown_renderer, show_available_renderers
-from .config_manager import show_config_help, check_config
+from .formatters import COLORS
+from .renderers import show_available_renderers
+from .config_manager import check_config
 from .interactive import interactive_chat_session
 from .modes.chat import chat_mode
 from .modes.code import code_mode

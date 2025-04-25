@@ -1,5 +1,4 @@
 import sys
-from ..utils.config import get_config_path, load_configs, add_config_entry, remove_config_entry
 from .formatters import COLORS
 
 def show_config_help():
