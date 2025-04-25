@@ -131,7 +131,7 @@ You can also set configuration options directly via command-line arguments:
 - `--stream-prettify`: Enable real-time formatted output while streaming (uses Rich).
 - `--web-search`: Enable web search capability (if supported by the API).
 - `--preprompt <text>`: Set a custom system prompt.
-- `--log <file>`: Log the conversation to a file (in interactive modes).
+- `--log [file]`: Enable logging: use `--log` to create a temporary log file, or `--log PATH` for a specific location.
 - `--temperature <value>`: Set the generation temperature (0.0-2.0).
 - `--top_p <value>`: Set the nucleus sampling top_p value (0.0-1.0).
 - `--max_tokens <number>`: Set the maximum number of tokens for the response.
@@ -157,8 +157,11 @@ ngpt --temperature 0.8 --top_p 0.95 --max_tokens 300 "Write a creative story"
 # Set a custom system prompt (preprompt)
 ngpt --preprompt "You are a Linux command line expert. Focus on efficient solutions." "How do I find the largest files in a directory?"
 
-# Save conversation to a log file (for interactive modes)
+# Log conversation to a specific file
 ngpt --interactive --log conversation.log
+
+# Create a temporary log file automatically
+ngpt --log "Tell me about quantum computing"
 ```
 
 ## Environment Variables

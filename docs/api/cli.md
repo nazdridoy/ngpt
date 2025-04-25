@@ -18,7 +18,7 @@ def interactive_chat_session(
     temperature=0.7,
     top_p=1.0,
     max_tokens=None,
-    log_file=None,
+    logger=None,
     preprompt=None,
     prettify=False,
     renderer='auto',
@@ -35,7 +35,7 @@ Creates an interactive chat session with the specified AI client.
 - `temperature` (float): Temperature for generation (0.0-1.0)
 - `top_p` (float): Top-p sampling value (0.0-1.0)
 - `max_tokens` (int, optional): Maximum number of tokens to generate
-- `log_file` (str, optional): Path to file for logging the conversation
+- `logger` (object, optional): A logger instance with `log(role, message)` and `get_log_path()` methods for logging the conversation.
 - `preprompt` (str, optional): System prompt to use for the chat
 - `prettify` (bool): Whether to prettify markdown in responses
 - `renderer` (str): Markdown renderer to use ('auto', 'rich', 'glow')

@@ -81,8 +81,11 @@ ngpt --interactive --preprompt "You are a Python programming tutor. Explain conc
 Save your conversation history to a file for reference:
 
 ```bash
-# Basic interactive session with logging
+# Basic interactive session with logging to a specific file
 ngpt --interactive --log python_tutoring.log
+
+# Create an automatic temporary log file
+ngpt --interactive --log
 
 # Combine logging with custom system prompt
 ngpt --interactive \
@@ -93,6 +96,9 @@ ngpt --interactive \
 ngpt --interactive \
      --preprompt "You are helping plan the architecture for a microservices application." \
      --log architecture_planning.log
+
+# Log non-interactive sessions
+ngpt --log "Explain quantum computing"
 ```
 
 The log file contains the complete conversation transcript, including:
