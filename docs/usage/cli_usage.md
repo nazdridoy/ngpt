@@ -744,6 +744,9 @@ If the `ngpt` command is not found after installation:
 
 - Ensure Python's bin directory is in your PATH
 - Try using `python -m ngpt` instead of just `ngpt`
+  - This works because of the package's `__main__.py` module
+  - It's particularly useful in virtual environments or when the command isn't in your PATH
+  - All the same arguments and options work with this method: `python -m ngpt -i --prettify`
 
 ## Tips and Best Practices
 

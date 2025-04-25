@@ -148,6 +148,19 @@ ngpt --version
 
 You should see the version number of nGPT displayed.
 
+Alternatively, you can run nGPT as a Python module:
+
+```bash
+python -m ngpt --version
+```
+
+This method is especially useful when:
+- The `ngpt` command is not in your PATH
+- You're working in a virtual environment
+- You want to ensure you're using the correct Python interpreter
+
+All the functionality available through the `ngpt` command is also available through `python -m ngpt`.
+
 ## Updating nGPT
 
 To update to the latest version:

@@ -44,6 +44,9 @@ uv tool install ngpt
 # Chat with default settings
 ngpt "Tell me about quantum computing"
 
+# Alternatively, run as a Python module
+python -m ngpt "Tell me about quantum computing"
+
 # Start an interactive chat session with conversation memory
 ngpt -i
 
