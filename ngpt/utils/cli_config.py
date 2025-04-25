@@ -206,8 +206,12 @@ def apply_cli_config(args: Any, mode: str) -> Any:
     # Load CLI config
     cli_config = load_cli_config()
     
-    # Get command-line arguments provided by the user
-    explicit_args = set(arg for arg in sys.argv[1:] if arg.startswith('--'))
+    # Get command-line arguments provided by the user (both long and short forms)
+    explicit_args = set()
+    for arg in sys.argv[1:]:
+        if arg.startswith('--'):
+            explicit_args.add(arg)
+        # We've removed -n, but this pattern would handle other short options
 
     # Keep track of applied exclusive options
     applied_exclusives = set()

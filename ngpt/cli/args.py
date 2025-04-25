@@ -48,7 +48,7 @@ def setup_argument_parser():
     global_group.add_argument('--model', help='Model to use')
     global_group.add_argument('--web-search', action='store_true', 
                       help='Enable web search capability (Note: Your API endpoint must support this feature)')
-    global_group.add_argument('-n', '--no-stream', action='store_true',
+    global_group.add_argument('--no-stream', action='store_true',
                       help='Return the whole response without streaming')
     global_group.add_argument('--temperature', type=float, default=0.7,
                       help='Set temperature (controls randomness, default: 0.7)')

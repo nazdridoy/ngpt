@@ -128,7 +128,7 @@ print(response)
 ngpt "Tell me about quantum computing"
 
 # No streaming (wait for full response)
-ngpt -n "Explain the theory of relativity"
+ngpt --no-stream "Explain the theory of relativity"
 
 # Prettify markdown output
 ngpt --prettify "Create a markdown table comparing different programming languages"

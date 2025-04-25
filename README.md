@@ -48,7 +48,7 @@ ngpt "Tell me about quantum computing"
 ngpt -i
 
 # Return response without streaming
-ngpt -n "Tell me about quantum computing"
+ngpt --no-stream "Tell me about quantum computing"
 
 # Generate code
 ngpt --code "function to calculate the Fibonacci sequence"
@@ -314,7 +314,7 @@ You can configure the client using the following options:
 | `--model` | Model to use |
 | `--list-models` | List all available models for the selected configuration (can be combined with --config-index) |
 | `--web-search` | Enable web search capability |
-| `-n, --no-stream` | Return the whole response without streaming |
+| `--no-stream` | Return the whole response without streaming |
 | `--temperature` | Set temperature (controls randomness, default: 0.7) |
 | `--top_p` | Set top_p (controls diversity, default: 1.0) |
 | `--max_tokens` | Set maximum response length in tokens |

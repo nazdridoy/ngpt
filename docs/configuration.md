@@ -124,7 +124,7 @@ You can also set configuration options directly via command-line arguments:
 - `-c, --code`: Generate code.
   - `--language <lang>`: Specify the programming language for code generation (e.g., `python`, `javascript`, default: `python`).
 - `-t, --text`: Use a multiline editor for input.
-- `-n, --no-stream`: Disable streaming output.
+- `--no-stream`: Disable streaming output.
 - `--prettify`: Enable formatted markdown/code output (disables streaming).
   - `--renderer <name>`: Choose the renderer (`auto`, `rich`, `glow`).
   - `--list-renderers`: Show available renderers.

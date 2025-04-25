@@ -48,7 +48,7 @@ Below is a comprehensive list of all available command-line options, organized b
 | `-s, --shell` | Generate and execute shell commands appropriate for your operating system |
 | `-c, --code` | Generate clean code without markdown formatting or explanations |
 | `-t, --text` | Open interactive multiline editor for complex prompts with syntax highlighting |
-| `-n, --no-stream` | Return the whole response without streaming (useful for scripts) |
+| `--no-stream` | Return the whole response without streaming (useful for scripts) |
 
 ### Configuration Management
 
@@ -598,7 +598,7 @@ You can combine various options:
 ngpt -c --web-search "function to get current weather using an API"
 
 # Use a specific model and no streaming
-ngpt --model gpt-4o-mini -n "Explain quantum entanglement"
+ngpt --model gpt-4o-mini --no-stream "Explain quantum entanglement"
 
 # Interactive session with custom prompt and logging
 ngpt -i --preprompt "You are a data science tutor" --log datasci_tutoring.txt
@@ -768,6 +768,6 @@ If the `ngpt` command is not found after installation:
    - Use environment variables when appropriate
 
 5. **Improve efficiency**:
-   - Use `-n` (no streaming) for faster responses in scripts
+   - Use `--no-stream` for faster responses in scripts
    - Use interactive mode when having a conversation
    - Exit interactive sessions when not in use to save API costs
