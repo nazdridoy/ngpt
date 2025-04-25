@@ -20,7 +20,7 @@ Thank you for your interest in contributing to NGPT! This document provides guid
 
 - `ngpt/` - Main package directory
   - `__init__.py` - Package initialization
-  - `cli.py` - Top-level CLI script (potentially legacy)
+  - `__main__.py` - Entry point when run as a module
   - `client.py` - Client implementation for API interaction
   - `cli/` - Command-line interface implementation
     - `__init__.py`

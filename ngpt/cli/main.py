@@ -542,6 +542,13 @@ def main():
             # Text mode (multiline input)
             text_mode(client, args, logger=logger)
         
+        elif args.stdin:
+            # Apply CLI config for stdin mode (similar to chat mode)
+            args = apply_cli_config(args, "all")
+            
+            # Stdin mode (using the chat mode with stdin input)
+            chat_mode(client, args, logger=logger)
+        
         else:
             # Default to chat mode
             # Apply CLI config for default chat mode

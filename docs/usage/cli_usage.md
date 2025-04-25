@@ -48,6 +48,7 @@ Below is a comprehensive list of all available command-line options, organized b
 | `-s, --shell` | Generate and execute shell commands appropriate for your operating system |
 | `-c, --code` | Generate clean code without markdown formatting or explanations |
 | `-t, --text` | Open interactive multiline editor for complex prompts with syntax highlighting |
+| `--stdin` | Read from stdin and use content in your prompt with {} placeholder |
 | `--no-stream` | Return the whole response without streaming (useful for scripts) |
 
 ### Configuration Management
@@ -247,13 +248,47 @@ ngpt -s "clean up temporary files"
 
 # Network diagnostics
 ngpt -s "check if port 8080 is open"
-
-# Process management
-ngpt -s "find processes using too much memory"
-
-# Package management
-ngpt -s "install the latest version of numpy"
 ```
+
+### Stdin Mode
+
+Process text from standard input and incorporate it into your prompt using the `{}` placeholder:
+
+```bash
+echo "Who are you?" | ngpt --stdin "answer {}"
+```
+
+The content from stdin replaces the `{}` placeholder in your prompt. This is useful for:
+
+1. Processing files or command output
+2. Integrating nGPT into shell pipelines
+3. Analyzing text from other commands
+
+#### Examples
+
+Analyze command output:
+```bash
+ls -la | ngpt --stdin "Explain what these files do based on their names: {}"
+```
+
+Analyze a log file:
+```bash
+cat error.log | ngpt --stdin "What's causing these errors? {}"
+```
+
+Summarize documentation:
+```bash
+cat README.md | ngpt --stdin "Summarize this documentation: {}"
+```
+
+Translate text from a file:
+```bash
+cat french_text.txt | ngpt --stdin "Translate this French text to English: {}"
+```
+
+#### Placeholder Behavior
+
+The `{}` placeholder will be replaced with stdin content. If the placeholder is not found in your prompt, stdin content will be appended to the end of your prompt with a warning.
 
 ### Generating Code
 

@@ -1,6 +1,6 @@
 [project]
 name = "ngpt"
-version = "2.11.5"
+version = "2.12.0"
 description = "A lightweight Python CLI and library for interacting with OpenAI-compatible APIs, supporting both official and self-hosted LLM endpoints."
 authors = [
     {name = "nazDridoy", email = "nazdridoy399@gmail.com"},
@@ -41,7 +41,7 @@ classifiers = [
 "Bug Tracker" = "https://github.com/nazdridoy/ngpt/issues"
 
 [project.scripts]
-ngpt = "ngpt.cli:main"
+ngpt = "ngpt.__main__:main"
 
 [build-system]
 requires = ["hatchling"]

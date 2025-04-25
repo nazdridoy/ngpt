@@ -65,6 +65,9 @@ ngpt --code --stream-prettify "function to calculate the Fibonacci sequence"
 # Generate and execute shell commands
 ngpt --shell "list all files in the current directory"
 
+# Read from stdin and use the content in your prompt
+echo "What is this text about?" | ngpt --stdin "Analyze the following text: {}"
+
 # Display markdown responses with beautiful formatting
 ngpt --prettify "Explain markdown syntax with examples"
 
@@ -85,6 +88,9 @@ ngpt --interactive --log conversation.log
 
 # Create a temporary log file automatically
 ngpt --log "Tell me about quantum computing"
+
+# Process text from stdin using the {} placeholder
+cat README.md | ngpt --stdin "Summarize this document: {}"
 ```
 
 For more examples and detailed usage, visit the [CLI Usage Guide](https://nazdridoy.github.io/ngpt/usage/cli_usage.html).

@@ -99,7 +99,8 @@ def setup_argument_parser():
                                       help='Generate code')
     mode_exclusive_group.add_argument('-t', '--text', action='store_true', 
                                       help='Enter multi-line text input (submit with Ctrl+D)')
-    # Note: --show-config is handled separately and implicitly acts as a mode
+    mode_exclusive_group.add_argument('--stdin', action='store_true',
+                                      help='Read from stdin and use content with prompt. Use {} in prompt as placeholder for stdin content')
     
     return parser
 
@@ -121,6 +122,10 @@ def validate_args(args):
     # Check if --stream-prettify is used but Rich is not available
     if args.stream_prettify and not has_markdown_renderer('rich'):
         raise ValueError("--stream-prettify requires Rich to be installed. Install with: pip install \"ngpt[full]\" or pip install rich")
+    
+    # If stdin mode is used, check if input is available
+    if args.stdin and sys.stdin.isatty():
+        raise ValueError("--stdin was specified but no input is piped. Use echo 'content' | ngpt --stdin 'prompt with {}'")
     
     return args
 
