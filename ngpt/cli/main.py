@@ -12,6 +12,7 @@ from ..cli_config import (
     CLI_CONFIG_OPTIONS,
     load_cli_config
 )
+from ..log import create_logger
 from .. import __version__
 
 from .formatters import COLORS, ColoredHelpFormatter
@@ -194,6 +195,46 @@ def main():
     
     # Load CLI configuration early
     cli_config = load_cli_config()
+    
+    # Initialize logger if --log is specified
+    logger = None
+    if args.log is not None:
+        # Check if the log value is a string that looks like a prompt (incorrectly parsed)
+        likely_prompt = False
+        likely_path = False
+        
+        if isinstance(args.log, str) and args.prompt is None:
+            # Check if string looks like a path
+            if args.log.startswith('/') or args.log.startswith('./') or args.log.startswith('../') or args.log.startswith('~'):
+                likely_path = True
+            # Check if string has a file extension
+            elif '.' in os.path.basename(args.log):
+                likely_path = True
+            # Check if parent directory exists
+            elif os.path.exists(os.path.dirname(args.log)) and os.path.dirname(args.log) != '':
+                likely_path = True
+            # Check if string ends with a question mark (very likely a prompt)
+            elif args.log.strip().endswith('?'):
+                likely_prompt = True
+            # As a last resort, if it has spaces and doesn't look like a path, assume it's a prompt
+            elif ' ' in args.log and not likely_path:
+                likely_prompt = True
+                
+        if likely_prompt and not likely_path:
+            # This is likely a prompt, not a log path
+            args.prompt = args.log
+            # Change log to True to create a temp file
+            args.log = True
+        
+        # If --log is True, it means it was used without a path value
+        log_path = None if args.log is True else args.log
+        logger = create_logger(log_path)
+        if logger:
+            logger.open()
+            print(f"{COLORS['green']}Logging session to: {logger.get_log_path()}{COLORS['reset']}")
+            # If it's a temporary log file, inform the user
+            if logger.is_temporary():
+                print(f"{COLORS['green']}Created temporary log file.{COLORS['reset']}")
     
     # Priority order for config selection:
     # 1. Command-line arguments (args.provider, args.config_index)
@@ -426,7 +467,12 @@ def main():
         show_available_renderers()
     
     # Initialize client using the potentially overridden active_config
-    client = NGPTClient(**active_config)
+    client = NGPTClient(
+        api_key=active_config.get("api_key", args.api_key),
+        base_url=active_config.get("base_url", args.base_url),
+        provider=active_config.get("provider"),
+        model=active_config.get("model", args.model)
+    )
     
     try:
         # Handle listing models
@@ -459,32 +505,32 @@ def main():
                 temperature=args.temperature,
                 top_p=args.top_p,
                 max_tokens=args.max_tokens,
-                log_file=args.log,
                 preprompt=args.preprompt,
                 prettify=args.prettify,
                 renderer=args.renderer,
-                stream_prettify=args.stream_prettify
+                stream_prettify=args.stream_prettify,
+                logger=logger
             )
         elif args.shell:
             # Apply CLI config for shell mode
             args = apply_cli_config(args, "shell")
             
             # Shell command generation mode
-            shell_mode(client, args)
+            shell_mode(client, args, logger=logger)
                     
         elif args.code:
             # Apply CLI config for code mode
             args = apply_cli_config(args, "code")
             
             # Code generation mode
-            code_mode(client, args)
+            code_mode(client, args, logger=logger)
         
         elif args.text:
             # Apply CLI config for text mode
             args = apply_cli_config(args, "text")
             
             # Text mode (multiline input)
-            text_mode(client, args)
+            text_mode(client, args, logger=logger)
         
         else:
             # Default to chat mode
@@ -492,12 +538,15 @@ def main():
             args = apply_cli_config(args, "all")
             
             # Standard chat mode
-            chat_mode(client, args)
-    
+            chat_mode(client, args, logger=logger)
     except KeyboardInterrupt:
         print("\nOperation cancelled by user. Exiting gracefully.")
         # Make sure we exit with a non-zero status code to indicate the operation was cancelled
         sys.exit(130)  # 130 is the standard exit code for SIGINT (Ctrl+C)
     except Exception as e:
         print(f"Error: {e}")
-        sys.exit(1)  # Exit with error code 
+        sys.exit(1)  # Exit with error code
+    finally:
+        # Close the logger if it exists
+        if logger:
+            logger.close() 

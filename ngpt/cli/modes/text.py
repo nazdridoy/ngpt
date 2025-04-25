@@ -1,13 +1,15 @@
 from ..formatters import COLORS
 from ..renderers import prettify_markdown, prettify_streaming_markdown
 from ..ui import get_multiline_input
+from ...log import create_logger
 
-def text_mode(client, args):
+def text_mode(client, args, logger=None):
     """Handle the multi-line text input mode.
     
     Args:
         client: The NGPTClient instance
         args: The parsed command-line arguments
+        logger: Optional logger instance
     """
     if args.prompt is not None:
         prompt = args.prompt
@@ -20,9 +22,17 @@ def text_mode(client, args):
     
     print("\nSubmission successful. Waiting for response...")
     
+    # Log the user message if logging is enabled
+    if logger:
+        logger.log("user", prompt)
+    
     # Create messages array with preprompt if available
     messages = None
     if args.preprompt:
+        # Log the system message if logging is enabled
+        if logger:
+            logger.log("system", args.preprompt)
+            
         messages = [
             {"role": "system", "content": args.preprompt},
             {"role": "user", "content": prompt}
@@ -63,6 +73,10 @@ def text_mode(client, args):
     # Stop live display if using stream-prettify
     if args.stream_prettify and live_display:
         live_display.stop()
+        
+    # Log the AI response if logging is enabled
+    if logger and response:
+        logger.log("assistant", response)
         
     # Handle non-stream response or regular prettify
     if (args.no_stream or args.prettify) and response:

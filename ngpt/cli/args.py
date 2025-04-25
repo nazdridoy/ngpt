@@ -56,8 +56,8 @@ def setup_argument_parser():
                       help='Set top_p (controls diversity, default: 1.0)')
     global_group.add_argument('--max_tokens', type=int, 
                       help='Set max response length in tokens')
-    global_group.add_argument('--log', metavar='FILE',
-                      help='Set filepath to log conversation to (For interactive modes)')
+    global_group.add_argument('--log', metavar='FILE', nargs='?', const=True,
+                      help='Set filepath to log conversation to, or create a temporary log file if no path provided')
     global_group.add_argument('--preprompt', 
                       help='Set custom system prompt to control AI behavior')
     global_group.add_argument('--prettify', action='store_const', const='auto',

@@ -1,13 +1,15 @@
 from ..formatters import COLORS
 from ..renderers import prettify_markdown, prettify_streaming_markdown, has_markdown_renderer, show_available_renderers
+from ...log import create_logger
 import sys
 
-def code_mode(client, args):
+def code_mode(client, args, logger=None):
     """Handle the code generation mode.
     
     Args:
         client: The NGPTClient instance
         args: The parsed command-line arguments
+        logger: Optional logger instance
     """
     if args.prompt is None:
         try:
@@ -18,6 +20,10 @@ def code_mode(client, args):
             sys.exit(130)
     else:
         prompt = args.prompt
+    
+    # Log the user prompt if logging is enabled
+    if logger:
+        logger.log("user", prompt)
 
     # Setup for streaming and prettify logic
     stream_callback = None
@@ -86,6 +92,10 @@ def code_mode(client, args):
     # Stop live display if using stream-prettify
     if use_stream_prettify and live_display:
         live_display.stop()
+    
+    # Log the generated code if logging is enabled
+    if logger and generated_code:
+        logger.log("assistant", generated_code)
         
     # Print non-streamed output if needed
     if generated_code and not should_stream:

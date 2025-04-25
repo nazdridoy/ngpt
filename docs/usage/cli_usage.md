@@ -90,7 +90,7 @@ Below is a comprehensive list of all available command-line options, organized b
 
 | Option | Description |
 |--------|-------------|
-| `--log <file>` | Set filepath to log conversation to (for interactive modes) |
+| `--log [file]` | Enable logging: use `--log` to create a temporary log file, or `--log PATH` for a specific location |
 | `-v, --version` | Show version information and exit |
 | `-h, --help` | Show help message and exit |
 
@@ -120,13 +120,36 @@ This opens a continuous chat session where the AI remembers previous exchanges. 
 - Use arrow keys to navigate message history
 - Press Ctrl+C to exit the session
 
-You can log your conversation to a file for later reference:
+#### Conversation Logging
+
+You can log your conversation in several ways:
 
 ```bash
+# Log to a specific file
 ngpt -i --log conversation.log
+
+# Automatically create a temporary log file
+ngpt -i --log
 ```
 
-This saves the entire conversation, including both user inputs and AI responses, to the specified file. 
+When using `--log` without a path, nGPT creates a temporary log file with a timestamp in the name:
+- On Linux/macOS: `/tmp/ngpt-YYYYMMDD-HHMMSS.log`
+- On Windows: `%TEMP%\ngpt-YYYYMMDD-HHMMSS.log`
+
+The log file contains timestamps, roles, and the full content of all messages exchanged, making it easy to reference conversations later.
+
+Logging works in all modes (not just interactive):
+
+```bash
+# Log in standard chat mode
+ngpt --log "Tell me about quantum computing"
+
+# Log in code generation mode 
+ngpt --code --log "function to calculate prime numbers"
+
+# Log in shell command mode
+ngpt --shell --log "find large files in current directory"
+```
 
 #### Combining with Other Options
 

@@ -28,6 +28,11 @@ nGPT is a lightweight Python library and command-line interface (CLI) tool desig
 
 - **Clean Code Generation**: Output code without markdown formatting or explanations.
 
+- 📝 **Rich Multiline Editor**: Interactive multiline text input with syntax highlighting and intuitive controls
+- 🎭 **System Prompts**: Customize model behavior with custom system prompts
+- 📃 **Conversation Logging**: Automatically or manually log conversations with timestamps and role information
+- 🧰 **CLI Components**: Reusable components for building custom AI-powered command-line tools
+
 ## Architecture
 
 nGPT is built around a few core components:

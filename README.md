@@ -79,6 +79,9 @@ ngpt --preprompt "You are a Linux expert" "How do I find large files?"
 
 # Log your conversation to a file
 ngpt --interactive --log conversation.log
+
+# Create a temporary log file automatically
+ngpt --log "Tell me about quantum computing"
 ```
 
 For more examples and detailed usage, visit the [CLI Usage Guide](https://nazdridoy.github.io/ngpt/usage/cli_usage.html).
@@ -314,7 +317,7 @@ You can configure the client using the following options:
 | `--top_p` | Set top_p (controls diversity, default: 1.0) |
 | `--max_tokens` | Set maximum response length in tokens |
 | `--preprompt` | Set custom system prompt to control AI behavior |
-| `--log` | Set filepath to log conversation to (for interactive modes) |
+| `--log` | Enable logging: use `--log` to create a temporary log file, or `--log PATH` for a specific location |
 | `--prettify` | Render markdown responses and code with syntax highlighting |
 | `--stream-prettify` | Enable real-time markdown rendering with syntax highlighting while streaming |
 | `--renderer` | Select which markdown renderer to use with --prettify (auto, rich, or glow) |

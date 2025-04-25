@@ -1,9 +1,11 @@
 import sys
+import os
 import shutil
 import datetime
 import traceback
 from .formatters import COLORS
 from .renderers import prettify_markdown, prettify_streaming_markdown
+from ..log import create_logger
 
 # Optional imports for enhanced UI
 try:
@@ -16,7 +18,7 @@ try:
 except ImportError:
     HAS_PROMPT_TOOLKIT = False
 
-def interactive_chat_session(client, web_search=False, no_stream=False, temperature=0.7, top_p=1.0, max_tokens=None, log_file=None, preprompt=None, prettify=False, renderer='auto', stream_prettify=False):
+def interactive_chat_session(client, web_search=False, no_stream=False, temperature=0.7, top_p=1.0, max_tokens=None, preprompt=None, prettify=False, renderer='auto', stream_prettify=False, logger=None):
     """Start an interactive chat session with the AI.
     
     Args:
@@ -26,11 +28,11 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
         temperature: Controls randomness in the response
         top_p: Controls diversity via nucleus sampling
         max_tokens: Maximum number of tokens to generate in each response
-        log_file: Optional filepath to log conversation to
         preprompt: Custom system prompt to control AI behavior
         prettify: Whether to enable markdown rendering
         renderer: Which markdown renderer to use
         stream_prettify: Whether to enable streaming with prettify
+        logger: Logger instance for logging the conversation
     """
     # Get terminal width for better formatting
     try:
@@ -58,18 +60,9 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
     
     print(f"\n{separator}\n")
     
-    # Initialize log file if provided
-    log_handle = None
-    if log_file:
-        try:
-            timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            log_handle = open(log_file, 'a', encoding='utf-8')
-            log_handle.write(f"\n--- nGPT Session Log: {sys.argv} ---\n")
-            log_handle.write(f"Started at: {timestamp}\n\n")
-            print(f"{COLORS['green']}Logging conversation to: {log_file}{COLORS['reset']}")
-        except Exception as e:
-            print(f"{COLORS['yellow']}Warning: Could not open log file: {str(e)}{COLORS['reset']}")
-            log_handle = None
+    # Show logging info if logger is available
+    if logger:
+        print(f"{COLORS['green']}Logging conversation to: {logger.get_log_path()}{COLORS['reset']}")
     
     # Custom separator - use the same length for consistency
     def print_separator():
@@ -90,9 +83,8 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
     conversation.append(system_message)
     
     # Log system prompt if logging is enabled
-    if log_handle and preprompt:
-        log_handle.write(f"System: {system_prompt}\n\n")
-        log_handle.flush()
+    if logger and preprompt:
+        logger.log("system", system_prompt)
     
     # Initialize prompt_toolkit history
     prompt_history = InMemoryHistory() if HAS_PROMPT_TOOLKIT else None
@@ -187,9 +179,8 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
             conversation.append(user_message)
             
             # Log user message if logging is enabled
-            if log_handle:
-                log_handle.write(f"User: {user_input}\n")
-                log_handle.flush()
+            if logger:
+                logger.log("user", user_input)
             
             # Print assistant indicator with formatting
             if not no_stream and not stream_prettify:
@@ -254,22 +245,16 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
                     else:
                         print(response)
                 
-                # Log assistant response if logging is enabled
-                if log_handle:
-                    log_handle.write(f"Assistant: {response}\n\n")
-                    log_handle.flush()
+                # Log AI response if logging is enabled
+                if logger:
+                    logger.log("assistant", response)
             
             # Print separator between exchanges
             print_separator()
             
     except KeyboardInterrupt:
-        print(f"\n\n{COLORS['green']}Chat session ended by user. Goodbye!{COLORS['reset']}")
+        print(f"\n\n{COLORS['yellow']}Chat session interrupted by user.{COLORS['reset']}")
     except Exception as e:
-        print(f"\n{COLORS['yellow']}Error during chat session: {str(e)}{COLORS['reset']}")
-        # Print traceback for debugging if it's a serious error
-        traceback.print_exc()
-    finally:
-        # Close log file if it was opened
-        if log_handle:
-            log_handle.write(f"\n--- End of Session ---\n")
-            log_handle.close() 
+        print(f"\n{COLORS['yellow']}Error in chat session: {str(e)}{COLORS['reset']}")
+        if os.environ.get("NGPT_DEBUG"):
+            traceback.print_exc() 

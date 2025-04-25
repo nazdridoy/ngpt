@@ -11,7 +11,7 @@ CLI_CONFIG_OPTIONS = {
     "temperature": {"type": "float", "default": 0.7, "context": ["all"]},
     "top_p": {"type": "float", "default": 1.0, "context": ["all"]},
     "max_tokens": {"type": "int", "default": None, "context": ["all"]},
-    "log": {"type": "str", "default": None, "context": ["interactive", "text"]},
+    "log": {"type": "str", "default": None, "context": ["all"]},
     "preprompt": {"type": "str", "default": None, "context": ["all"]},
     "no-stream": {"type": "bool", "default": False, "context": ["all"], "exclusive": ["prettify", "stream-prettify"]},
     "prettify": {"type": "bool", "default": False, "context": ["all"], "exclusive": ["no-stream", "stream-prettify"]},
