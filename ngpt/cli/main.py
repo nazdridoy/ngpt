@@ -2,8 +2,8 @@ import argparse
 import sys
 import os
 from ..client import NGPTClient
-from ..config import load_config, get_config_path, load_configs, add_config_entry, remove_config_entry
-from ..cli_config import (
+from ..utils.config import load_config, get_config_path, load_configs, add_config_entry, remove_config_entry
+from ..utils.cli_config import (
     set_cli_config_option, 
     get_cli_config_option, 
     unset_cli_config_option, 
@@ -12,7 +12,7 @@ from ..cli_config import (
     CLI_CONFIG_OPTIONS,
     load_cli_config
 )
-from ..log import create_logger
+from ..utils.log import create_logger
 from .. import __version__
 
 from .formatters import COLORS, ColoredHelpFormatter

@@ -1,5 +1,5 @@
 from ..formatters import COLORS
-from ...log import create_logger
+from ...utils.log import create_logger
 import subprocess
 import sys
 
