@@ -68,6 +68,15 @@ ngpt --shell "list all files in the current directory"
 # Read from stdin and use the content in your prompt
 echo "What is this text about?" | ngpt --stdin "Analyze the following text: {}"
 
+# Rewrite text to improve quality while preserving tone and meaning
+echo "your text" | ngpt --rewrite
+
+# Rewrite text from a command-line argument
+ngpt --rewrite "your text to rewrite"
+
+# Use interactive multiline editor to enter text to rewrite
+ngpt --rewrite
+
 # Display markdown responses with beautiful formatting
 ngpt --prettify "Explain markdown syntax with examples"
 
@@ -108,6 +117,7 @@ For more examples and detailed usage, visit the [CLI Usage Guide](https://nazdri
 - ⚡ **Real-time Markdown**: Stream responses with live updating syntax highlighting and formatting
 - ⚙️ **Multiple Configurations**: Cross-platform config system supporting different profiles
 - 💻 **Shell Command Generation**: OS-aware command execution
+- 🧠 **Text Rewriting**: Improve text quality while maintaining original tone and meaning
 - 🧩 **Clean Code Generation**: Output code without markdown or explanations
 - 📝 **Rich Multiline Editor**: Interactive multiline text input with syntax highlighting and intuitive controls
 - 🎭 **System Prompts**: Customize model behavior with custom system prompts
@@ -326,6 +336,7 @@ You can configure nGPT using the following options:
 | `-c, --code` | Generate clean code without markdown formatting or explanations |
 | `-t, --text` | Open interactive multiline editor for complex prompts with syntax highlighting |
 | `--stdin` | Read from stdin and use content with prompt. Use {} in prompt as placeholder for stdin content |
+| `--rewrite` | Rewrite text to improve quality while preserving original tone and meaning |
 
 #### Global Options
 

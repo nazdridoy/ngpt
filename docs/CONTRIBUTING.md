@@ -1,4 +1,6 @@
 ---
+title: Contributing to NGPT
+description: Guidelines and instructions for contributing to the NGPT project
 ---
 
 # Contributing to NGPT
@@ -32,7 +34,12 @@ Thank you for your interest in contributing to NGPT! This document provides guid
     - `config_manager.py` - CLI configuration handling
     - `formatters.py` - Output formatting logic
     - `interactive.py` - Interactive mode implementation
-    - `modes/` - Different operational modes (e.g., chat, run)
+    - `modes/` - Different operational modes
+      - `chat.py` - Chat mode functionality
+      - `code.py` - Code generation mode
+      - `shell.py` - Shell command generation
+      - `text.py` - Text generation mode
+      - `rewrite.py` - Text rewriting mode
     - `renderers.py` - Output rendering logic (e.g., markdown)
     - `ui.py` - User interface elements (e.g., prompts, spinners)
   - `utils/` - Utility modules
@@ -40,6 +47,10 @@ Thank you for your interest in contributing to NGPT! This document provides guid
     - `config.py` - API endpoint and general configuration management
     - `cli_config.py` - CLI-specific option configuration management
     - `log.py` - Logging setup and utilities
+- `docs/` - Documentation files
+  - `api/` - API reference documentation
+  - `examples/` - Example code and usage
+  - `usage/` - Usage guides and tutorials
 - `.github/` - GitHub workflows and templates
 - `pyproject.toml` - Project configuration and dependencies
 

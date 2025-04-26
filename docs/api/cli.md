@@ -544,6 +544,136 @@ text_mode(
 )
 ```
 
+### Rewrite Mode
+
+```python
+from ngpt.cli.modes.rewrite import rewrite_mode
+
+def rewrite_mode(
+    client,
+    args,
+    logger=None
+)
+```
+
+Executes a text rewriting operation to improve text quality while preserving meaning and tone.
+
+**Parameters:**
+- `client` (NGPTClient): The initialized client for the operation
+- `args` (namespace): Parsed command-line arguments including:
+  - `prompt` (str, optional): Text to rewrite from command line
+  - `temperature` (float): Temperature setting (0.0-1.0)
+  - `top_p` (float): Top-p sampling value (0.0-1.0)
+  - `max_tokens` (int, optional): Maximum tokens to generate
+  - `no_stream` (bool): Whether to disable streaming
+  - `prettify` (bool): Whether to prettify markdown output
+  - `stream_prettify` (bool): Enable real-time markdown rendering
+  - `renderer` (str): Markdown renderer to use
+  - `web_search` (bool): Whether to enable web search
+- `logger` (object, optional): Logger instance
+
+**Input Methods:**
+The rewrite mode supports three input methods:
+1. Stdin (piped input): Content read from stdin if available
+2. Command-line argument: Text provided via args.prompt
+3. Multiline editor: If neither stdin nor prompt is available, opens interactive editor
+
+**Features:**
+- **Text Quality Improvement**: Fixes grammar, flow, readability while preserving meaning
+- **Multiline Editor**: Interactive editor with syntax highlighting for entering text when no input is piped or provided as argument
+- **Clipboard Integration**: Offers to copy rewritten text to clipboard with cross-platform support
+- **Format Preservation**: Maintains original formatting including code blocks, lists, and markdown
+
+**Example with Stdin:**
+```python
+import sys
+import subprocess
+from ngpt import NGPTClient, load_config
+from ngpt.cli.modes.rewrite import rewrite_mode
+import argparse
+
+client = NGPTClient(**load_config())
+
+# Create args namespace with required parameters
+args = argparse.Namespace()
+args.prompt = None
+args.temperature = 0.7
+args.top_p = 1.0
+args.max_tokens = None
+args.no_stream = False
+args.prettify = True
+args.stream_prettify = False
+args.renderer = 'rich'
+args.web_search = False
+
+# Redirect stdin from a string or file
+original_stdin = sys.stdin
+sys.stdin = open('text_to_rewrite.txt', 'r')
+
+# Call rewrite mode
+rewrite_mode(client=client, args=args)
+
+# Restore stdin
+sys.stdin = original_stdin
+```
+
+**Example with Command-line Argument:**
+```python
+from ngpt import NGPTClient, load_config
+from ngpt.cli.modes.rewrite import rewrite_mode
+import argparse
+
+client = NGPTClient(**load_config())
+
+# Create args namespace with required parameters
+args = argparse.Namespace()
+args.prompt = "We was hoping you could help with this issue what we are having with the server."
+args.temperature = 0.7
+args.top_p = 1.0
+args.max_tokens = None
+args.no_stream = False
+args.prettify = True
+args.stream_prettify = False
+args.renderer = 'rich'
+args.web_search = False
+
+rewrite_mode(
+    client=client,
+    args=args
+)
+```
+
+**Example with Multiline Editor:**
+```python
+from ngpt import NGPTClient, load_config
+from ngpt.cli.modes.rewrite import rewrite_mode
+import argparse
+import sys
+
+client = NGPTClient(**load_config())
+
+# Create args namespace with required parameters
+args = argparse.Namespace()
+args.prompt = None
+args.temperature = 0.7
+args.top_p = 1.0
+args.max_tokens = None
+args.no_stream = False
+args.prettify = True
+args.stream_prettify = False
+args.renderer = 'rich'
+args.web_search = False
+
+# Ensure stdin appears to be a TTY
+# (This will trigger the multiline editor in a real terminal)
+# Note: This is just to illustrate how the condition works
+if sys.stdin.isatty():
+    print("Multiline editor will open in a real terminal")
+    rewrite_mode(client=client, args=args)
+else:
+    print("This example would open a multiline editor in a real terminal")
+```
+
 ## Reference Tables
 
 ### Markdown Renderers

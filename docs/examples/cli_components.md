@@ -397,6 +397,197 @@ Save this as `code-review.py` and use it:
 python code-review.py --language javascript --prettify
 ```
 
+## Building a Text Rewriting Tool
+
+This example creates a text improvement tool that uses nGPT's rewrite mode to enhance text quality while preserving the original meaning and tone:
+
+```python
+#!/usr/bin/env python3
+import argparse
+import sys
+from pathlib import Path
+from ngpt import NGPTClient
+from ngpt.utils.config import load_config
+from ngpt.cli.ui import multiline_editor
+from ngpt.cli.renderers import prettify_markdown, prettify_streaming_markdown
+from ngpt.cli.formatters import ColoredHelpFormatter, COLORS
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Text improvement assistant",
+        formatter_class=ColoredHelpFormatter
+    )
+    
+    # Command line arguments
+    parser.add_argument("text", nargs="?", help="Text to rewrite (optional)")
+    parser.add_argument("--file", "-f", help="Read text from file")
+    parser.add_argument("--output", "-o", help="Save output to file")
+    parser.add_argument("--type", "-t", choices=["formal", "casual", "academic", "creative", "general"],
+                      default="general", help="Style of rewriting")
+    parser.add_argument("--stream", "-s", action="store_true", 
+                      help="Stream results with live updates")
+    parser.add_argument("--prettify", "-p", action="store_true", 
+                      help="Format output with markdown rendering")
+    
+    args = parser.parse_args()
+    
+    # Get input text
+    text = ""
+    if args.text:
+        # Text from command line
+        text = args.text
+    elif args.file:
+        # Text from file
+        try:
+            file_path = Path(args.file)
+            if not file_path.exists():
+                print(f"Error: File '{args.file}' not found", file=sys.stderr)
+                sys.exit(1)
+            with open(file_path, 'r') as f:
+                text = f.read()
+        except Exception as e:
+            print(f"Error reading file: {e}", file=sys.stderr)
+            sys.exit(1)
+    else:
+        # No text provided, use multiline editor
+        try:
+            import prompt_toolkit
+        except ImportError:
+            print("Error: prompt_toolkit is required for multiline editor", file=sys.stderr)
+            print("Install with: pip install prompt_toolkit", file=sys.stderr)
+            sys.exit(1)
+        
+        print(f"{COLORS['cyan']}Text Improvement Assistant{COLORS['reset']}")
+        print("Enter or paste the text you want to improve.")
+        print("Press Ctrl+D to submit, or Esc to cancel.")
+        
+        try:
+            text = multiline_editor(
+                message="Enter text to rewrite:",
+                default_text="",
+                lexer_name="markdown"  # Use markdown for general text
+            )
+        except KeyboardInterrupt:
+            print("\nOperation cancelled.")
+            sys.exit(0)
+        
+        if not text.strip():
+            print("No text entered. Exiting.")
+            sys.exit(0)
+    
+    # Initialize client
+    try:
+        config = load_config()
+        client = NGPTClient(**config)
+    except Exception as e:
+        print(f"{COLORS['yellow']}Error initializing AI client: {e}{COLORS['reset']}", 
+              file=sys.stderr)
+        sys.exit(1)
+    
+    # Style instructions
+    style_guide = {
+        "formal": "Use formal language, proper grammar, and professional tone.",
+        "casual": "Use conversational, friendly tone while improving clarity.",
+        "academic": "Use academic language with precise terminology and citations where appropriate.",
+        "creative": "Make the text more engaging and vibrant while maintaining meaning.",
+        "general": "Improve clarity and correctness while preserving the original tone."
+    }
+    
+    # System prompt for rewriting
+    system_prompt = f"""You are a text improvement assistant. 
+Rewrite the text to improve quality while preserving the original meaning and intent.
+{style_guide[args.type]}
+Focus on:
+1. Fixing grammar and spelling errors
+2. Improving clarity and readability
+3. Enhancing flow and structure
+4. Maintaining the author's voice and meaning
+Return ONLY the improved text without explanations or notes."""
+    
+    print(f"\n{COLORS['cyan']}Rewriting text ({args.type} style)...{COLORS['reset']}")
+    
+    # Process with AI
+    try:
+        if args.stream:
+            # Stream with live updates
+            if args.prettify:
+                streamer = prettify_streaming_markdown(
+                    renderer='rich',
+                    header_text="Improved Text"
+                )
+                
+                full_response = ""
+                for chunk in client.chat(
+                    text,
+                    system_prompt=system_prompt,
+                    stream=True
+                ):
+                    full_response += chunk
+                    streamer.update_content(full_response)
+                
+                improved_text = full_response
+            else:
+                # Simple streaming
+                print(f"\n{COLORS['green']}Improved Text:{COLORS['reset']}\n")
+                improved_text = ""
+                for chunk in client.chat(
+                    text,
+                    system_prompt=system_prompt,
+                    stream=True
+                ):
+                    improved_text += chunk
+                    print(chunk, end="", flush=True)
+                print()  # Final newline
+        else:
+            # Get complete response
+            improved_text = client.chat(
+                text,
+                system_prompt=system_prompt
+            )
+            
+            if args.prettify:
+                print(f"\n{COLORS['green']}Improved Text:{COLORS['reset']}\n")
+                print(prettify_markdown(improved_text))
+            else:
+                print(f"\n{COLORS['green']}Improved Text:{COLORS['reset']}\n")
+                print(improved_text)
+        
+        # Save to file if requested
+        if args.output:
+            try:
+                with open(args.output, 'w') as f:
+                    f.write(improved_text)
+                print(f"\n{COLORS['green']}Improved text saved to {args.output}{COLORS['reset']}")
+            except Exception as e:
+                print(f"{COLORS['yellow']}Error saving to file: {e}{COLORS['reset']}", 
+                      file=sys.stderr)
+    
+    except KeyboardInterrupt:
+        print("\nOperation cancelled.")
+    except Exception as e:
+        print(f"\n{COLORS['yellow']}Error: {e}{COLORS['reset']}", file=sys.stderr)
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
+```
+
+Save this as `text-improver.py` and use it like:
+
+```bash
+# Use multiline editor for input
+python text-improver.py --type formal --prettify
+
+# Provide text directly from command line
+python text-improver.py "I aint never seen nothing like it" --type formal --prettify
+
+# Read from file and save to another file
+python text-improver.py --file rough_draft.txt --output improved.txt --type academic
+
+# Stream results with live updates
+python text-improver.py --file notes.txt --type casual --stream --prettify
+```
+
 ## Advanced CLI Configuration Example
 
 Create a CLI tool with persistent configuration:

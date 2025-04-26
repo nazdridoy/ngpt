@@ -49,7 +49,7 @@ Below is a comprehensive list of all available command-line options, organized b
 | `-c, --code` | Generate clean code without markdown formatting or explanations |
 | `-t, --text` | Open interactive multiline editor for complex prompts with syntax highlighting |
 | `--stdin` | Read from stdin and use content in your prompt with {} placeholder |
-| `--no-stream` | Return the whole response without streaming (useful for scripts) |
+| `--rewrite` | Rewrite text to improve quality while preserving original tone and meaning |
 
 ### Configuration Management
 
@@ -71,6 +71,7 @@ Below is a comprehensive list of all available command-line options, organized b
 
 | Option | Description |
 |--------|-------------|
+| `--no-stream` | Return the whole response without streaming (useful for scripts) |
 | `--prettify` | Render markdown responses and code with syntax highlighting (disables streaming) |
 | `--stream-prettify` | Enable real-time markdown rendering with syntax highlighting while streaming (uses Rich) |
 | `--renderer <name>` | Select which markdown renderer to use with --prettify (auto, rich, or glow) |
@@ -289,6 +290,138 @@ cat french_text.txt | ngpt --stdin "Translate this French text to English: {}"
 #### Placeholder Behavior
 
 The `{}` placeholder will be replaced with stdin content. If the placeholder is not found in your prompt, stdin content will be appended to the end of your prompt with a warning.
+
+### Text Rewriting
+
+Rewrite text to improve its quality, clarity, and flow while carefully preserving the original meaning, tone, and intent:
+
+```bash
+# Rewrite text from stdin
+echo "The implementation of the feature, which was delayed due to unforeseen technical complications, is now scheduled for next week's release." | ngpt --rewrite
+```
+
+The rewrite feature intelligently improves writing while preserving the original message's meaning and style.
+
+#### Input Methods
+
+Rewrite mode supports three different input methods:
+
+1. **From stdin (piped input)**:
+   ```bash
+   cat document.txt | ngpt --rewrite
+   ```
+
+2. **From command-line argument**:
+   ```bash
+   ngpt --rewrite "We was hoping you could help with this issue what we are having with the server."
+   ```
+
+3. **From multiline editor**:
+   ```bash
+   ngpt --rewrite
+   # Opens an interactive editor for entering text to rewrite
+   ```
+
+#### Multiline Editor for Text Rewriting
+
+When you run `ngpt --rewrite` without piped input or a command-line argument, it opens an interactive multiline editor:
+
+```bash
+ngpt --rewrite
+```
+
+This editor provides a comfortable environment for entering longer or more complex text:
+
+- **Key commands**:
+  - `Enter` - Insert a new line
+  - `Tab` - Insert tab/indentation
+  - `Ctrl+D` or `F10` - Submit the text for rewriting
+  - `Esc` - Cancel and exit
+  - `Arrow keys` - Navigate through the text
+  - `Home/End` - Move to beginning/end of line
+  
+- **Features**:
+  - Syntax highlighting
+  - Line numbering
+  - Word wrapping
+  - Multi-line editing
+  - Copy/paste support
+  
+- **When to use**:
+  - For longer documents
+  - When editing text with complex formatting
+  - For text with multiple paragraphs
+  - When working with content that has code blocks or other structured elements
+  
+```bash
+# Example workflow
+ngpt --rewrite
+# Enter or paste your text in the editor
+# Press Ctrl+D to submit
+# Review the rewritten text
+# Optionally copy to clipboard with 'y'
+```
+
+This approach is especially useful for documents, emails, or articles that need structural preservation while improving language quality.
+
+#### What Gets Improved
+
+The rewrite feature focuses on:
+- Grammar and spelling corrections
+- Improved sentence structure and flow
+- Enhanced clarity and readability
+- More concise and precise language
+- Breaking up overly long sentences
+- Converting passive voice to active when appropriate
+- Removing redundancies and filler words
+
+#### What Gets Preserved
+
+While improving text, the rewrite feature carefully maintains:
+- Original meaning and information content
+- Tone (formal/casual/technical/friendly/serious/rude)
+- Author's perspective and point of view
+- Technical terminology and jargon
+- Formatting (paragraphs, lists, code blocks, markdown)
+- URLs, file paths, and special variables
+
+#### Examples
+
+**Original**: *"The implementation of the feature, which was delayed due to unforeseen technical complications, is now scheduled for next week's release."*
+
+**Rewritten**: *"We delayed the feature implementation due to unforeseen technical complications. It's now scheduled for next week's release."*
+
+**Original**: *"We was hoping you could help with this issue what we are having with the server."*
+
+**Rewritten**: *"We were hoping you could help with this issue we're having with the server."*
+
+#### Combining with Other Options
+
+Rewrite mode can be combined with other options:
+
+```bash
+# Rewrite with syntax highlighting for the output
+cat essay.txt | ngpt --rewrite --prettify
+
+# Rewrite with real-time syntax highlighting
+cat essay.txt | ngpt --rewrite --stream-prettify
+
+# Rewrite with specific model
+cat email.txt | ngpt --rewrite --model gpt-4o
+
+# Rewrite with logging
+cat document.txt | ngpt --rewrite --log rewrite_log.txt
+```
+
+#### Copying to Clipboard
+
+After rewriting, you'll be prompted to copy the result to clipboard (requires pyperclip to be installed):
+
+```
+Copy to clipboard? (y/n)
+```
+
+Answering `y` copies the rewritten text to your clipboard for easy pasting into documents or emails.
 
 ### Generating Code
 
@@ -708,6 +841,25 @@ ngpt "Write a 300-word sci-fi story about time travel"
 
 # Write poetry
 ngpt "Write a haiku about mountains"
+```
+
+### Writing & Editing
+
+```bash
+# Improve email drafts
+cat draft_email.txt | ngpt --rewrite
+
+# Enhance documentation clarity
+cat documentation.md | ngpt --rewrite
+
+# Improve resume bullet points
+ngpt --rewrite "Responsible for managing team of 5 developers and ensuring project deadlines were met"
+
+# Edit academic writing for clarity
+cat thesis_chapter.txt | ngpt --rewrite
+
+# Polish blog posts
+cat blog_draft.md | ngpt --rewrite
 ```
 
 ### Programming Help

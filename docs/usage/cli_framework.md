@@ -259,6 +259,7 @@ from ngpt.cli.modes.chat import chat_mode
 from ngpt.cli.modes.code import code_mode
 from ngpt.cli.modes.shell import shell_mode
 from ngpt.cli.modes.text import text_mode
+from ngpt.cli.modes.rewrite import rewrite_mode
 
 # Initialize the client
 client = NGPTClient(**load_config())
@@ -276,6 +277,10 @@ shell_mode(client, prompt="Find all PNG files in current directory")
 
 # Text mode - handle multiline text input
 text_mode(client, prettify=True)
+
+# Rewrite mode - improve text quality while preserving meaning and tone
+rewrite_mode(client, text="We was hoping you could help with this issue what we are having.", 
+             prettify=True, stream=True)
 ```
 
 Each mode handler encapsulates the specialized behavior for that particular mode of operation.
