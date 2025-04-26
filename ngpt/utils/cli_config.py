@@ -24,7 +24,8 @@ CLI_CONFIG_OPTIONS = {
     "recursive-chunk": {"type": "bool", "default": False, "context": ["gitcommsg"]},
     "diff": {"type": "str", "default": None, "context": ["gitcommsg"]},
     "chunk-size": {"type": "int", "default": 200, "context": ["gitcommsg"]},
-    "max-depth": {"type": "int", "default": 3, "context": ["gitcommsg"]},
+    "max-msg-lines": {"type": "int", "default": 20, "context": ["gitcommsg"]},
+    "max-recursion-depth": {"type": "int", "default": 3, "context": ["gitcommsg"]},
 }
 
 def get_cli_config_dir() -> Path:

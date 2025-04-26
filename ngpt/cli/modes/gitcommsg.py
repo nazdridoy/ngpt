@@ -441,7 +441,7 @@ def handle_api_call(client, prompt, system_prompt=None, logger=None, max_retries
             # Exponential backoff
             wait_seconds *= 2
 
-def process_with_chunking(client, diff_content, context_data, chunk_size=200, recursive=False, max_depth=3, logger=None):
+def process_with_chunking(client, diff_content, context_data, chunk_size=200, recursive=False, logger=None, max_msg_lines=20, max_recursion_depth=3):
     """Process diff with chunking to handle large diffs.
     
     Args:
@@ -450,8 +450,9 @@ def process_with_chunking(client, diff_content, context_data, chunk_size=200, re
         context_data: The processed context data
         chunk_size: Maximum number of lines per chunk
         recursive: Whether to use recursive chunking
-        max_depth: Maximum recursion depth
         logger: Optional logger instance
+        max_msg_lines: Maximum number of lines in commit message before condensing
+        max_recursion_depth: Maximum recursion depth for message condensing
         
     Returns:
         str: Generated commit message
@@ -517,11 +518,20 @@ def process_with_chunking(client, diff_content, context_data, chunk_size=200, re
     combined_analyses = "\n\n".join(partial_analyses)
     combined_line_count = len(combined_analyses.splitlines())
     
-    if recursive and combined_line_count > 50 and max_depth > 0:
-        # Use recursive chunking
-        return recursive_process(client, combined_analyses, context_data, max_depth, logger)
+    if recursive and combined_line_count > chunk_size:
+        # Use recursive analysis chunking
+        return recursive_chunk_analysis(
+            client, 
+            combined_analyses, 
+            context_data, 
+            chunk_size,
+            logger,
+            max_msg_lines,
+            max_recursion_depth
+        )
     else:
-        # Use direct combination
+        # Combined analysis is under the chunk size limit, generate the commit message
+        print(f"{COLORS['green']}Generating commit message from combined analysis...{COLORS['reset']}")
         combine_prompt = create_combine_prompt(partial_analyses)
         
         # Log combine template
@@ -529,66 +539,59 @@ def process_with_chunking(client, diff_content, context_data, chunk_size=200, re
             logger.log_template("DEBUG", "COMBINE", combine_prompt)
         
         try:
-            result = handle_api_call(client, combine_prompt, system_prompt, logger)
-            return result
+            commit_message = handle_api_call(client, combine_prompt, system_prompt, logger)
+            
+            # If the commit message is too long, we need to condense it
+            if len(commit_message.splitlines()) > max_msg_lines:
+                return condense_commit_message(
+                    client,
+                    commit_message,
+                    system_prompt,
+                    max_msg_lines,
+                    max_recursion_depth,
+                    1,  # Start at depth 1
+                    logger
+                )
+            return commit_message
         except Exception as e:
             print(f"{COLORS['red']}Error combining analyses: {str(e)}{COLORS['reset']}")
             if logger:
                 logger.error(f"Error combining analyses: {str(e)}")
             return None
 
-def recursive_process(client, combined_analysis, context_data, max_depth, logger=None, current_depth=1):
-    """Process large analysis results recursively.
+def recursive_chunk_analysis(client, combined_analysis, context_data, chunk_size, logger=None, max_msg_lines=20, max_recursion_depth=3, current_depth=1):
+    """Recursively chunk and process large analysis results until they're small enough.
     
     Args:
         client: The NGPTClient instance
         combined_analysis: The combined analysis to process
         context_data: The processed context data
-        max_depth: Maximum recursion depth
+        chunk_size: Maximum number of lines per chunk
         logger: Optional logger instance
-        current_depth: Current recursion depth
+        max_msg_lines: Maximum number of lines in commit message before condensing
+        max_recursion_depth: Maximum recursion depth for message condensing
+        current_depth: Current recursive analysis depth
         
     Returns:
         str: Generated commit message
     """
     system_prompt = create_system_prompt(context_data)
     
-    print(f"\n{COLORS['cyan']}Recursive chunking level {current_depth}/{max_depth}...{COLORS['reset']}")
+    print(f"\n{COLORS['cyan']}Recursive analysis chunking level {current_depth}...{COLORS['reset']}")
     
     if logger:
-        logger.info(f"Starting recursive chunking at depth {current_depth}/{max_depth}")
+        logger.info(f"Starting recursive analysis chunking at depth {current_depth}")
         logger.debug(f"Combined analysis size: {len(combined_analysis.splitlines())} lines")
         logger.log_content("DEBUG", f"COMBINED_ANALYSIS_DEPTH_{current_depth}", combined_analysis)
     
-    # Create rechunk prompt
-    rechunk_prompt = create_rechunk_prompt(combined_analysis, current_depth)
-    
-    # Log rechunk template
-    if logger:
-        logger.log_template("DEBUG", f"RECHUNK_DEPTH_{current_depth}", rechunk_prompt)
-    
-    # Process rechunk
-    try:
-        result = handle_api_call(client, rechunk_prompt, system_prompt, logger)
+    # If analysis is under chunk size, generate the commit message
+    if len(combined_analysis.splitlines()) <= chunk_size:
+        print(f"{COLORS['green']}Analysis is small enough, generating commit message...{COLORS['reset']}")
         
-        # Check if further recursive chunking is needed
-        result_line_count = len(result.splitlines())
-        
-        if result_line_count > 50 and current_depth < max_depth:
-            # Need another level of chunking
-            print(f"{COLORS['yellow']}Result still too large ({result_line_count} lines), continuing recursion...{COLORS['reset']}")
-            if logger:
-                logger.info(f"Result still too large ({result_line_count} lines), depth {current_depth}/{max_depth}")
-            
-            return recursive_process(client, result, context_data, max_depth, logger, current_depth + 1)
-        else:
-            # Final processing
-            print(f"{COLORS['green']}Recursion complete, generating final commit message...{COLORS['reset']}")
-            
-            # Create final combine prompt
-            final_prompt = f"""Create a CONVENTIONAL COMMIT MESSAGE based on these analyzed git changes:
+        # Create final prompt
+        final_prompt = f"""Create a CONVENTIONAL COMMIT MESSAGE based on these analyzed git changes:
 
-{result}
+{combined_analysis}
 
 FORMAT:
 type[(scope)]: <concise summary> (max 50 chars)
@@ -604,17 +607,210 @@ RULES:
 4. BE SPECIFIC - mention technical details and function names
 
 DO NOT include any explanation or commentary outside the commit message format."""
-            
-            # Log final template
-            if logger:
-                logger.log_template("DEBUG", "FINAL", final_prompt)
-            
-            return handle_api_call(client, final_prompt, system_prompt, logger)
-    except Exception as e:
-        print(f"{COLORS['red']}Error in recursive processing: {str(e)}{COLORS['reset']}")
+        
+        # Log final template
         if logger:
-            logger.error(f"Error in recursive processing at depth {current_depth}: {str(e)}")
-        return None
+            logger.log_template("DEBUG", f"FINAL_PROMPT_DEPTH_{current_depth}", final_prompt)
+        
+        # Generate the commit message
+        commit_message = handle_api_call(client, final_prompt, system_prompt, logger)
+        
+        if logger:
+            logger.log_content("DEBUG", f"COMMIT_MESSAGE_DEPTH_{current_depth}", commit_message)
+        
+        # If the commit message is too long, we need to condense it
+        if len(commit_message.splitlines()) > max_msg_lines:
+            return condense_commit_message(
+                client,
+                commit_message,
+                system_prompt,
+                max_msg_lines,
+                max_recursion_depth,
+                1,  # Start at depth 1
+                logger
+            )
+        return commit_message
+    
+    # Analysis is still too large, need to chunk it
+    print(f"{COLORS['yellow']}Analysis still too large ({len(combined_analysis.splitlines())} lines), chunking...{COLORS['reset']}")
+    
+    # Split the analysis into chunks
+    analysis_chunks = split_into_chunks(combined_analysis, chunk_size)
+    analysis_chunk_count = len(analysis_chunks)
+    
+    if logger:
+        logger.info(f"Split analysis into {analysis_chunk_count} chunks at depth {current_depth}")
+    
+    # Process each analysis chunk and get a condensed version
+    condensed_chunks = []
+    for i, analysis_chunk in enumerate(analysis_chunks):
+        print(f"\n{COLORS['cyan']}[Analysis chunk {i+1}/{analysis_chunk_count} at depth {current_depth}]{COLORS['reset']}")
+        
+        # Create a target size based on how many chunks we have
+        target_size = min(int(chunk_size / analysis_chunk_count), 100)  # Make sure it's not too small
+        
+        # Create a prompt to condense this analysis chunk
+        condense_prompt = f"""You are analyzing a PORTION of already analyzed git changes. This is analysis data, not raw git diff.
+
+Take this SECTION of technical analysis and condense it to be UNDER {target_size} lines while preserving the most important technical details.
+
+Preserve full file paths, function names, and technical changes.
+Focus on detailed technical changes and group related changes when appropriate.
+Preserve all distinct files and changes.
+
+SECTION OF ANALYSIS TO CONDENSE:
+
+{analysis_chunk}
+
+Create a CONDENSED ANALYSIS SUMMARY for this section only."""
+        
+        if logger:
+            logger.log_template("DEBUG", f"CONDENSE_ANALYSIS_DEPTH_{current_depth}_CHUNK_{i+1}", condense_prompt)
+        
+        print(f"{COLORS['yellow']}Condensing analysis chunk {i+1}/{analysis_chunk_count}...{COLORS['reset']}")
+        
+        # Condense this analysis chunk
+        try:
+            condensed_chunk = handle_api_call(client, condense_prompt, system_prompt, logger)
+            condensed_chunks.append(condensed_chunk)
+            
+            if logger:
+                logger.log_content("DEBUG", f"CONDENSED_ANALYSIS_DEPTH_{current_depth}_CHUNK_{i+1}", condensed_chunk)
+                
+            print(f"{COLORS['green']}✓ Analysis chunk {i+1}/{analysis_chunk_count} condensed{COLORS['reset']}")
+        except Exception as e:
+            print(f"{COLORS['red']}Error condensing analysis chunk {i+1}: {str(e)}{COLORS['reset']}")
+            if logger:
+                logger.error(f"Error condensing analysis chunk {i+1} at depth {current_depth}: {str(e)}")
+            return None
+        
+        # Rate limit protection between chunks
+        if i < analysis_chunk_count - 1:
+            print(f"{COLORS['yellow']}Waiting to avoid rate limits...{COLORS['reset']}")
+            time.sleep(5)
+    
+    # Combine condensed chunks
+    combined_condensed = "\n\n".join(condensed_chunks)
+    condensed_line_count = len(combined_condensed.splitlines())
+    
+    print(f"\n{COLORS['cyan']}Condensed analysis to {condensed_line_count} lines at depth {current_depth}{COLORS['reset']}")
+    
+    if logger:
+        logger.info(f"Combined condensed analysis: {condensed_line_count} lines at depth {current_depth}")
+        logger.log_content("DEBUG", f"COMBINED_CONDENSED_DEPTH_{current_depth}", combined_condensed)
+    
+    # Recursively process the combined condensed analysis
+    return recursive_chunk_analysis(
+        client,
+        combined_condensed,
+        context_data,
+        chunk_size,
+        logger,
+        max_msg_lines,
+        max_recursion_depth,
+        current_depth + 1
+    )
+
+def condense_commit_message(client, commit_message, system_prompt, max_msg_lines, max_recursion_depth, current_depth=1, logger=None):
+    """Recursively condense a commit message to be under the maximum length.
+    
+    Args:
+        client: The NGPTClient instance
+        commit_message: The commit message to condense
+        system_prompt: The system prompt
+        max_msg_lines: Maximum number of lines in commit message
+        max_recursion_depth: Maximum recursion depth for condensing
+        current_depth: Current recursion depth
+        logger: Optional logger instance
+        
+    Returns:
+        str: Condensed commit message
+    """
+    commit_lines = len(commit_message.splitlines())
+    print(f"\n{COLORS['cyan']}Commit message has {commit_lines} lines (depth {current_depth}/{max_recursion_depth}){COLORS['reset']}")
+    
+    if logger:
+        logger.info(f"Commit message has {commit_lines} lines at depth {current_depth}/{max_recursion_depth}")
+        logger.log_content("DEBUG", f"COMMIT_MESSAGE_DEPTH_{current_depth}", commit_message)
+    
+    # If already under the limit, return as is
+    if commit_lines <= max_msg_lines:
+        return commit_message
+    
+    # Check if we've reached the maximum recursion depth
+    is_final_depth = current_depth >= max_recursion_depth
+    
+    # Create the condense prompt - only mention the specific max_msg_lines at final depth
+    if is_final_depth:
+        condense_prompt = f"""Rewrite this git commit message to be MUST BE AT MOST {max_msg_lines} LINES TOTAL.
+PRESERVE the first line exactly as is, and keep the most important changes in the bullet points.
+Group related changes when possible.
+
+CURRENT MESSAGE (TOO LONG):
+{commit_message}
+
+REQUIREMENTS:
+1. First line must be preserved exactly as is
+2. MUST BE AT MOST {max_msg_lines} LINES TOTAL including blank lines - THIS IS A HARD REQUIREMENT
+3. Include the most significant changes
+4. Group related changes when possible
+5. Keep proper formatting with bullet points
+6. Maintain detailed file/function references in each bullet point"""
+    else:
+        # At earlier depths, don't specify the exact line count limit
+        condense_prompt = f"""Rewrite this git commit message to be more concise.
+PRESERVE the first line exactly as is, and keep the most important changes in the bullet points.
+Group related changes when possible.
+
+CURRENT MESSAGE (TOO LONG):
+{commit_message}
+
+REQUIREMENTS:
+1. First line must be preserved exactly as is
+2. Make the message significantly shorter while preserving key information
+3. Include the most significant changes
+4. Group related changes when possible
+5. Keep proper formatting with bullet points
+6. Maintain detailed file/function references in each bullet point"""
+    
+    if logger:
+        logger.log_template("DEBUG", f"CONDENSE_PROMPT_DEPTH_{current_depth}", condense_prompt)
+    
+    print(f"{COLORS['yellow']}Condensing commit message (depth {current_depth}/{max_recursion_depth})...{COLORS['reset']}")
+    
+    try:
+        condensed_result = handle_api_call(client, condense_prompt, system_prompt, logger)
+        
+        if logger:
+            logger.log_content("DEBUG", f"CONDENSED_RESULT_DEPTH_{current_depth}", condensed_result)
+        
+        # Check if we need to condense further
+        condensed_lines = len(condensed_result.splitlines())
+        
+        if condensed_lines > max_msg_lines and current_depth < max_recursion_depth:
+            print(f"{COLORS['yellow']}Commit message still has {condensed_lines} lines. Further condensing...{COLORS['reset']}")
+            
+            if logger:
+                logger.info(f"Commit message still has {condensed_lines} lines after condensing at depth {current_depth}")
+            
+            # Try again at the next depth
+            return condense_commit_message(
+                client,
+                condensed_result,
+                system_prompt,
+                max_msg_lines,
+                max_recursion_depth,
+                current_depth + 1,
+                logger
+            )
+        else:
+            return condensed_result
+    except Exception as e:
+        print(f"{COLORS['red']}Error condensing commit message: {str(e)}{COLORS['reset']}")
+        if logger:
+            logger.error(f"Error condensing commit message at depth {current_depth}: {str(e)}")
+        # Return the original message if condensing fails
+        return commit_message
 
 def gitcommsg_mode(client, args, logger=None):
     """Handle the Git commit message generation mode.
@@ -701,10 +897,20 @@ def gitcommsg_mode(client, args, logger=None):
             if active_logger:
                 active_logger.info(f"Using chunk size: {chunk_size}")
         
+        # Get max_msg_lines from args or use default
+        max_msg_lines = getattr(args, 'max_msg_lines', 20)  # Default to 20 if not specified
+        if active_logger:
+            active_logger.info(f"Maximum commit message lines: {max_msg_lines}")
+        
+        # Get max_recursion_depth from args or use default
+        max_recursion_depth = getattr(args, 'max_recursion_depth', 3)  # Default to 3 if not specified
+        if active_logger:
+            active_logger.info(f"Maximum recursion depth for message condensing: {max_recursion_depth}")
+        
         if args.recursive_chunk:
             # Use chunking with recursive processing
             if active_logger:
-                active_logger.info(f"Using recursive chunking with max_depth: {args.max_depth}")
+                active_logger.info(f"Using recursive chunking with max_recursion_depth: {max_recursion_depth}")
             
             result = process_with_chunking(
                 client, 
@@ -712,8 +918,9 @@ def gitcommsg_mode(client, args, logger=None):
                 context_data, 
                 chunk_size=args.chunk_size,
                 recursive=True,
-                max_depth=args.max_depth,
-                logger=active_logger
+                logger=active_logger,
+                max_msg_lines=max_msg_lines,
+                max_recursion_depth=max_recursion_depth
             )
         else:
             # Direct processing without chunking
@@ -727,6 +934,23 @@ def gitcommsg_mode(client, args, logger=None):
                 active_logger.log_template("DEBUG", "DIRECT_PROCESSING", prompt)
             
             result = handle_api_call(client, prompt, system_prompt, active_logger)
+            
+            # Check if the result exceeds max_msg_lines and recursive_chunk is enabled
+            if result and len(result.splitlines()) > max_msg_lines:
+                print(f"{COLORS['yellow']}Commit message exceeds {max_msg_lines} lines, condensing...{COLORS['reset']}")
+                if active_logger:
+                    active_logger.info(f"Commit message exceeds {max_msg_lines} lines, starting condensing process")
+                
+                # Use our condense_commit_message function
+                result = condense_commit_message(
+                    client,
+                    result,
+                    system_prompt,
+                    max_msg_lines,
+                    max_recursion_depth,
+                    1,  # Start at depth 1
+                    active_logger
+                )
         
         if not result:
             print(f"{COLORS['red']}Failed to generate commit message.{COLORS['reset']}")

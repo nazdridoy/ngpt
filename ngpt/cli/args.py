@@ -98,8 +98,10 @@ def setup_argument_parser():
                       help='Use diff from specified file instead of staged changes. If used without a path, uses the path from CLI config.')
     gitcommsg_group.add_argument('--chunk-size', type=int, default=200,
                       help='Number of lines per chunk when chunking is enabled (default: 200)')
-    gitcommsg_group.add_argument('--max-depth', type=int, default=3,
-                      help='Maximum recursion depth for recursive chunking (default: 3)')
+    gitcommsg_group.add_argument('--max-msg-lines', type=int, default=20,
+                      help='Maximum number of lines in commit message before condensing (default: 20)')
+    gitcommsg_group.add_argument('--max-recursion-depth', type=int, default=3,
+                      help='Maximum recursion depth for commit message condensing (default: 3)')
     
     # Mode flags (mutually exclusive)
     mode_group = parser.add_argument_group('Modes (mutually exclusive)')
