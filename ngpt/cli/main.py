@@ -46,7 +46,8 @@ def show_cli_config_help():
         "code": [],
         "interactive": [],
         "text": [],
-        "shell": []
+        "shell": [],
+        "gitcommsg": []  # Add gitcommsg context
     }
     
     for option, meta in CLI_CONFIG_OPTIONS.items():
@@ -71,7 +72,8 @@ def show_cli_config_help():
         ("code", "Code generation mode"),
         ("interactive", "Interactive mode"),
         ("text", "Text mode"),
-        ("shell", "Shell mode")
+        ("shell", "Shell mode"),
+        ("gitcommsg", "Git commit message mode")  # Add gitcommsg mode
     ]:
         if context_groups[mode]:
             print(f"\n    {COLORS['yellow']}Options for {options}:{COLORS['reset']}")
@@ -88,6 +90,8 @@ def show_cli_config_help():
     print(f"    {COLORS['yellow']}ngpt --cli-config set language java{COLORS['reset']}        - Set default language to java for code generation")
     print(f"    {COLORS['yellow']}ngpt --cli-config set temperature 0.9{COLORS['reset']}      - Set default temperature to 0.9")
     print(f"    {COLORS['yellow']}ngpt --cli-config set no-stream true{COLORS['reset']}       - Disable streaming by default")
+    print(f"    {COLORS['yellow']}ngpt --cli-config set recursive-chunk true{COLORS['reset']} - Enable recursive chunking for git commit messages")
+    print(f"    {COLORS['yellow']}ngpt --cli-config set diff /path/to/file.diff{COLORS['reset']} - Set default diff file for git commit messages")
     print(f"    {COLORS['yellow']}ngpt --cli-config get temperature{COLORS['reset']}          - Check the current temperature setting")
     print(f"    {COLORS['yellow']}ngpt --cli-config get{COLORS['reset']}                      - Show all current CLI settings")
     print(f"    {COLORS['yellow']}ngpt --cli-config unset language{COLORS['reset']}           - Remove language setting")
