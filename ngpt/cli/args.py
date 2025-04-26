@@ -94,8 +94,8 @@ def setup_argument_parser():
                       help='Context to guide AI generation (e.g., file types, commit type)')
     gitcommsg_group.add_argument('-r', '--recursive-chunk', action='store_true',
                       help='Process large diffs in chunks with recursive analysis if needed')
-    gitcommsg_group.add_argument('--diff', metavar='FILE',
-                      help='Use diff from specified file instead of staged changes')
+    gitcommsg_group.add_argument('--diff', metavar='FILE', nargs='?', const=True,
+                      help='Use diff from specified file instead of staged changes. If used without a path, uses the path from CLI config.')
     gitcommsg_group.add_argument('--chunk-size', type=int, default=200,
                       help='Number of lines per chunk when chunking is enabled (default: 200)')
     gitcommsg_group.add_argument('--max-depth', type=int, default=3,

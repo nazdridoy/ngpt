@@ -8,6 +8,7 @@ from datetime import datetime
 import logging
 from ..formatters import COLORS
 from ...utils.log import create_gitcommsg_logger
+from ...utils.cli_config import get_cli_config_option
 
 def get_diff_content(diff_file=None):
     """Get git diff content from file or git staged changes.
@@ -638,8 +639,35 @@ def gitcommsg_mode(client, args, logger=None):
         active_logger.debug(f"Args: {args}")
     
     try:
+        # Check if --diff was explicitly passed on the command line
+        diff_option_provided = '--diff' in sys.argv
+        diff_path_provided = diff_option_provided and args.diff is not None and args.diff is not True
+        
+        # If --diff wasn't explicitly provided on the command line, don't use the config value
+        if not diff_option_provided:
+            # Even if diff is in CLI config, don't use it unless --diff flag is provided
+            diff_file = None
+            if active_logger:
+                active_logger.info("Not using diff file from CLI config because --diff flag was not provided")
+        else:
+            # --diff flag was provided on command line
+            if args.diff is True:
+                # --diff flag was used without a path, use the value from CLI config
+                success, config_diff = get_cli_config_option("diff")
+                diff_file = config_diff if success and config_diff else None
+                if active_logger:
+                    if diff_file:
+                        active_logger.info(f"Using diff file from CLI config: {diff_file}")
+                    else:
+                        active_logger.info("No diff file found in CLI config")
+            else:
+                # --diff flag was used with an explicit path
+                diff_file = args.diff
+                if active_logger:
+                    active_logger.info(f"Using explicitly provided diff file: {diff_file}")
+        
         # Get diff content
-        diff_content = get_diff_content(args.diff)
+        diff_content = get_diff_content(diff_file)
         
         if not diff_content:
             print(f"{COLORS['red']}No diff content available. Exiting.{COLORS['reset']}")

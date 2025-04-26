@@ -562,7 +562,7 @@ def main():
         
         elif args.gitcommsg:
             # Apply CLI config for gitcommsg mode
-            args = apply_cli_config(args, "all")
+            args = apply_cli_config(args, "gitcommsg")
             
             # Git commit message generation mode
             gitcommsg_mode(client, args, logger=logger)
