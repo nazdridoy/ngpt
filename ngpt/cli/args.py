@@ -101,6 +101,8 @@ def setup_argument_parser():
                                       help='Enter multi-line text input (submit with Ctrl+D)')
     mode_exclusive_group.add_argument('--stdin', action='store_true',
                                       help='Read from stdin and use content with prompt. Use {} in prompt as placeholder for stdin content')
+    mode_exclusive_group.add_argument('--rewrite', action='store_true',
+                                      help='Rewrite text from stdin to be more natural while preserving tone and meaning')
     
     return parser
 

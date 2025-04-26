@@ -23,6 +23,7 @@ from .modes.chat import chat_mode
 from .modes.code import code_mode
 from .modes.shell import shell_mode
 from .modes.text import text_mode
+from .modes.rewrite import rewrite_mode
 from .args import parse_args, validate_args, handle_cli_config_args, setup_argument_parser, validate_markdown_renderer
 
 def show_cli_config_help():
@@ -460,7 +461,7 @@ def main():
         return
     
     # For interactive mode, we'll allow continuing without a specific prompt
-    if not args.prompt and not (args.shell or args.code or args.text or args.interactive or args.show_config or args.list_models):
+    if not args.prompt and not (args.shell or args.code or args.text or args.interactive or args.show_config or args.list_models or args.rewrite):
         # Simply use the parser's help
         parser = setup_argument_parser()
         parser.print_help()
@@ -548,6 +549,13 @@ def main():
             
             # Stdin mode (using the chat mode with stdin input)
             chat_mode(client, args, logger=logger)
+        
+        elif args.rewrite:
+            # Apply CLI config for rewrite mode
+            args = apply_cli_config(args, "all")
+            
+            # Rewrite mode (process stdin)
+            rewrite_mode(client, args, logger=logger)
         
         else:
             # Default to chat mode
