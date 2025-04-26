@@ -265,47 +265,6 @@ Section to summarize:
 
 {combined_analysis}"""
 
-def create_combine_prompt(partial_analyses):
-    """Create prompt for combining partial analyses.
-    
-    Args:
-        partial_analyses: List of partial analyses to combine
-        
-    Returns:
-        str: Prompt for the AI
-    """
-    all_analyses = "\n\n".join(partial_analyses)
-    
-    return f"""===CRITICAL INSTRUCTION===
-You are working with ANALYZED SUMMARIES of git changes, NOT raw git diff.
-The raw git diff has ALREADY been processed into these summaries.
-DO NOT ask for or expect to see the original git diff.
-
-TASK: Synthesize these partial analyses into a complete conventional commit message:
-
-{all_analyses}
-
-Create a CONVENTIONAL COMMIT MESSAGE with:
-1. First line: "type[(scope)]: brief summary" (50 chars max)
-   - Include scope ONLY if you are 100% confident about the affected area
-   - Omit scope if changes affect multiple areas or scope is unclear
-2. ⚠️ ONE BLANK LINE IS MANDATORY - NEVER SKIP THIS STEP ⚠️
-   - This blank line MUST be present in EVERY commit message
-   - The blank line separates the summary from the detailed changes
-   - Without this blank line, the commit message format is invalid
-3. Bullet points with specific changes, each with appropriate [type] tag
-4. Reference files in EACH bullet point with function names or line numbers
-
-FILENAME & FUNCTION HANDLING RULES:
-- Include SPECIFIC function names, method names, or line numbers when available
-- Format as filename:function() or filename:line_number
-- Use short relative paths for files
-- Group related changes to the same file when appropriate
-- Avoid breaking long filenames across lines
-
-STRICTLY follow this format with NO EXPLANATION or additional commentary.
-DO NOT mention insufficient information or ask for the original diff."""
-
 def create_final_prompt(diff_content):
     """Create prompt for direct processing without chunking.
     
@@ -350,6 +309,13 @@ COMMIT TYPES:
 - config: Configuration changes
 - ui: User interface changes
 - api: API-related changes
+
+BULLET POINT FORMAT:
+- Each bullet MUST start with a type in square brackets: [type]
+- DO NOT use the format "- type: description" (without square brackets)
+- Instead, ALWAYS use "- [type] description" (with square brackets)
+- Example: "- [feat] Add new login component" (correct)
+- Not: "- feat: Add new login component" (incorrect)
 
 RULES:
 1. BE 100% FACTUAL - Mention ONLY code explicitly shown in the diff
@@ -600,6 +566,13 @@ type[(scope)]: <concise summary> (max 50 chars)
 - [type] <specific change 2> (filename:function/method/line)
 - [type] <additional changes...>
 
+BULLET POINT FORMAT:
+- Each bullet MUST start with a type in square brackets: [type]
+- DO NOT use the format "- type: description" (without square brackets)
+- Instead, ALWAYS use "- [type] description" (with square brackets)
+- Example: "- [feat] Add new login component" (correct)
+- Not: "- feat: Add new login component" (incorrect)
+
 RULES:
 1. First line must be under 50 characters
 2. Include a blank line after the first line
@@ -749,13 +722,21 @@ Group related changes when possible.
 CURRENT MESSAGE (TOO LONG):
 {commit_message}
 
+BULLET POINT FORMAT:
+- Each bullet MUST start with a type in square brackets: [type]
+- DO NOT use the format "- type: description" (without square brackets)
+- Instead, ALWAYS use "- [type] description" (with square brackets)
+- Example: "- [feat] Add new login component" (correct)
+- Not: "- feat: Add new login component" (incorrect)
+
 REQUIREMENTS:
 1. First line must be preserved exactly as is
 2. MUST BE AT MOST {max_msg_lines} LINES TOTAL including blank lines - THIS IS A HARD REQUIREMENT
 3. Include the most significant changes
 4. Group related changes when possible
 5. Keep proper formatting with bullet points
-6. Maintain detailed file/function references in each bullet point"""
+6. Maintain detailed file/function references in each bullet point
+7. KEEP TYPE TAGS IN SQUARE BRACKETS: [type]"""
     else:
         # At earlier depths, don't specify the exact line count limit
         condense_prompt = f"""Rewrite this git commit message to be more concise.
@@ -765,13 +746,21 @@ Group related changes when possible.
 CURRENT MESSAGE (TOO LONG):
 {commit_message}
 
+BULLET POINT FORMAT:
+- Each bullet MUST start with a type in square brackets: [type]
+- DO NOT use the format "- type: description" (without square brackets)
+- Instead, ALWAYS use "- [type] description" (with square brackets)
+- Example: "- [feat] Add new login component" (correct)
+- Not: "- feat: Add new login component" (incorrect)
+
 REQUIREMENTS:
 1. First line must be preserved exactly as is
 2. Make the message significantly shorter while preserving key information
 3. Include the most significant changes
 4. Group related changes when possible
 5. Keep proper formatting with bullet points
-6. Maintain detailed file/function references in each bullet point"""
+6. Maintain detailed file/function references in each bullet point
+7. KEEP TYPE TAGS IN SQUARE BRACKETS: [type]"""
     
     if logger:
         logger.log_template("DEBUG", f"CONDENSE_PROMPT_DEPTH_{current_depth}", condense_prompt)
@@ -811,6 +800,54 @@ REQUIREMENTS:
             logger.error(f"Error condensing commit message at depth {current_depth}: {str(e)}")
         # Return the original message if condensing fails
         return commit_message
+
+def create_combine_prompt(partial_analyses):
+    """Create prompt for combining partial analyses.
+    
+    Args:
+        partial_analyses: List of partial analyses to combine
+        
+    Returns:
+        str: Prompt for the AI
+    """
+    all_analyses = "\n\n".join(partial_analyses)
+    
+    return f"""===CRITICAL INSTRUCTION===
+You are working with ANALYZED SUMMARIES of git changes, NOT raw git diff.
+The raw git diff has ALREADY been processed into these summaries.
+DO NOT ask for or expect to see the original git diff.
+
+TASK: Synthesize these partial analyses into a complete conventional commit message:
+
+{all_analyses}
+
+Create a CONVENTIONAL COMMIT MESSAGE with:
+1. First line: "type[(scope)]: brief summary" (50 chars max)
+   - Include scope ONLY if you are 100% confident about the affected area
+   - Omit scope if changes affect multiple areas or scope is unclear
+2. ⚠️ ONE BLANK LINE IS MANDATORY - NEVER SKIP THIS STEP ⚠️
+   - This blank line MUST be present in EVERY commit message
+   - The blank line separates the summary from the detailed changes
+   - Without this blank line, the commit message format is invalid
+3. Bullet points with specific changes, each with appropriate [type] tag in square brackets
+4. Reference files in EACH bullet point with function names or line numbers
+
+BULLET POINT FORMAT:
+- Each bullet MUST start with a type in square brackets: [type]
+- DO NOT use the format "- type: description" (without square brackets)
+- Instead, ALWAYS use "- [type] description" (with square brackets)
+- Example: "- [feat] Add new login component" (correct)
+- Not: "- feat: Add new login component" (incorrect)
+
+FILENAME & FUNCTION HANDLING RULES:
+- Include SPECIFIC function names, method names, or line numbers when available
+- Format as filename:function() or filename:line_number
+- Use short relative paths for files
+- Group related changes to the same file when appropriate
+- Avoid breaking long filenames across lines
+
+STRICTLY follow this format with NO EXPLANATION or additional commentary.
+DO NOT mention insufficient information or ask for the original diff."""
 
 def gitcommsg_mode(client, args, logger=None):
     """Handle the Git commit message generation mode.
