@@ -26,6 +26,7 @@ This will install nGPT with all required dependencies, including:
 - `requests` for API communication
 - `rich` for markdown rendering and syntax highlighting
 - `prompt_toolkit` for interactive features
+- `pyperclip` for clipboard interaction
 
 ## Available Components
 
@@ -188,19 +189,31 @@ This creates a live-updating display that refreshes as new content arrives. The 
 
 ### CLI Configuration Management
 
-nGPT provides tools for managing CLI configurations:
+nGPT provides a comprehensive configuration management system:
 
 ```python
-from ngpt.cli.main import handle_cli_config, show_cli_config_help
+from ngpt.utils.cli_config import (
+    load_cli_config,
+    set_cli_config_option,
+    get_cli_config_option,
+    unset_cli_config_option,
+    apply_cli_config
+)
+
+# Get a configuration value
+value = get_cli_config_option('temperature')
+
+# Set a configuration value
+set_cli_config_option('temperature', '0.8')
+
+# Apply CLI configuration to args
+args = apply_cli_config(args)
+
+# For CLI tools, use the config_manager module
+from ngpt.cli.config_manager import handle_cli_config, show_cli_config_help
 
 # Show help
 show_cli_config_help()
-
-# Get a configuration value
-value = handle_cli_config('get', 'temperature')
-
-# Set a configuration value
-handle_cli_config('set', 'temperature', '0.8')
 
 # List all configuration options
 options = handle_cli_config('list')
@@ -210,7 +223,7 @@ options = handle_cli_config('list')
 
 ```python
 try:
-    value = handle_cli_config('get', 'temperature')
+    value = get_cli_config_option('temperature')
     if value is None:
         # Option not set, use default
         value = 0.7
@@ -593,7 +606,7 @@ if __name__ == "__main__":
 
 ## Logging and Debugging
 
-nGPT CLI components work with Python's standard logging module. You can configure logging for better debugging:
+nGPT provides comprehensive logging capabilities through the `utils.log` module:
 
 ```python
 import logging

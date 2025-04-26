@@ -13,7 +13,7 @@ nGPT provides a set of utilities for managing CLI-specific configuration setting
 ```python
 from ngpt.utils.cli_config import load_cli_config
 
-def load_cli_config():
+def load_cli_config() -> Dict[str, Any]:
 ```
 
 Loads the CLI configuration from the configuration file.
@@ -35,14 +35,14 @@ print(f"Current CLI configuration: {cli_config}")
 ```python
 from ngpt.utils.cli_config import set_cli_config_option
 
-def set_cli_config_option(option, value):
+def set_cli_config_option(option: str, value: Any) -> Tuple[bool, str]:
 ```
 
 Sets a CLI configuration option.
 
 **Parameters:**
 - `option` (str): The name of the option to set
-- `value` (str): The value to set for the option
+- `value` (Any): The value to set for the option
 
 **Returns:**
 - tuple: (success, message) where success is a boolean indicating whether the operation was successful and message is a string explaining the result
@@ -65,7 +65,7 @@ print(message)
 ```python
 from ngpt.utils.cli_config import get_cli_config_option
 
-def get_cli_config_option(option=None):
+def get_cli_config_option(option: str = None) -> Tuple[bool, Union[str, Dict[str, Any]]]:
 ```
 
 Gets the value of a CLI configuration option, or all options if none is specified.
@@ -99,7 +99,7 @@ if success:
 ```python
 from ngpt.utils.cli_config import unset_cli_config_option
 
-def unset_cli_config_option(option):
+def unset_cli_config_option(option: str) -> Tuple[bool, str]:
 ```
 
 Removes a CLI configuration option.
@@ -124,17 +124,17 @@ print(message)
 ```python
 from ngpt.utils.cli_config import apply_cli_config
 
-def apply_cli_config(args, mode):
+def apply_cli_config(args: Any, mode: str) -> Any:
 ```
 
-Applies CLI configuration options to the provided argument namespace based on the current mode.
+Applies CLI configuration options to the provided argument namespace based on the current mode, respecting context and not overriding explicit args.
 
 **Parameters:**
-- `args` (namespace): The argument namespace (from argparse)
+- `args` (Any): The argument namespace (from argparse)
 - `mode` (str): The current mode ('interactive', 'shell', 'code', 'text', 'gitcommsg', or 'all' for default)
 
 **Returns:**
-- namespace: The updated argument namespace
+- Any: The updated argument namespace
 
 **Example:**
 ```python
@@ -161,7 +161,7 @@ print(f"Language: {args.language}")
 ```python
 from ngpt.utils.cli_config import list_cli_config_options
 
-def list_cli_config_options():
+def list_cli_config_options() -> List[str]:
 ```
 
 Lists all available CLI configuration options.
@@ -185,7 +185,7 @@ for option in options:
 ```python
 from ngpt.utils.cli_config import get_cli_config_dir
 
-def get_cli_config_dir():
+def get_cli_config_dir() -> Path:
 ```
 
 Gets the directory where the CLI configuration is stored.
@@ -207,7 +207,7 @@ print(f"CLI configuration directory: {config_dir}")
 ```python
 from ngpt.utils.cli_config import get_cli_config_path
 
-def get_cli_config_path():
+def get_cli_config_path() -> Path:
 ```
 
 Gets the path to the CLI configuration file.
@@ -222,6 +222,40 @@ from ngpt.utils.cli_config import get_cli_config_path
 # Get the CLI config file path
 config_path = get_cli_config_path()
 print(f"CLI configuration file: {config_path}")
+```
+
+### `save_cli_config`
+
+```python
+from ngpt.utils.cli_config import save_cli_config
+
+def save_cli_config(config: Dict[str, Any]) -> bool:
+```
+
+Saves CLI configuration to the config file.
+
+**Parameters:**
+- `config` (Dict[str, Any]): The configuration dictionary to save
+
+**Returns:**
+- bool: True if the operation was successful, False otherwise
+
+**Example:**
+```python
+from ngpt.utils.cli_config import load_cli_config, save_cli_config
+
+# Load existing config
+config = load_cli_config()
+
+# Modify config
+config['temperature'] = 0.9
+
+# Save the updated config
+success = save_cli_config(config)
+if success:
+    print("Configuration saved successfully")
+else:
+    print("Failed to save configuration")
 ```
 
 ## Available CLI Configuration Options

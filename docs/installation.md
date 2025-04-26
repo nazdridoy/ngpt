@@ -49,9 +49,10 @@ Any of these methods will install nGPT with all its dependencies, including supp
 nGPT requires:
 
 - Python 3.8 or newer
-- `requests` library for API communication
-- `rich` library for markdown formatting and syntax highlighting
-- `prompt_toolkit` library for interactive features
+- `requests` library for API communication (v2.31.0 or newer)
+- `rich` library for markdown formatting and syntax highlighting (v10.0.0 or newer)
+- `prompt_toolkit` library for interactive features (v3.0.0 or newer)
+- `pyperclip` library for clipboard operations (v1.8.0 or newer)
 
 All required dependencies are automatically installed when you install nGPT.
 
@@ -256,13 +257,13 @@ If you experience issues with the Rich library or Prompt Toolkit:
 
 ```bash
 # Using pip
-pip uninstall rich prompt_toolkit
-pip install rich prompt_toolkit
+pip uninstall rich prompt_toolkit pyperclip
+pip install rich prompt_toolkit pyperclip
 pip install ngpt
 
 # Using uv
-uv pip uninstall rich prompt_toolkit
-uv pip install rich prompt_toolkit
+uv pip uninstall rich prompt_toolkit pyperclip
+uv pip install rich prompt_toolkit pyperclip
 uv pip install ngpt
 ```
 

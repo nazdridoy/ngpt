@@ -205,10 +205,9 @@ print(message)  # "Option 'temperature' removed from configuration"
 
 # Apply CLI configuration to arguments
 args = parser.parse_args()
-args = apply_cli_config(args)
+args = apply_cli_config(args, mode="interactive")
 ```
 
-For more information about the CLI configuration API, see the [CLI Framework Documentation](./cli_framework.md).
 
 ## Examples
 
@@ -261,6 +260,7 @@ Each option is only applied in the appropriate context:
 
 - The `language` option only affects code generation mode (`-c`)
 - The `log` option only affects interactive and text modes (`-i`, `-t`)
+- The git commit message options only affect the gitcommsg mode (`--gitcommsg`)
 
 ## CLI Configuration File
 
@@ -280,3 +280,5 @@ The CLI configuration system is designed to efficiently handle both main profile
 2. CLI configuration is loaded early in the execution process to influence which profile is selected.
 3. Mutual exclusivity is enforced when setting options via `--cli-config set`.
 4. Option values are only applied to the current command if they are relevant to its mode. 
+
+For more information about the CLI configuration API, see the [CLI Framework Documentation](./cli_framework.md).

@@ -60,6 +60,9 @@ config_path = get_config_path()
 # Load a specific configuration (default is index 0)
 config = load_config(config_index=0)
 
+# Or load by provider name
+config = load_config(provider="OpenAI")
+
 # Use the configuration
 print(f"Using {config['provider']} with model {config['model']}")
 ```
@@ -73,8 +76,9 @@ nGPT determines configuration values in the following order (highest priority fi
    - `OPENAI_API_KEY` 
    - `OPENAI_BASE_URL`
    - `OPENAI_MODEL`
-3. **Configuration file**: Selected configuration (by default, index 0)
-4. **Default values**: Fall back to built-in defaults
+3. **CLI configuration file**: Stored in ngpt-cli.conf (see CLI Configuration section)
+4. **Main configuration file**: Selected configuration (by default, index 0)
+5. **Default values**: Fall back to built-in defaults
 
 ## Interactive Configuration
 
@@ -113,34 +117,52 @@ You can also set configuration options directly via command-line arguments:
 - `--provider <name>`: Select a configuration profile by its provider name.
 - `--show-config [--all]`: Display the current (or all) configuration(s).
 - `--list-models`: List models available for the selected configuration.
+- `--list-renderers`: Show available markdown renderers for use with --prettify.
 - `--config`: Enter interactive mode to add/edit/remove configurations.
   - Use with `--config-index <index>` or `--provider <name>` to edit.
   - Use with `--remove` and `--config-index <index>` or `--provider <name>` to remove.
 
-### Usage Control Flags
+### Mode Flags (mutually exclusive)
 
 - `-i, --interactive`: Start an interactive chat session.
 - `-s, --shell`: Generate and execute shell commands.
 - `-c, --code`: Generate code.
-  - `--language <lang>`: Specify the programming language for code generation (e.g., `python`, `javascript`, default: `python`).
+  - `--language <lang>`: Specify the programming language for code generation (default: `python`).
 - `-t, --text`: Use a multiline editor for input.
 - `--stdin`: Read from stdin and use content in your prompt with {} placeholder.
+- `--rewrite`: Rewrite text from stdin to be more natural while preserving tone and meaning.
+- `--gitcommsg`: Generate AI-powered git commit messages from staged changes or diff file.
+
+### Output Control Flags
+
 - `--no-stream`: Disable streaming output.
 - `--prettify`: Enable formatted markdown/code output (disables streaming).
   - `--renderer <name>`: Choose the renderer (`auto`, `rich`, `glow`).
-  - `--list-renderers`: Show available renderers.
 - `--stream-prettify`: Enable real-time formatted output while streaming (uses Rich).
-- `--web-search`: Enable web search capability (if supported by the API).
+
+### Generation Control Flags
+
 - `--preprompt <text>`: Set a custom system prompt.
 - `--log [file]`: Enable logging: use `--log` to create a temporary log file, or `--log PATH` for a specific location.
-- `--temperature <value>`: Set the generation temperature (0.0-2.0).
-- `--top_p <value>`: Set the nucleus sampling top_p value (0.0-1.0).
+- `--temperature <value>`: Set the generation temperature (0.0-2.0, default: 0.7).
+- `--top_p <value>`: Set the nucleus sampling top_p value (0.0-1.0, default: 1.0).
 - `--max_tokens <number>`: Set the maximum number of tokens for the response.
+- `--web-search`: Enable web search capability (if supported by the API).
+
+### Git Commit Message Flags
+
+- `-m, --message-context <text>`: Context to guide AI generation (e.g., file types, commit type).
+- `-r, --recursive-chunk`: Process large diffs in chunks with recursive analysis if needed.
+- `--diff [file]`: Use diff from specified file instead of staged changes.
+- `--chunk-size <number>`: Number of lines per chunk when chunking is enabled (default: 200).
+- `--analyses-chunk-size <number>`: Number of lines per chunk when recursively chunking analyses (default: 200).
+- `--max-msg-lines <number>`: Maximum number of lines in commit message before condensing (default: 20).
+- `--max-recursion-depth <number>`: Maximum recursion depth for commit message condensing (default: 3).
 
 ### Other Flags
 
 - `-v, --version`: Show the nGPT version.
-- `--cli-config <command> [option] [value]`: Manage persistent CLI option defaults (`set`, `get`, `unset`, `list`, `help`). See [CLI Configuration Guide](usage/cli_config.md).
+- `--cli-config <command> [option] [value]`: Manage persistent CLI option defaults (`set`, `get`, `unset`, `list`, `help`).
 
 ```bash
 # Example: Use specific API key, base URL, and model for a single command
@@ -166,6 +188,12 @@ ngpt --log "Tell me about quantum computing"
 
 # Process text from stdin using the {} placeholder
 echo "What is this text about?" | ngpt --stdin "Analyze the following text: {}"
+
+# Generate git commit message from staged changes
+ngpt --gitcommsg
+
+# Generate git commit message from a diff file
+ngpt --gitcommsg --diff changes.diff
 ```
 
 ## Environment Variables
@@ -209,16 +237,6 @@ The CLI configuration is stored in a separate JSON file at:
 - **macOS**: `~/Library/Application Support/ngpt/ngpt-cli.conf`
 - **Windows**: `%APPDATA%\ngpt\ngpt-cli.conf`
 
-### Configuration Priority
-
-Options are applied in the following order (highest priority first):
-
-1. Command-line arguments
-2. Environment variables
-3. CLI configuration (ngpt-cli.conf)
-4. Main configuration file (ngpt.conf)
-5. Default values
-
 ### Managing CLI Settings
 
 You can manage CLI configuration with the `--cli-config` command:
@@ -240,7 +258,63 @@ ngpt --cli-config list
 ngpt --cli-config help
 ```
 
-For a full guide to CLI configuration, see the [CLI Configuration Guide](usage/cli_config.md).
+### Available CLI Configuration Options
+
+The following options can be configured persistently:
+
+- General options (available in all modes):
+  - `provider`: Select configuration profile by provider name
+  - `temperature`: Set temperature for generations
+  - `top_p`: Set top_p value for generations
+  - `max_tokens`: Set maximum tokens for response
+  - `log`: Set default log file path
+  - `preprompt`: Set default system prompt
+  - `no-stream`: Disable streaming by default
+  - `prettify`: Enable formatted output by default
+  - `stream-prettify`: Enable streaming with formatting
+  - `renderer`: Set default markdown renderer
+  - `config-index`: Set default configuration index
+  - `web-search`: Enable web search capability by default
+
+- Code generation mode options:
+  - `language`: Set default programming language
+
+- Git commit message mode options:
+  - `message-context`: Set default context guidance
+  - `recursive-chunk`: Enable recursive chunking by default
+  - `diff`: Set default diff file path
+  - `chunk-size`: Set default chunk size
+  - `analyses-chunk-size`: Set default analyses chunk size
+  - `max-msg-lines`: Set default maximum message lines
+  - `max-recursion-depth`: Set default maximum recursion depth
+
+### Example CLI Configuration Usage
+
+```bash
+# Set default language to JavaScript for code generation
+ngpt --cli-config set language javascript
+
+# Set default temperature
+ngpt --cli-config set temperature 0.9
+
+# Enable streaming with prettify by default
+ngpt --cli-config set stream-prettify true
+
+# Set default provider
+ngpt --cli-config set provider Groq
+
+# Enable recursive chunking for git commit messages
+ngpt --cli-config set recursive-chunk true
+
+# Check current temperature setting
+ngpt --cli-config get temperature
+
+# Show all current CLI settings
+ngpt --cli-config get
+
+# Remove language setting
+ngpt --cli-config unset language
+```
 
 ## Examples
 

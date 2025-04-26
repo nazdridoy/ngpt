@@ -27,6 +27,7 @@ These examples demonstrate the fundamental functionality of nGPT:
 - Code generation
 - Shell command generation
 - Basic configuration
+- Markdown formatting
 
 ### Advanced Examples
 
@@ -37,6 +38,7 @@ These examples show more sophisticated use of nGPT:
 - Working with multiple API providers
 - Error handling and retries
 - Custom system prompts
+- Web search integration
 
 ### Custom Integrations
 
@@ -46,6 +48,7 @@ These examples demonstrate how to integrate nGPT into larger applications:
 - Command-line tool development
 - Chatbot development
 - Workflow automation
+- API service integration
 
 ### CLI Component Examples
 
@@ -71,13 +74,24 @@ client = NGPTClient(**config)
 response = client.chat("Tell me about quantum computing")
 print(response)
 
-# Code generation example
-code = client.generate_code("function to calculate fibonacci numbers")
+# Code generation example with specific language
+code = client.generate_code("function to calculate fibonacci numbers", language="javascript")
 print(code)
 
-# Shell command example
-command = client.generate_shell_command("find all files modified in the last week")
+# Shell command example with web search enabled
+command = client.generate_shell_command(
+    "find all files modified in the last week", 
+    web_search=True
+)
 print(command)
+
+# Streaming example with markdown formatting
+for chunk in client.chat(
+    "Explain neural networks", 
+    stream=True, 
+    markdown_format=True
+):
+    print(chunk, end="", flush=True)
 
 # CLI component reuse example
 from ngpt.cli.formatters import ColoredHelpFormatter
@@ -94,7 +108,7 @@ from ngpt.cli.modes.chat import chat_mode
 from ngpt.cli.modes.code import code_mode
 from ngpt.cli.modes.shell import shell_mode
 
-# Interactive session example
+# Interactive session example with web search
 from ngpt.cli.interactive import interactive_chat_session
 ```
 

@@ -313,11 +313,20 @@ The rewrite mode is designed to improve:
 - Clarity and conciseness
 - Natural flow
 
-It preserves:
-- Original meaning
-- Tone and style
-- Technical terminology
-- Key information
+While preserving:
+- Original meaning and information content
+- Author's tone (formal/casual/technical/friendly/serious) 
+- Perspective and point of view
+- Style of expression when intentional
+- Technical terminology, jargon, and domain-specific language
+- Facts, data points, quotes, and references
+
+It also maintains formatting elements like:
+- Paragraph breaks and section structures
+- Lists, bullet points, and numbering
+- Code blocks with exact code preservation
+- Markdown formatting (bold, italic, headers)
+- URLs, email addresses, file paths, and variables
 
 Rewrite mode works especially well for:
 - Email drafts
@@ -341,6 +350,27 @@ cat email.txt | ngpt --rewrite --preprompt "Make this more professional and conc
 # Add SEO optimization
 cat blog.md | ngpt --rewrite --preprompt "Optimize this for SEO while maintaining readability"
 ```
+
+#### Advanced Rewrite Options
+
+The rewrite mode uses a specialized system prompt that carefully preserves original content while improving its quality. The default system prompt instructs the AI to:
+
+- Fix grammar, spelling, and punctuation errors
+- Improve sentence structure and flow
+- Enhance clarity and readability
+- Make language more concise and precise
+- Replace awkward phrasings with more natural alternatives
+- Break up overlong sentences
+- Convert passive voice to active when appropriate
+- Remove redundancies and filler words
+
+It also adapts to different content types:
+- Technical content: Prioritizes precision and clarity
+- Casual text: Maintains conversational flow
+- Formal writing: Preserves professionalism
+- Emotional content: Maintains emotional resonance
+
+When using custom instructions with `--preprompt`, these supplement rather than replace the underlying rewrite directives.
 
 ### Git Commit Message Generation
 
@@ -723,6 +753,36 @@ In interactive mode:
 - When creating a new configuration, press Enter to use default values
 - For security, your API key is not displayed when editing configurations
 - When removing a configuration, you'll be asked to confirm before deletion
+
+#### Available CLI Configuration Options
+
+The list of options that can be set with `--cli-config` includes:
+
+##### General options (all modes):
+- `api-key` - API key for the service
+- `base-url` - Base URL for the API
+- `config-index` - Index of the configuration to use
+- `language` - Programming language for code generation
+- `max_tokens` - Maximum tokens in response
+- `model` - Model to use
+- `no-stream` - Disable streaming responses
+- `preprompt` - Custom system prompt
+- `prettify` - Enable markdown rendering
+- `provider` - Provider name to identify configuration
+- `renderer` - Markdown renderer to use
+- `stream-prettify` - Enable streaming with markdown rendering
+- `temperature` - Temperature setting (0.0-2.0)
+- `top_p` - Top-p parameter (0.0-1.0)
+- `web-search` - Enable web search capability
+
+##### Options for Git commit message mode:
+- `recursive-chunk` - Process large diffs in chunks with recursive analysis
+- `diff` - Path to diff file to use instead of staged changes
+- `chunk-size` - Number of lines per chunk when chunking is enabled
+- `analyses-chunk-size` - Number of lines per chunk for recursive analysis
+- `max-msg-lines` - Maximum number of lines in commit message before condensing
+- `max-recursion-depth` - Maximum recursion depth for message condensing
+- `message-context` - Context to guide AI generation
 
 #### Custom Configuration File
 

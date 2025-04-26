@@ -22,6 +22,7 @@ The CLI components for nGPT are organized into a modular structure under the `ng
     - `ngpt.cli.modes.shell`: Shell command generation mode functionality
     - `ngpt.cli.modes.text`: Text generation mode functionality
     - `ngpt.cli.modes.rewrite`: Text rewriting mode functionality
+    - `ngpt.cli.modes.gitcommsg`: Git commit message generation functionality
 
 ## Interactive Chat Module
 
@@ -673,6 +674,80 @@ if sys.stdin.isatty():
     rewrite_mode(client=client, args=args)
 else:
     print("This example would open a multiline editor in a real terminal")
+```
+
+### Git Commit Message Mode
+
+```python
+from ngpt.cli.modes.gitcommsg import gitcommsg_mode
+
+def gitcommsg_mode(client, args, logger=None)
+```
+
+Executes a git commit message generation operation to create commit messages based on staged changes in a git repository.
+
+**Parameters:**
+- `client` (NGPTClient): The initialized client for the operation
+- `args` (namespace): Parsed command-line arguments including:
+  - `diff_file` (str, optional): Path to diff file to use instead of git diff --staged
+  - `message_context` (str, optional): Additional context or instructions for commit message generation
+  - `temperature` (float): Temperature setting (0.0-1.0) 
+  - `max_tokens` (int, optional): Maximum tokens to generate
+  - `chunk_size` (int): Number of lines per chunk for large diffs
+  - `max_lines` (int): Maximum lines in the generated commit message
+  - `recursive` (bool): Whether to use recursive chunking for large diffs
+  - `deep_recursive` (bool): Whether to use deeper recursive analysis
+  - `web_search` (bool): Whether to enable web search
+- `logger` (object, optional): Logger instance
+
+**Features:**
+- **Git Diff Analysis**: Analyzes staged git changes to create relevant commit messages
+- **Conventional Commit Format**: Follows standard commit message format (type(scope): message)
+- **Chunking Strategy**: Handles large diffs by splitting into manageable chunks
+- **Recursive Analysis**: Optional deep analysis of complex changes
+- **Context Directives**: Supports filtering and focusing on specific file types/components
+- **Technical Detail Extraction**: Extracts function names, line numbers, and specific changes
+
+**Example:**
+```python
+from ngpt import NGPTClient, load_config
+from ngpt.cli.modes.gitcommsg import gitcommsg_mode
+import argparse
+
+client = NGPTClient(**load_config())
+
+# Create args namespace with required parameters
+args = argparse.Namespace()
+args.diff_file = None  # Use git staged changes
+args.message_context = "type:feat focus on authentication"
+args.temperature = 0.4
+args.max_tokens = None
+args.chunk_size = 200
+args.max_lines = 20
+args.recursive = True
+args.deep_recursive = False
+args.web_search = False
+
+gitcommsg_mode(
+    client=client,
+    args=args
+)
+```
+
+**Context Directive Examples:**
+- `type:feat` - Set commit type to feature
+- `focus on authentication` - Focus only on authentication-related changes
+- `ignore tests` - Exclude test changes from the commit message
+- `javascript` - Focus only on JavaScript file changes
+
+**Output Example:**
+```
+feat(auth): implement JWT authentication and user session management
+
+- Add generateToken function in auth/jwt.js
+- Create validateJWTMiddleware in middleware/auth.js
+- Add token refresh endpoint in routes/auth.js
+- Update user model to store refresh tokens
 ```
 
 ## Reference Tables

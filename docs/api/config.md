@@ -8,7 +8,7 @@ nGPT provides a set of utilities for managing configuration files and settings. 
 
 ### get_config_dir()
 
-Returns the directory where configuration files are stored based on the operating system.
+Returns the directory where configuration files are stored based on the operating system. This function also ensures the directory exists by creating it if needed.
 
 ```python
 from ngpt.utils.config import get_config_dir
@@ -33,11 +33,8 @@ from ngpt.utils.config import get_config_dir
 config_dir = get_config_dir()
 print(f"Configuration directory: {config_dir}")
 
-# Check if the directory exists
-if config_dir.exists():
-    print("Configuration directory exists")
-else:
-    print("Configuration directory does not exist")
+# The directory is guaranteed to exist as get_config_dir() creates it if needed
+print(f"Files in directory: {list(config_dir.iterdir())}")
 ```
 
 ### get_config_path()
@@ -79,7 +76,7 @@ print(f"Custom configuration file: {custom_config_path}")
 
 ### load_configs()
 
-Loads all configurations from the configuration file.
+Loads all configurations from the configuration file. If the file doesn't exist, a default configuration file is created.
 
 ```python
 from ngpt.utils.config import load_configs
@@ -124,7 +121,7 @@ custom_configs = load_configs("/path/to/custom/config.json")
 
 ### load_config()
 
-Loads a specific configuration by index or provider name and applies environment variables.
+Loads a specific configuration by index or provider name and applies environment variables. If the specified configuration cannot be found, a default configuration or the first available configuration is returned.
 
 ```python
 from ngpt.utils.config import load_config
@@ -149,6 +146,16 @@ config: Dict[str, Any] = load_config(
 
 A dictionary with configuration values, potentially overridden by environment variables.
 
+#### Environment Variables
+
+The following environment variables can override configuration values:
+
+| Environment Variable | Configuration Key |
+|----------------------|-------------------|
+| `OPENAI_API_KEY` | `api_key` |
+| `OPENAI_BASE_URL` | `base_url` |
+| `OPENAI_MODEL` | `model` |
+
 #### Examples
 
 ```python
@@ -171,6 +178,55 @@ print(f"Using model: {gemini_config.get('model', 'Unknown')}")
 
 # Load from a custom path
 custom_config = load_config(custom_path="/path/to/custom/config.json")
+```
+
+## Default Configuration
+
+nGPT provides default configuration values that are used when no configuration file exists or when specific settings are not provided.
+
+```python
+from ngpt.utils.config import DEFAULT_CONFIG, DEFAULT_CONFIG_ENTRY
+
+# Print the default configuration entry
+print(DEFAULT_CONFIG_ENTRY)
+```
+
+### DEFAULT_CONFIG_ENTRY
+
+The `DEFAULT_CONFIG_ENTRY` constant defines the default values for a single configuration:
+
+```python
+DEFAULT_CONFIG_ENTRY = {
+    "api_key": "",
+    "base_url": "https://api.openai.com/v1/",
+    "provider": "OpenAI",
+    "model": "gpt-3.5-turbo"
+}
+```
+
+### DEFAULT_CONFIG
+
+The `DEFAULT_CONFIG` constant is a list containing the default configuration entry:
+
+```python
+DEFAULT_CONFIG = [DEFAULT_CONFIG_ENTRY]
+```
+
+This is used when creating a new configuration file or when falling back to defaults.
+
+#### Examples
+
+```python
+from ngpt.utils.config import DEFAULT_CONFIG, DEFAULT_CONFIG_ENTRY, load_config
+
+# Use default configuration as a base for a custom configuration
+custom_config = DEFAULT_CONFIG_ENTRY.copy()
+custom_config["model"] = "gpt-4o"
+custom_config["provider"] = "Custom Provider"
+
+# Load configuration with fallback to defaults
+config = load_config()
+# If no configuration file exists, this will use DEFAULT_CONFIG
 ```
 
 ## Creating Configurations
@@ -211,7 +267,7 @@ create_default_config(custom_path)
 
 ### add_config_entry()
 
-Adds a new configuration entry or updates an existing one at the specified index.
+Adds a new configuration entry or updates an existing one at the specified index. This function prompts the user interactively for configuration values.
 
 ```python
 from ngpt.utils.config import add_config_entry
@@ -229,6 +285,14 @@ add_config_entry(
 |-----------|------|---------|-------------|
 | `config_path` | `Path` | | Path to the configuration file |
 | `config_index` | `Optional[int]` | `None` | Index of the configuration to update (if None, adds a new entry) |
+
+#### Interactive Prompts
+
+The function prompts for:
+- API Key
+- Base URL
+- Provider (ensures the provider name is unique)
+- Model
 
 #### Examples
 
@@ -269,7 +333,7 @@ success: bool = remove_config_entry(
 #### Returns
 
 - `True` if the configuration was successfully removed
-- `False` if the operation failed
+- `False` if the operation failed (e.g., invalid index or file access error)
 
 #### Examples
 

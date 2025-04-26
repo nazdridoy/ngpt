@@ -205,7 +205,7 @@ print(f"Using provider: {config.get('provider', 'Unknown')}")
 
 ### CLI Configuration Management
 
-nGPT also provides a CLI configuration system that you can use programmatically:
+nGPT provides a CLI configuration system that you can use programmatically:
 
 ```python
 from ngpt.utils.cli_config import (
@@ -231,6 +231,31 @@ print(f"Temperature: {value}")
 # Unset a configuration option
 success, message = unset_cli_config_option('temperature')
 print(message)
+
+# Apply CLI configuration to parameters
+params = {}
+apply_cli_config(params, cli_config)
+print(f"Parameters with CLI config applied: {params}")
+```
+
+You can also use the CLI configuration management directly:
+
+```python
+from ngpt.cli.config_manager import (
+    list_cli_config,
+    update_cli_config,
+    clear_cli_config
+)
+
+# List all current CLI configuration settings
+list_cli_config()
+
+# Update a configuration setting
+update_cli_config('temperature', '0.7')
+update_cli_config('model', 'gpt-4o')
+
+# Clear all configuration settings
+clear_cli_config()
 ```
 
 ### Using Multiple API Endpoints
@@ -273,38 +298,85 @@ client = NGPTClient(**config)
 # Start an interactive chat session
 interactive_chat_session(
     client=client,
-    web_search=True,
-    temperature=0.7,
-    prettify=True,
-    renderer='rich'
+    web_search=True,           # Enable web search capability
+    temperature=0.7,           # Control randomness
+    prettify=True,             # Enable markdown rendering
+    renderer='rich',           # Use rich for rendering (requires rich package)
+    stream_prettify=True,      # Enable streaming with markdown rendering
+    preprompt="You are a helpful AI assistant specialized in Python programming."  # Custom system prompt
+)
+```
+
+The interactive chat session supports several features:
+- Command history (up/down arrows)
+- Session commands (`history`, `clear`, `exit`)
+- Markdown rendering of responses
+- Real-time streaming of responses
+- Conversation logging
+
+You can customize the session with these parameters:
+
+```python
+interactive_chat_session(
+    client=client,
+    web_search=False,          # Enable/disable web search
+    no_stream=False,           # Disable streaming if set to True
+    temperature=0.7,           # Control randomness
+    top_p=1.0,                 # Nucleus sampling parameter
+    max_tokens=None,           # Limit response length
+    preprompt=None,            # Custom system prompt
+    prettify=False,            # Enable markdown rendering
+    renderer='auto',           # Markdown renderer ('auto', 'rich', 'terminal')
+    stream_prettify=False,     # Streaming with markdown rendering
+    logger=None                # Optional logger instance
 )
 ```
 
 ### Markdown Rendering
 
-Reuse the markdown rendering capabilities:
+nGPT provides rich markdown rendering capabilities for terminal output:
 
 ```python
-from ngpt.cli.renderers import has_markdown_renderer
-from ngpt.cli.formatters import prettify_markdown
+from ngpt.cli.renderers import prettify_markdown, has_markdown_renderer
 
 # Check if a specific renderer is available
 if has_markdown_renderer(renderer='rich'):
     # Render markdown text
-    markdown_text = "# Hello, World!\n\n```python\nprint('Hello, World!')\n```"
-    formatted_text = prettify_markdown(markdown_text, renderer='rich')
-    print(formatted_text)
+    markdown_text = """
+    # Hello, World!
+    
+    This is a **markdown** example with:
+    
+    * Bullet points
+    * Code blocks
+    
+    ```python
+    def hello_world():
+        print('Hello, World!')
+    ```
+    """
+    
+    prettify_markdown(markdown_text, renderer='rich')
+```
+
+You can check available renderers and their status:
+
+```python
+from ngpt.cli.renderers import show_available_renderers
+
+# Show which renderers are available on the system
+show_available_renderers()
 ```
 
 ### Real-time Markdown Streaming
 
-Implement real-time markdown rendering in your applications:
+For real-time rendering of streaming markdown content:
 
 ```python
 from ngpt import NGPTClient, load_config
 from ngpt.cli.renderers import prettify_streaming_markdown
 
-# Initialize the client
+# Initialize client
 config = load_config()
 client = NGPTClient(**config)
 
@@ -314,12 +386,38 @@ markdown_streamer = prettify_streaming_markdown(
     header_text="Streaming Response:"
 )
 
-# Use the streamer with the client
-response_text = client.chat(
-    "Explain quantum computing with code examples",
-    stream=True,
-    stream_callback=markdown_streamer.update_content
+# Start the live display
+if markdown_streamer[0]:  # Check if setup was successful
+    markdown_streamer[0].start()
+
+    # Use the streamer with the client
+    response = client.chat(
+        "Explain quantum computing with code examples",
+        stream=True,
+        markdown_format=True,
+        stream_callback=markdown_streamer[1]
+    )
+    
+    # Stop the live display when done
+    markdown_streamer[0].stop()
+```
+
+For more control, you can access the live display and update function directly:
+
+```python
+live_display, update_function = prettify_streaming_markdown(
+    renderer='rich',
+    header_text="Custom Header"
 )
+
+if live_display:  # Check if setup was successful
+    live_display.start()
+    
+    # Update the content manually
+    update_function("# Header\nThis is *formatted* content")
+    
+    # Stop when done
+    live_display.stop()
 ```
 
 ### CLI Configuration Management
@@ -364,7 +462,7 @@ print(f"{COLORS['green']}Success!{COLORS['reset']}")
 
 ### Using Different Modes
 
-nGPT now has different modes for various operations:
+nGPT offers various specialized modes for different operations:
 
 ```python
 from ngpt import NGPTClient, load_config
@@ -372,6 +470,7 @@ from ngpt.cli.modes.chat import chat_mode
 from ngpt.cli.modes.code import code_mode
 from ngpt.cli.modes.shell import shell_mode
 from ngpt.cli.modes.text import text_mode
+from ngpt.cli.modes.rewrite import rewrite_mode
 
 # Initialize the client
 config = load_config()
@@ -388,145 +487,27 @@ shell_mode(client, "find all txt files in current directory")
 
 # Use text mode
 text_mode(client, "Write a summary of quantum computing")
-```
 
-## Complete Examples
+# Create a simple command-line arguments object for rewrite mode
+class Args:
+    def __init__(self):
+        self.no_stream = False
+        self.web_search = False
+        self.temperature = 0.7
+        self.top_p = 1.0
+        self.max_tokens = None
+        self.prettify = True
+        self.renderer = 'rich'
+        self.stream_prettify = False
+        self.prompt = "This is a texst with typos and grammatical error that need to be fix."
 
-### Simple Chat Bot
-
-```python
-from ngpt import NGPTClient, load_config
-
-def simple_chat_bot():
-    # Initialize client with default configuration
-    config = load_config()
-    client = NGPTClient(**config)
-    
-    print("Simple Chat Bot (type 'exit' to quit)")
-    print("-" * 50)
-    
-    while True:
-        user_input = input("You: ")
-        if user_input.lower() in ['exit', 'quit', 'bye']:
-            break
-            
-        print("Bot: ", end="", flush=True)
-        response = ""
-        for chunk in client.chat(user_input, stream=True):
-            print(chunk, end="", flush=True)
-            response += chunk
-        print()  # Final newline
-    
-    print("Goodbye!")
-
-if __name__ == "__main__":
-    simple_chat_bot()
-```
-
-### Code Generation Utility
-
-```python
-from ngpt import NGPTClient, load_config
-import argparse
-import sys
-
-def code_generator():
-    parser = argparse.ArgumentParser(description="Generate code using nGPT")
-    parser.add_argument("prompt", help="Description of the code to generate")
-    parser.add_argument("--language", "-l", default="python", help="Programming language (default: python)")
-    parser.add_argument("--output", "-o", help="Output file (default: print to stdout)")
-    args = parser.parse_args()
-    
-    # Initialize client
-    config = load_config()
-    client = NGPTClient(**config)
-    
-    # Generate code
-    try:
-        code = client.generate_code(args.prompt, language=args.language)
-        
-        if args.output:
-            with open(args.output, 'w') as f:
-                f.write(code)
-            print(f"Code written to {args.output}")
-        else:
-            print(code)
-    except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
-
-if __name__ == "__main__":
-    code_generator()
+# Use rewrite mode to improve text quality
+rewrite_mode(client, Args())
 ```
 
 ### Git Commit Message Generator
 
-The following example shows how to create a CLI tool for generating git commit messages:
-
-```python
-from ngpt import NGPTClient, load_config
-from ngpt.cli.modes.gitcommsg import gitcommsg_mode
-import argparse
-import sys
-
-def git_commit_message_generator():
-    parser = argparse.ArgumentParser(description="Generate git commit messages using nGPT")
-    parser.add_argument("--diff", "-d", nargs="?", const=True, help="Path to diff file (optional)")
-    parser.add_argument("--message-context", "-m", help="Additional context for commit message generation")
-    parser.add_argument("--chunk-size", type=int, default=200, help="Maximum lines per chunk")
-    parser.add_argument("--recursive-chunk", action="store_true", help="Enable recursive chunking for large diffs")
-    parser.add_argument("--log", help="Enable logging to specified file")
-    parser.add_argument("--max-msg-lines", type=int, default=20, help="Maximum lines in commit message")
-    args = parser.parse_args()
-    
-    # Initialize client
-    config = load_config()
-    client = NGPTClient(**config)
-    
-    try:
-        # Use the gitcommsg_mode function from nGPT
-        gitcommsg_mode(client, args)
-    except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
-
-if __name__ == "__main__":
-    git_commit_message_generator()
-
-You can also use the Git commit message functionality directly in your applications:
-
-```python
-from ngpt import NGPTClient, load_config
-from ngpt.cli.modes.gitcommsg import get_diff_content, gitcommsg_mode
-
-def analyze_git_changes():
-    # Initialize client
-    config = load_config()
-    client = NGPTClient(**config)
-    
-    # Get staged changes from git
-    diff_content = get_diff_content()
-    if not diff_content:
-        print("No staged changes found. Use 'git add' first.")
-        return
-        
-    # Create args object with desired options
-    class Args:
-        pass
-    
-    args = Args()
-    args.diff = None  # Use staged changes
-    args.message_context = "type:feat focus on API changes"  # Customize as needed
-    args.chunk_size = 200
-    args.recursive_chunk = True
-    args.log = None
-    args.max_msg_lines = 20
-    
-    # Generate commit message
-    gitcommsg_mode(client, args)
-```
-
-For more fine-grained control, you can use the individual functions from the gitcommsg module:
+nGPT includes a specialized module for generating Git commit messages based on staged changes:
 
 ```python
 from ngpt import NGPTClient, load_config
@@ -538,15 +519,15 @@ from ngpt.cli.modes.gitcommsg import (
     handle_api_call
 )
 
-def generate_commit_message_advanced():
+def generate_commit_message():
     # Initialize client
     config = load_config()
     client = NGPTClient(**config)
     
-    # Get diff content
+    # Get diff content from staged changes
     diff_content = get_diff_content()
     if not diff_content:
-        print("No staged changes found.")
+        print("No staged changes found. Use 'git add' first.")
         return
     
     # Process context for focus/filtering
@@ -563,6 +544,30 @@ def generate_commit_message_advanced():
     
     # Print or use the result
     print(commit_message)
+```
+
+For more convenient usage, you can use the provided `gitcommsg_mode` function:
+
+```python
+from ngpt import NGPTClient, load_config
+from ngpt.cli.modes.gitcommsg import gitcommsg_mode
+
+# Initialize client
+config = load_config()
+client = NGPTClient(**config)
+
+# Create args object with desired options
+class Args:
+    def __init__(self):
+        self.diff = None  # Use staged changes
+        self.message_context = "type:feat focus on API changes"
+        self.chunk_size = 200
+        self.recursive_chunk = True
+        self.log = None
+        self.max_msg_lines = 20
+
+# Generate commit message
+gitcommsg_mode(client, Args())
 ```
 
 ### Web Search Assistant
@@ -585,15 +590,67 @@ def web_search_assistant():
             break
             
         print("Searching and generating response...")
-        response = client.chat(user_input, web_search=True)
-        print("\nAnswer:")
-        print(response)
-        print("-" * 50)
+        try:
+            # Stream the response in real-time
+            print("\nAnswer: ", end="", flush=True)
+            response = ""
+            for chunk in client.chat(user_input, web_search=True, stream=True):
+                print(chunk, end="", flush=True)
+                response += chunk
+            print("\n" + "-" * 50)
+        except Exception as e:
+            print(f"\nError occurred: {e}")
+            print("-" * 50)
     
     print("Goodbye!")
 
 if __name__ == "__main__":
     web_search_assistant()
+```
+
+You can also create a more advanced web search assistant with additional configuration:
+
+```python
+from ngpt import NGPTClient, load_config
+from ngpt.cli.renderers import prettify_streaming_markdown
+
+def advanced_web_search_assistant():
+    # Initialize client with default configuration
+    config = load_config()
+    client = NGPTClient(**config)
+    
+    # Set up markdown rendering for nicer outputs
+    markdown_streamer = prettify_streaming_markdown(
+        renderer='rich',
+        header_text="Searching the web..."
+    )
+    
+    print("Advanced Web Search Assistant (type 'exit' to quit)")
+    print("-" * 50)
+    
+    while True:
+        user_input = input("Question: ")
+        if user_input.lower() in ['exit', 'quit', 'bye']:
+            break
+        
+        try:
+            # Use the markdown streamer for pretty output formatting
+            client.chat(
+                user_input,
+                web_search=True,
+                stream=True,
+                markdown_format=True,
+                temperature=0.5,  # Lower temperature for more factual responses
+                stream_callback=markdown_streamer.update_content
+            )
+            print()
+        except Exception as e:
+            print(f"Error: {e}")
+    
+    print("Goodbye!")
+
+if __name__ == "__main__":
+    advanced_web_search_assistant()
 ```
 
 ## Error Handling

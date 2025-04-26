@@ -57,7 +57,7 @@ messages = [
 ]
 
 # Send the chat with custom messages
-response = client.chat("", messages=messages)
+response = client.chat("", messages=messages, markdown_format=True)
 print(response)
 ```
 
@@ -74,6 +74,38 @@ ngpt --preprompt "Your responses should be concise and include code examples." \
 
 # Create a specialized tutor for interactive sessions
 ngpt --interactive --preprompt "You are a Python programming tutor. Explain concepts clearly and provide helpful examples."
+```
+
+### Web Search Integration
+
+Enable the model to search the web for current information:
+
+```python
+from ngpt import NGPTClient, load_config
+
+config = load_config()
+client = NGPTClient(**config)
+
+# Query with web search enabled
+response = client.chat(
+    "What are the latest developments in large language models?",
+    web_search=True,
+    markdown_format=True
+)
+print(response)
+```
+
+Using web search in the CLI:
+
+```bash
+# Basic web search query
+ngpt --web-search "Current international space station crew members"
+
+# Combine web search with stream-prettify for formatted, real-time results
+ngpt --web-search --stream-prettify "Latest climate research findings"
+
+# Use web search for detailed technical information
+ngpt --web-search "How to implement WebSocket authentication in Node.js" 
 ```
 
 ### Conversation Logging
@@ -99,6 +131,9 @@ ngpt --interactive \
 
 # Log non-interactive sessions
 ngpt --log "Explain quantum computing"
+
+# Log web search sessions
+ngpt --web-search --log "Latest advancements in quantum computing"
 ```
 
 The log file contains the complete conversation transcript, including:
@@ -106,12 +141,14 @@ The log file contains the complete conversation transcript, including:
 - All user messages
 - All AI responses
 - System prompts when custom preprompts are used
+- Web search results when enabled
 
 This is particularly useful for:
 - Documenting important planning discussions
 - Saving educational sessions for later review
 - Keeping records of complex problem-solving processes
 - Sharing conversations with team members
+- Research tracking with web search results
 
 ## Advanced Conversation Management
 
@@ -146,7 +183,7 @@ def conversation_with_memory():
         # Get response
         print("Assistant: ", end="")
         response_text = ""
-        for chunk in client.chat("", messages=messages, stream=True):
+        for chunk in client.chat("", messages=messages, stream=True, markdown_format=True):
             print(chunk, end="", flush=True)
             response_text += chunk
         print()
@@ -162,6 +199,59 @@ def conversation_with_memory():
 
 if __name__ == "__main__":
     conversation_with_memory()
+```
+
+### Real-time Markdown Formatting
+
+Create a custom streaming renderer for beautifully formatted responses:
+
+```python
+from ngpt import NGPTClient, load_config
+from ngpt.cli.renderers import prettify_streaming_markdown
+from rich.console import Console
+
+def custom_streaming_markdown():
+    config = load_config()
+    client = NGPTClient(**config)
+    
+    # Create a Rich console
+    console = Console()
+    
+    # Initialize the markdown renderer
+    markdown_renderer = prettify_streaming_markdown(renderer='rich')
+    
+    # Start a conversation
+    console.print("[bold green]Starting conversation with markdown rendering[/bold green]")
+    console.print("[bold]Type 'exit' to quit[/bold]")
+    console.print("-" * 50)
+    
+    messages = [
+        {"role": "system", "content": "You are a helpful assistant with markdown capabilities. Use formatting like headers, lists, code blocks, and tables to present information clearly."}
+    ]
+    
+    while True:
+        user_input = input("You: ")
+        if user_input.lower() in ['exit', 'quit', 'bye']:
+            break
+        
+        # Add user message to history
+        messages.append({"role": "user", "content": user_input})
+        
+        # Call the API with the custom renderer
+        console.print("[bold blue]Assistant:[/bold blue]")
+        response = client.chat(
+            "", 
+            messages=messages, 
+            stream=True, 
+            markdown_format=True,
+            stream_callback=markdown_renderer.update_content
+        )
+        
+        # Add the response to history
+        messages.append({"role": "assistant", "content": response})
+
+if __name__ == "__main__":
+    custom_streaming_markdown()
 ```
 
 ## Error Handling and Retry Logic
@@ -214,6 +304,34 @@ except Exception as e:
 ```
 
 ## Advanced Code Generation
+
+### Code Generation with Web Search
+
+Generate more up-to-date code examples by enabling web search:
+
+```python
+from ngpt import NGPTClient, load_config
+
+config = load_config()
+client = NGPTClient(**config)
+
+# Generate code with web search for current best practices
+prompt = """
+Create a modern React component that:
+1. Uses React hooks for state management
+2. Implements dark/light theme toggle
+3. Follows current React best practices
+4. Uses TypeScript typing
+"""
+
+code = client.generate_code(
+    prompt, 
+    language="typescript", 
+    web_search=True,
+    markdown_format=True
+)
+print(code)
+```
 
 ### Code Generation with Constraints
 
@@ -270,7 +388,7 @@ config = load_config()
 client = NGPTClient(**config)
 
 def execute_piped_commands(description):
-    command = client.generate_shell_command(description)
+    command = client.generate_shell_command(description, web_search=True)
     print(f"Generated command: {command}")
     
     # Ask for confirmation
@@ -335,12 +453,8 @@ ngpt -c --stream-prettify --language typescript "implement a React hook for mana
 
 # Interactive session with real-time markdown rendering
 ngpt -i --stream-prettify
-```
 
-Combining stream-prettify with web search for up-to-date formatted information:
-
-```bash
-# Get latest news with beautified formatting in real-time
+# Combined with web search for up-to-date information
 ngpt --stream-prettify --web-search "What are the latest developments in AI research?"
 ```
 
@@ -375,6 +489,11 @@ def main():
     parser.add_argument("--code", action="store_true", help="Generate code")
     parser.add_argument("--language", default="python", help="Language for code generation")
     parser.add_argument("--prettify", action="store_true", help="Enable markdown formatting")
+    parser.add_argument("--stream-prettify", action="store_true", help="Enable real-time markdown formatting")
+    parser.add_argument("--web-search", action="store_true", help="Enable web search capability")
+    parser.add_argument("-i", "--interactive", action="store_true", help="Start interactive session")
+    parser.add_argument("--log", nargs="?", const="ngpt_session.log", help="Log conversation to file")
+    parser.add_argument("--preprompt", help="Set a system message/preprompt")
     
     args = parser.parse_args()
     
@@ -386,8 +505,10 @@ def main():
         except Exception as e:
             print(f"{COLORS['yellow']}Error reading file: {e}{COLORS['reset']}", file=sys.stderr)
             return 1
-    elif args.prompt:
+    elif args.prompt and not args.interactive:
         prompt = args.prompt
+    elif args.interactive:
+        prompt = ""  # Will be handled by interactive mode
     else:
         parser.print_help()
         return 1
@@ -405,48 +526,174 @@ def main():
         print(f"{COLORS['yellow']}Error initializing client: {e}{COLORS['reset']}", file=sys.stderr)
         return 1
     
+    # Prepare messages with preprompt if specified
+    messages = None
+    if args.preprompt:
+        messages = [
+            {"role": "system", "content": args.preprompt}
+        ]
+        if prompt:
+            messages.append({"role": "user", "content": prompt})
+    
+    # Setup logging if requested
+    log_file = None
+    if args.log:
+        try:
+            log_file = open(args.log, 'a')
+            log_file.write(f"\n\n--- Session started at {import datetime; datetime.datetime.now()} ---\n\n")
+            if args.preprompt:
+                log_file.write(f"System: {args.preprompt}\n\n")
+            if prompt:
+                log_file.write(f"User: {prompt}\n\n")
+        except Exception as e:
+            print(f"{COLORS['yellow']}Error opening log file: {e}{COLORS['reset']}", file=sys.stderr)
+            log_file = None
+    
     # Process based on mode
     try:
-        if args.shell:
-            # Use shell mode
-            shell_mode(client, prompt)
+        # Handle interactive mode
+        if args.interactive:
+            from ngpt.cli.modes.interactive import interactive_mode
+            return interactive_mode(
+                client, 
+                preprompt=args.preprompt,
+                stream_prettify=args.stream_prettify or args.prettify,
+                web_search=args.web_search,
+                log_file=args.log
+            )
+            
+        # Handle shell command generation
+        elif args.shell:
+            shell_mode(
+                client, 
+                prompt, 
+                web_search=args.web_search,
+                messages=messages,
+                log_file=log_file
+            )
+            
+        # Handle code generation
         elif args.code:
-            # Use code mode
-            code_mode(client, prompt, language=args.language)
+            code_mode(
+                client, 
+                prompt, 
+                language=args.language, 
+                web_search=args.web_search,
+                messages=messages,
+                stream_prettify=args.stream_prettify or args.prettify,
+                log_file=log_file
+            )
+            
+        # Standard chat mode
         else:
-            # Standard chat mode
-            if args.prettify:
-                # Set up streaming markdown renderer
+            # Real-time prettified markdown mode
+            if args.stream_prettify:
                 streamer = prettify_streaming_markdown(renderer='rich')
                 response = client.chat(
                     prompt, 
                     temperature=args.temperature,
                     stream=True,
-                    stream_callback=streamer.update_content
+                    stream_callback=streamer.update_content,
+                    markdown_format=True,
+                    web_search=args.web_search,
+                    messages=messages
                 )
+                
                 if args.output:
                     with open(args.output, 'w') as f:
                         f.write(response)
                     print(f"{COLORS['green']}Response saved to {args.output}{COLORS['reset']}")
-            else:
-                # Simple mode
+                    
+                if log_file:
+                    log_file.write(f"Assistant: {response}\n\n")
+                    
+            # Basic prettify mode
+            elif args.prettify:
+                from rich.markdown import Markdown
+                from rich.console import Console
+                
+                console = Console()
+                
                 if args.output:
                     # No streaming if saving to file
-                    response = client.chat(prompt, temperature=args.temperature, stream=False)
+                    response = client.chat(
+                        prompt, 
+                        temperature=args.temperature, 
+                        stream=False,
+                        web_search=args.web_search,
+                        markdown_format=True,
+                        messages=messages
+                    )
                     with open(args.output, 'w') as f:
                         f.write(response)
                     print(f"{COLORS['green']}Response saved to {args.output}{COLORS['reset']}")
+                    
+                    if log_file:
+                        log_file.write(f"Assistant: {response}\n\n")
+                else:
+                    # Use rich to render markdown after completion
+                    response = client.chat(
+                        prompt, 
+                        temperature=args.temperature, 
+                        stream=False,
+                        web_search=args.web_search,
+                        markdown_format=True,
+                        messages=messages
+                    )
+                    console.print(Markdown(response))
+                    
+                    if log_file:
+                        log_file.write(f"Assistant: {response}\n\n")
+                        
+            # Simple mode
+            else:
+                if args.output:
+                    # No streaming if saving to file
+                    response = client.chat(
+                        prompt, 
+                        temperature=args.temperature, 
+                        stream=False,
+                        web_search=args.web_search,
+                        messages=messages
+                    )
+                    with open(args.output, 'w') as f:
+                        f.write(response)
+                    print(f"{COLORS['green']}Response saved to {args.output}{COLORS['reset']}")
+                    
+                    if log_file:
+                        log_file.write(f"Assistant: {response}\n\n")
                 else:
                     # Stream to console
                     full_response = ""
-                    for chunk in client.chat(prompt, temperature=args.temperature, stream=True):
+                    for chunk in client.chat(
+                        prompt, 
+                        temperature=args.temperature, 
+                        stream=True,
+                        web_search=args.web_search,
+                        messages=messages
+                    ):
                         print(chunk, end="", flush=True)
                         full_response += chunk
                     print()  # Final newline
+                    
+                    if log_file:
+                        log_file.write(f"Assistant: {full_response}\n\n")
                 
+        if log_file:
+            log_file.close()
+            
         return 0
+    except KeyboardInterrupt:
+        print("\nOperation cancelled by user")
+        if log_file:
+            log_file.write("\n--- Session interrupted by user ---\n")
+            log_file.close()
+        return 130
     except Exception as e:
         print(f"{COLORS['yellow']}Error: {e}{COLORS['reset']}", file=sys.stderr)
+        if log_file:
+            log_file.write(f"\nError: {e}\n--- Session ended with error ---\n")
+            log_file.close()
         return 1
 
 if __name__ == "__main__":
@@ -471,8 +718,26 @@ chmod +x enhanced_ngpt.py
 # Use a specific model and configuration
 ./enhanced_ngpt.py -c 1 -m gpt-4o "Explain neural networks"
 
-# Use with markdown formatting
-./enhanced_ngpt.py -p "Explain quantum computing with code examples"
+# Use with markdown formatting (static, after completion)
+./enhanced_ngpt.py --prettify "Explain quantum computing with code examples"
+
+# Use with real-time markdown formatting
+./enhanced_ngpt.py --stream-prettify "Compare different sorting algorithms"
+
+# Use with web search
+./enhanced_ngpt.py --web-search "Latest advancements in quantum computing"
+
+# Interactive mode with real-time markdown formatting
+./enhanced_ngpt.py -i --stream-prettify
+
+# Log conversation to file
+./enhanced_ngpt.py --log conversation.log "Explain the theory of relativity"
+
+# Set custom system prompt/preprompt
+./enhanced_ngpt.py --preprompt "You are a Python expert. Provide concise code examples." "How to use async in Python?"
+
+# Combine multiple features
+./enhanced_ngpt.py --web-search --stream-prettify --preprompt "You are a research assistant" "Latest breakthroughs in quantum computing"
 ```
 
 ## Next Steps

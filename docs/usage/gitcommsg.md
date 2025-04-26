@@ -68,6 +68,8 @@ ngpt --gitcommsg -m "css"
 ngpt --gitcommsg -m "python"
 ```
 
+The file type filter applies a strict filter to only include changes to files of that type or related to that technology in the analysis and commit message. Other file changes will be excluded from the message.
+
 ### Focus/Exclusion Directives
 
 Control what to include or exclude:
@@ -82,6 +84,8 @@ ngpt --gitcommsg -m "ignore formatting"
 # Exclude test files from the summary
 ngpt --gitcommsg -m "exclude tests"
 ```
+
+Focus directives instruct the tool to exclusively analyze changes related to a specific feature or component, while exclusion directives tell it to completely ignore certain aspects like formatting changes or test files.
 
 ### Combined Directives
 
@@ -292,6 +296,44 @@ Where the types include:
 - `config`: Configuration changes
 - `ui`: User interface changes
 - `api`: API-related changes
+
+## How It Works
+
+The git commit message generation process follows these steps:
+
+1. Retrieves diff content (from staged changes or specified diff file)
+2. If recursive chunking is enabled:
+   - Splits the diff into smaller chunks (based on --chunk-size)
+   - Analyzes each chunk separately
+   - Combines the analyses into an intermediate result
+   - Further analyzes the combined result to generate a final commit message
+3. If not chunking, sends the entire diff to the AI for analysis
+4. Post-processes the response to ensure it follows the conventional commit format
+5. For large messages, condenses the output if it exceeds --max-msg-lines
+6. Attempts to copy the result to the clipboard for easy pasting
+
+## Technical Analysis Process
+
+The commit message generation involves a sophisticated technical analysis of your code changes:
+
+1. The tool analyzes the raw diff with a specialized technical analysis system prompt that instructs the AI to:
+   - Create a detailed technical summary of all changes
+   - Be 100% factual and only mention code explicitly shown in the diff
+   - Identify exact function names, method names, class names, and line numbers
+   - Use format 'filename:function_name()' or 'filename:line_number' for references
+   - Include all significant changes with proper technical details
+   - Focus on technical specifics, avoiding general statements
+
+2. The analysis produces structured output with:
+   - List of affected files with full paths
+   - Detailed technical changes with specific code locations
+   - Brief technical description of what the changes accomplish
+
+3. This technical analysis is then used to generate the conventional commit message with the appropriate type prefixes and detailed references.
+
+4. For large changes with recursive chunking, each chunk gets its own technical analysis before being combined into a unified understanding.
+
+This process ensures that commit messages are accurate, detailed, and follow best practices with proper file and function references.
 
 ## Example Output
 

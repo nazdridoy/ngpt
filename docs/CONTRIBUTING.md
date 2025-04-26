@@ -35,8 +35,10 @@ Thank you for your interest in contributing to NGPT! This document provides guid
     - `formatters.py` - Output formatting logic
     - `interactive.py` - Interactive mode implementation
     - `modes/` - Different operational modes
+      - `__init__.py` - Modes initialization
       - `chat.py` - Chat mode functionality
       - `code.py` - Code generation mode
+      - `gitcommsg.py` - Git commit message generation
       - `shell.py` - Shell command generation
       - `text.py` - Text generation mode
       - `rewrite.py` - Text rewriting mode

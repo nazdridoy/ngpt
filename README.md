@@ -118,6 +118,13 @@ ngpt --log "Tell me about quantum computing"
 
 # Process text from stdin using the {} placeholder
 cat README.md | ngpt --stdin "Summarize this document: {}"
+
+# Use different model providers by specifying the provider name
+ngpt --provider Groq "Explain quantum computing"
+
+# Compare outputs from different providers
+ngpt --provider OpenAI "Explain quantum physics" > openai_response.txt
+ngpt --provider Ollama "Explain quantum physics" > ollama_response.txt
 ```
 
 For more examples and detailed usage, visit the [CLI Usage Guide](https://nazdridoy.github.io/ngpt/usage/cli_usage.html).
@@ -126,7 +133,7 @@ For more examples and detailed usage, visit the [CLI Usage Guide](https://nazdri
 
 - ✅ **Versatile**: Use as a CLI tool, Python library, or CLI framework for building custom tools
 - 🪶 **Lightweight**: Minimal dependencies with everything you need included
-- 🔄 **API Flexibility**: Works with OpenAI, Ollama, Groq, and any compatible endpoint
+- 🔄 **API Flexibility**: Works with OpenAI, Ollama, Groq, Claude, and any compatible endpoint
 - 💬 **Interactive Chat**: Continuous conversation with memory in modern UI
 - 📊 **Streaming Responses**: Real-time output for better user experience
 - 🔍 **Web Search**: Integrated with compatible API endpoints
@@ -143,6 +150,8 @@ For more examples and detailed usage, visit the [CLI Usage Guide](https://nazdri
 - 📃 **Conversation Logging**: Save your conversations to text files for later reference
 - 🧰 **CLI Components**: Reusable components for building custom AI-powered command-line tools
 - 🔌 **Modular Architecture**: Well-structured codebase with clean separation of concerns
+- 🔄 **Provider Switching**: Easily switch between different LLM providers with a single parameter
+- 🚀 **Performance Optimized**: Fast response times and minimal resource usage
 
 See the [Feature Overview](https://nazdridoy.github.io/ngpt/overview.html) for more details.
 
@@ -291,6 +300,16 @@ print(result.stdout)
 # Returns only code without markdown or explanations
 code = client.generate_code("function that converts Celsius to Fahrenheit")
 print(code)
+
+# Compare responses from different providers
+openai_config = load_config(config_index=0)  # OpenAI
+groq_config = load_config(config_index=1)    # Groq
+
+openai_client = NGPTClient(**openai_config)
+groq_client = NGPTClient(**groq_config)
+
+openai_response = openai_client.chat("Explain quantum computing")
+groq_response = groq_client.chat("Explain quantum computing")
 ```
 
 For advanced usage patterns and integrations, check out the [Advanced Examples](https://nazdridoy.github.io/ngpt/examples/advanced.html).
@@ -356,6 +375,7 @@ You can configure nGPT using the following options:
 | `-t, --text` | Open interactive multiline editor for complex prompts with syntax highlighting |
 | `--stdin` | Read from stdin and use content with prompt. Use {} in prompt as placeholder for stdin content |
 | `--rewrite` | Rewrite text to improve quality while preserving original tone and meaning |
+| `--gitcommsg` | Generate AI-powered git commit messages from staged changes or diff files |
 
 #### Global Options
 
