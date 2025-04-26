@@ -66,8 +66,80 @@ These options are mutually exclusive:
 
 Some options only apply in specific modes:
 
+#### Code Mode Options
 - `language` - Programming language for code generation (only for code mode)
+
+#### Logging Options
 - `log` - Filepath to log conversation (for interactive and text modes)
+
+#### Git Commit Message Mode Options
+- `message-context` - Context to guide AI generation (e.g., file types, commit type directive)
+- `recursive-chunk` - Process large diffs in chunks with recursive analysis if needed (default: false)
+- `diff` - Path to diff file to use instead of staged git changes
+- `chunk-size` - Number of lines per chunk when chunking is enabled (default: 200)
+- `max-depth` - Maximum recursion depth for recursive chunking (default: 3)
+
+### Git Commit Message Options Details
+
+These options control the behavior of the `--gitcommsg` mode, which helps generate conventional commit messages from git diffs.
+
+#### message-context
+This option provides contextual information to guide the AI when generating commit messages. It accepts various directives:
+
+```bash
+# Set a default context for commit message generation
+ngpt --cli-config set message-context "type:feat focus on UI"
+```
+
+The context can include:
+- **Commit type directives**: `type:feat`, `type:fix`, `type:docs`, etc.
+- **File type filtering**: `javascript`, `python`, `css`, etc.
+- **Focus directives**: `focus on auth`, `focus on UI`, etc.
+- **Exclusion directives**: `ignore formatting`, `exclude tests`, etc.
+
+#### recursive-chunk
+When set to `true`, this enables recursive chunking for processing large diffs, which is helpful for large commits:
+
+```bash
+# Enable recursive chunking by default
+ngpt --cli-config set recursive-chunk true
+```
+
+With recursive chunking enabled, the system will:
+1. Split large diffs into chunks
+2. Process each chunk separately
+3. Further break down large intermediate results if needed
+4. Combine everything into a final commit message
+
+#### diff
+This specifies a default path to a diff file. When using the `--gitcommsg` command with `--diff` (without specifying a file), it will use this configured path:
+
+```bash
+# Set a default diff file path
+ngpt --cli-config set diff /path/to/changes.diff
+```
+
+**Important Note**: The diff file from CLI config is only used when you explicitly provide the `--diff` flag without a specific path. If you don't include the `--diff` flag, the system will always use git staged changes regardless of this setting.
+
+#### chunk-size
+Controls how many lines of diff are processed in each chunk when chunking is enabled:
+
+```bash
+# Set a larger chunk size (default is 200)
+ngpt --cli-config set chunk-size 300
+```
+
+Larger chunk sizes can provide more context but may hit token limits with some models. Smaller chunk sizes are better for very large commits but may lose some context between chunks.
+
+#### max-depth
+Sets the maximum recursion depth for recursive chunking:
+
+```bash
+# Increase max recursion depth (default is 3)
+ngpt --cli-config set max-depth 5
+```
+
+Higher values allow processing of extremely large diffs but may take longer.
 
 ### Context-Aware Application
 
@@ -140,6 +212,15 @@ ngpt --cli-config set prettify true
 
 # Set default provider to use
 ngpt --cli-config set provider Gemini
+
+# Enable recursive chunking for git commit messages by default
+ngpt --cli-config set recursive-chunk true
+
+# Set a default diff file path for git commit messages
+ngpt --cli-config set diff /path/to/changes.diff
+
+# Set a larger chunk size for git commit message processing
+ngpt --cli-config set chunk-size 300
 ```
 
 ### Using CLI Configuration

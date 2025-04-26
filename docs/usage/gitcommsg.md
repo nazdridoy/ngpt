@@ -105,7 +105,7 @@ This is particularly useful for large pull requests or commits with many changes
 
 ## CLI Configuration
 
-You can set default values for gitcommsg options:
+You can set default values for gitcommsg options using the CLI configuration system:
 
 ```bash
 # Set default chunk size
@@ -113,7 +113,115 @@ ngpt --cli-config set chunk-size 150
 
 # Enable recursive chunking by default
 ngpt --cli-config set recursive-chunk true
+
+# Set a default diff file path (used with --diff flag)
+ngpt --cli-config set diff /path/to/your/changes.diff
+
+# Set maximum recursion depth
+ngpt --cli-config set max-depth 5
+
+# Set a context directive to always apply
+ngpt --cli-config set message-context "type:feat"
 ```
+
+### Available CLI Configuration Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `recursive-chunk` | bool | false | Process large diffs in chunks with recursive analysis |
+| `diff` | string | null | Path to diff file to use instead of staged changes |
+| `chunk-size` | int | 200 | Number of lines per chunk when chunking is enabled |
+| `max-depth` | int | 3 | Maximum recursion depth for recursive chunking |
+| `message-context` | string | null | Context to guide AI generation |
+
+### Option Details
+
+#### recursive-chunk
+
+When enabled, this option automatically processes large diffs in chunks and then combines the results:
+
+```bash
+# Enable recursive chunking by default
+ngpt --cli-config set recursive-chunk true
+```
+
+This is particularly useful for large commits or codebases, as it helps:
+- Avoid token limits with large diffs
+- Handle rate limiting better by breaking requests into smaller pieces
+- Process very large changes that would otherwise fail
+
+#### chunk-size
+
+Controls how many lines of diff are processed in each chunk:
+
+```bash
+# Set a custom chunk size (smaller chunks for very large diffs)
+ngpt --cli-config set chunk-size 150
+
+# Or larger chunks for more context
+ngpt --cli-config set chunk-size 300
+```
+
+Smaller chunks (100-150 lines) work better for very large diffs or models with stricter token limits, while larger chunks (300-500 lines) provide more context but may hit token limits.
+
+#### max-depth
+
+Sets how many recursive analysis levels are allowed when using recursive chunking:
+
+```bash
+# Increase max recursion depth for extremely large diffs
+ngpt --cli-config set max-depth 5
+```
+
+Higher values allow processing larger diffs but may increase processing time.
+
+#### message-context
+
+Provides contextual guidance for the AI when generating commit messages:
+
+```bash
+# Always focus on a specific aspect
+ngpt --cli-config set message-context "focus on API changes"
+
+# Always use a specific commit type
+ngpt --cli-config set message-context "type:feat"
+
+# Combined directives
+ngpt --cli-config set message-context "type:fix exclude tests"
+```
+
+This is useful when you consistently work on the same type of changes and want to standardize your commit messages.
+
+### Using the Diff File Option
+
+When you've set a default diff file using the CLI config:
+
+```bash
+# Set a default diff file
+ngpt --cli-config set diff /path/to/changes.diff
+```
+
+The diff file from CLI config is only used when you specifically request it with the `--diff` flag without providing a path. You have three ways to control which diff is used:
+
+1. **Use git staged changes** (ignore the CLI config diff):
+   ```bash
+   ngpt --gitcommsg
+   ```
+   This will always use git staged changes regardless of your CLI config.
+
+2. **Use the CLI config diff file**:
+   ```bash
+   ngpt --gitcommsg --diff
+   ```
+   This explicitly tells ngpt to use the diff file specified in your CLI config.
+
+3. **Use a specific diff file** (override CLI config):
+   ```bash
+   ngpt --gitcommsg --diff /path/to/another.diff
+   ```
+   This overrides both git staged changes and your CLI config to use the specified file.
+
+This approach gives you flexibility with a default diff file while maintaining explicit control over when it's used.
 
 ## Example Output
 
