@@ -18,7 +18,7 @@ ngpt --gitcommsg -r
 ngpt --gitcommsg --diff /path/to/changes.diff
 
 # Enable logging for debugging
-ngpt --gitcommsg --log
+ngpt --gitcommsg --log commit_log.txt
 ```
 
 ## Command Line Options
@@ -27,10 +27,12 @@ ngpt --gitcommsg --log
 |--------|-------------|
 | `-m, --message-context` | Context to guide AI (file types, commit type directive, focus) |
 | `-r, --recursive-chunk` | Process large diffs in chunks with recursive analysis if needed |
-| `--diff FILE` | Use diff from specified file instead of staged changes |
+| `--diff [FILE]` | Use diff from specified file instead of staged changes. If used without a value, uses the path from CLI config |
 | `--log [FILE]` | Enable detailed logging (to specified file or auto-generated temp file) |
 | `--chunk-size NUM` | Set number of lines per chunk (default: 200) |
-| `--max-depth NUM` | Maximum recursion depth for recursive chunking (default: 3) |
+| `--analyses-chunk-size NUM` | Set number of lines per chunk when recursively analyzing (default: 200) |
+| `--max-msg-lines NUM` | Maximum number of lines in commit message before condensing (default: 20) |
+| `--max-recursion-depth NUM` | Maximum recursion depth for message condensing (default: 3) |
 
 ## Context Directives
 
@@ -97,28 +99,53 @@ ngpt --gitcommsg -m "type:fix ignore formatting"
 
 When processing large diffs with `-r/--recursive-chunk`, the chunking mechanism helps manage rate limits and token limits:
 
-1. Diffs are split into 200-line chunks and processed separately
+1. Diffs are split into chunks (default 200 lines) and processed separately
 2. The partial analyses are then combined into a final commit message
 3. If the combined analysis is still too large, it's recursively processed again
+4. The AI will condense the message if it exceeds `--max-msg-lines` (default: 20)
 
 This is particularly useful for large pull requests or commits with many changes.
+
+### Advanced Chunking Control
+
+For very large diffs or complex codebases, you can fine-tune the chunking process:
+
+```bash
+# Set a custom chunk size
+ngpt --gitcommsg -r --chunk-size 150
+
+# Set a different analysis chunk size (for processing intermediate results)
+ngpt --gitcommsg -r --chunk-size 200 --analyses-chunk-size 150
+
+# Control message length limits
+ngpt --gitcommsg -r --max-msg-lines 25
+
+# Increase the recursion depth for extremely large diffs
+ngpt --gitcommsg -r --max-recursion-depth 5
+```
 
 ## CLI Configuration
 
 You can set default values for gitcommsg options using the CLI configuration system:
 
 ```bash
-# Set default chunk size
-ngpt --cli-config set chunk-size 150
-
 # Enable recursive chunking by default
 ngpt --cli-config set recursive-chunk true
 
 # Set a default diff file path (used with --diff flag)
 ngpt --cli-config set diff /path/to/your/changes.diff
 
+# Set a custom chunk size
+ngpt --cli-config set chunk-size 150
+
+# Set custom analysis chunk size
+ngpt --cli-config set analyses-chunk-size 150  
+
+# Set maximum lines in commit message
+ngpt --cli-config set max-msg-lines 25
+
 # Set maximum recursion depth
-ngpt --cli-config set max-depth 5
+ngpt --cli-config set max-recursion-depth 5
 
 # Set a context directive to always apply
 ngpt --cli-config set message-context "type:feat"
@@ -131,7 +158,9 @@ ngpt --cli-config set message-context "type:feat"
 | `recursive-chunk` | bool | false | Process large diffs in chunks with recursive analysis |
 | `diff` | string | null | Path to diff file to use instead of staged changes |
 | `chunk-size` | int | 200 | Number of lines per chunk when chunking is enabled |
-| `max-depth` | int | 3 | Maximum recursion depth for recursive chunking |
+| `analyses-chunk-size` | int | 200 | Number of lines per chunk when recursively chunking analyses |
+| `max-msg-lines` | int | 20 | Maximum number of lines in commit message before condensing |
+| `max-recursion-depth` | int | 3 | Maximum recursion depth for recursive chunking and message condensing |
 | `message-context` | string | null | Context to guide AI generation |
 
 ### Option Details
@@ -150,30 +179,39 @@ This is particularly useful for large commits or codebases, as it helps:
 - Handle rate limiting better by breaking requests into smaller pieces
 - Process very large changes that would otherwise fail
 
-#### chunk-size
+#### chunk-size and analyses-chunk-size
 
-Controls how many lines of diff are processed in each chunk:
+Controls how many lines are processed in each chunk:
 
 ```bash
-# Set a custom chunk size (smaller chunks for very large diffs)
+# Set a custom chunk size for diff processing
 ngpt --cli-config set chunk-size 150
 
-# Or larger chunks for more context
-ngpt --cli-config set chunk-size 300
+# Set a custom chunk size for analysis processing
+ngpt --cli-config set analyses-chunk-size 150
 ```
+
+- `chunk-size`: Controls the size of raw diff chunks (smaller chunks for very large diffs)
+- `analyses-chunk-size`: Controls the size of analysis chunks during recursive processing
 
 Smaller chunks (100-150 lines) work better for very large diffs or models with stricter token limits, while larger chunks (300-500 lines) provide more context but may hit token limits.
 
-#### max-depth
+#### max-msg-lines and max-recursion-depth
 
-Sets how many recursive analysis levels are allowed when using recursive chunking:
+Controls the commit message condensing process:
 
 ```bash
+# Allow longer commit messages
+ngpt --cli-config set max-msg-lines 25
+
 # Increase max recursion depth for extremely large diffs
-ngpt --cli-config set max-depth 5
+ngpt --cli-config set max-recursion-depth 5
 ```
 
-Higher values allow processing larger diffs but may increase processing time.
+- `max-msg-lines`: Maximum number of lines in the final commit message before automatic condensing
+- `max-recursion-depth`: Maximum number of recursive analysis or condensing rounds allowed
+
+Higher recursion depth values allow processing larger diffs but may increase processing time.
 
 #### message-context
 
@@ -223,6 +261,38 @@ The diff file from CLI config is only used when you specifically request it with
 
 This approach gives you flexibility with a default diff file while maintaining explicit control over when it's used.
 
+## Commit Message Format
+
+The generated commit messages follow the conventional commit format:
+
+```
+type[(scope)]: <concise summary> (max 50 chars)
+
+- [type] <specific change 1> (filename:function/method/line)
+- [type] <specific change 2> (filename:function/method/line)
+- [type] <additional changes...>
+```
+
+Where the types include:
+- `feat`: New user-facing features
+- `fix`: Bug fixes or error corrections
+- `refactor`: Code restructuring (no behavior change)
+- `style`: Formatting/whitespace changes only
+- `docs`: Documentation only
+- `test`: Test-related changes
+- `perf`: Performance improvements
+- `build`: Build system changes
+- `ci`: CI/CD pipeline changes
+- `chore`: Routine maintenance tasks
+- `revert`: Reverting previous changes
+- `add`: New files without user-facing features
+- `remove`: Removing files/code
+- `update`: Changes to existing functionality
+- `security`: Security-related changes
+- `config`: Configuration changes
+- `ui`: User interface changes
+- `api`: API-related changes
+
 ## Example Output
 
 ```
@@ -234,11 +304,30 @@ feat(auth): Add OAuth2 authentication flow
 - [docs] Update authentication docs in README.md
 ```
 
-The generated commit messages follow the conventional commit format with:
+The generated commit messages include:
 1. Type prefix (feat, fix, docs, etc.)
 2. Optional scope in parentheses
 3. Brief summary
 4. Detailed bullet points with file and function references
+
+## Logging
+
+To debug issues or review the AI's analysis process, use the `--log` option:
+
+```bash
+# Log to a specific file
+ngpt --gitcommsg --log commit_log.txt
+
+# Create a temporary log file automatically
+ngpt --gitcommsg --log
+```
+
+The log will include:
+- Complete diff content
+- Analysis chunks
+- System prompts
+- API requests and responses
+- Error messages (if any)
 
 ## Requirements
 
@@ -248,8 +337,12 @@ The generated commit messages follow the conventional commit format with:
 
 ## Error Handling
 
-The command includes robust error handling:
-- Checks if in a git repository
-- Verifies staged changes exist
-- Includes automatic retries with exponential backoff for API failures
-- Provides detailed logs when `--log` is enabled 
+The tool handles various error conditions:
+- No staged changes (prompts you to stage changes with `git add`)
+- Invalid diff file (displays error and exits)
+- API rate limits (implements automatic retries with exponential backoff)
+- Token limit errors (suggests using the chunking mechanism)
+
+## Automatic Clipboard Copy
+
+When a commit message is successfully generated, the tool attempts to copy it to your clipboard for easy pasting into your git commit command. 

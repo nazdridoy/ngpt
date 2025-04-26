@@ -975,6 +975,142 @@ python image-analyzer.py photo.jpg --task describe
 python image-analyzer.py diagram.png --task extract-text
 ```
 
+## Git Commit Message Generator
+
+Create a CLI tool that uses nGPT to generate high-quality git commit messages from staged changes:
+
+```python
+#!/usr/bin/env python3
+import sys
+import subprocess
+from ngpt import NGPTClient
+from ngpt.utils.config import load_config
+from ngpt.cli.formatters import COLORS
+import pyperclip
+
+def get_git_diff():
+    """Get staged changes from git."""
+    try:
+        result = subprocess.run(
+            ["git", "diff", "--staged"], 
+            capture_output=True, 
+            text=True
+        )
+        
+        if result.returncode != 0:
+            raise Exception(f"Git command failed: {result.stderr}")
+            
+        # Check if there are staged changes
+        if not result.stdout.strip():
+            print(f"{COLORS['yellow']}No staged changes found. Stage changes with 'git add' first.{COLORS['reset']}")
+            return None
+            
+        return result.stdout
+    except Exception as e:
+        print(f"{COLORS['yellow']}Error getting git diff: {str(e)}{COLORS['reset']}")
+        return None
+
+def main():
+    # Get staged changes
+    diff_content = get_git_diff()
+    if not diff_content:
+        sys.exit(1)
+    
+    # Initialize client
+    try:
+        config = load_config()
+        client = NGPTClient(**config)
+    except Exception as e:
+        print(f"{COLORS['red']}Error initializing AI client: {e}{COLORS['reset']}", file=sys.stderr)
+        sys.exit(1)
+    
+    # Create system prompt for commit message generation
+    system_prompt = """You are an expert Git commit message writer. Your task is to analyze the git diff and create a precise, factual commit message following the conventional commit format.
+
+FORMAT:
+type[(scope)]: <concise summary> (max 50 chars)
+
+- [type] <specific change 1> (filename:function/method/line)
+- [type] <specific change 2> (filename:function/method/line)
+- [type] <additional changes...>
+
+COMMIT TYPES:
+- feat: New user-facing features
+- fix: Bug fixes or error corrections
+- refactor: Code restructuring (no behavior change)
+- style: Formatting/whitespace changes only
+- docs: Documentation only
+- test: Test-related changes
+- perf: Performance improvements
+- build: Build system changes
+- ci: CI/CD pipeline changes
+- chore: Routine maintenance tasks
+
+RULES:
+1. BE 100% FACTUAL - Mention ONLY code explicitly shown in the diff
+2. NEVER invent or assume changes not directly visible in the code
+3. EVERY bullet point MUST reference specific files/functions/lines
+4. Keep summary line under 50 characters (mandatory)
+5. Focus on technical specifics, avoid general statements"""
+    
+    # Create prompt for commit message generation
+    prompt = f"""Analyze this git diff and create a conventional commit message:
+
+{diff_content}"""
+
+    print(f"{COLORS['green']}Generating commit message...{COLORS['reset']}")
+    
+    # Generate commit message
+    try:
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt}
+        ]
+        
+        commit_message = client.chat(
+            prompt=prompt,
+            messages=messages
+        )
+        
+        # Display the result
+        print(f"\n{COLORS['green']}✨ Generated Commit Message:{COLORS['reset']}\n")
+        print(commit_message)
+        
+        # Copy to clipboard
+        try:
+            pyperclip.copy(commit_message)
+            print(f"\n{COLORS['green']}(Copied to clipboard){COLORS['reset']}")
+        except:
+            pass
+        
+    except Exception as e:
+        print(f"{COLORS['red']}Error generating commit message: {e}{COLORS['reset']}", file=sys.stderr)
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
+```
+
+Save this as `commit-msg.py` and use it after staging changes:
+
+```bash
+git add .
+python commit-msg.py
+```
+
+The tool will:
+1. Fetch the diff of staged changes
+2. Generate a conventional commit message based on the changes
+3. Display the message and copy it to your clipboard
+4. You can then use the commit message with `git commit -m "paste_message_here"`
+
+For larger projects, you might want to add more options such as:
+- Filtering by file type
+- Customizing commit types
+- Providing additional context for the AI
+
+The complete implementation in nGPT includes features like chunking for handling large diffs and specialized prompts for different types of code changes.
+
 ## Error Handling Best Practices
 
 When using nGPT CLI components, follow these error handling best practices:

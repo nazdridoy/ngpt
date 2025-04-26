@@ -8,6 +8,7 @@ This section contains comprehensive documentation on how to use nGPT, both as a 
 - [Library Usage](library_usage.md) - Learn how to integrate nGPT into your Python projects
 - [CLI Framework](cli_framework.md) - Learn how to build your own CLI tools with nGPT components
 - [CLI Configuration](cli_config.md) - Learn how to configure default CLI options
+- [Git Commit Message Generation](gitcommsg.md) - Learn how to generate high-quality commit messages using AI
 
 ## Overview
 
@@ -21,6 +22,7 @@ nGPT provides a powerful and intuitive command-line interface that allows you to
 - Conduct interactive chat sessions with conversation memory
 - Generate and execute shell commands
 - Generate clean code without markdown formatting
+- Generate conventional git commit messages from diffs
 - Configure API settings and preferences
 - And more...
 
@@ -33,6 +35,7 @@ nGPT can be imported as a Python library, allowing you to:
 - Integrate AI capabilities into your Python applications
 - Chat with AI models programmatically
 - Generate code and shell commands
+- Create git commit messages from diffs
 - Stream responses in real-time
 - Use multiple configurations for different providers
 - And more...
@@ -68,6 +71,12 @@ ngpt --shell "list all PDF files recursively"
 
 # Generate code
 ngpt --code "function to calculate prime numbers"
+
+# Generate git commit message from staged changes
+ngpt --gitcommsg
+
+# Generate commit message with context directive
+ngpt --gitcommsg -m "type:feat focus on UI"
 ```
 
 ### Library Quick Start
@@ -92,6 +101,11 @@ print(code)
 # Generate shell command
 command = client.generate_shell_command("list all PDF files recursively")
 print(command)
+
+# Generate git commit message from diff content
+diff_content = open("changes.diff").read()  # or get from 'git diff --staged'
+commit_msg = client.generate_git_commit_message(diff_content)
+print(commit_msg)
 ```
 
 ### CLI Framework Quick Start

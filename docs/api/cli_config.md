@@ -124,18 +124,17 @@ print(message)
 ```python
 from ngpt.utils.cli_config import apply_cli_config
 
-def apply_cli_config(args, options=None, context="all"):
+def apply_cli_config(args, mode):
 ```
 
-Applies CLI configuration options to the provided argument namespace.
+Applies CLI configuration options to the provided argument namespace based on the current mode.
 
 **Parameters:**
 - `args` (namespace): The argument namespace (from argparse)
-- `options` (list, optional): List of option names to apply (applies all if None)
-- `context` (str): The context for applying the configuration (e.g., "all", "chat", "code", "shell", "text")
+- `mode` (str): The current mode ('interactive', 'shell', 'code', 'text', 'gitcommsg', or 'all' for default)
 
 **Returns:**
-- None: Modifies the args namespace in-place
+- namespace: The updated argument namespace
 
 **Example:**
 ```python
@@ -150,11 +149,79 @@ parser.add_argument("--markdown-format", action="store_true")
 args = parser.parse_args()
 
 # Apply CLI configuration for code generation context
-apply_cli_config(args, context="code")
+apply_cli_config(args, mode="code")
 
 # Use the updated arguments
 print(f"Temperature: {args.temperature}")
 print(f"Language: {args.language}")
+```
+
+### `list_cli_config_options`
+
+```python
+from ngpt.utils.cli_config import list_cli_config_options
+
+def list_cli_config_options():
+```
+
+Lists all available CLI configuration options.
+
+**Returns:**
+- list: A sorted list of option names
+
+**Example:**
+```python
+from ngpt.utils.cli_config import list_cli_config_options
+
+# Get all available options
+options = list_cli_config_options()
+print("Available configuration options:")
+for option in options:
+    print(f"- {option}")
+```
+
+### `get_cli_config_dir`
+
+```python
+from ngpt.utils.cli_config import get_cli_config_dir
+
+def get_cli_config_dir():
+```
+
+Gets the directory where the CLI configuration is stored.
+
+**Returns:**
+- Path: The path to the CLI configuration directory
+
+**Example:**
+```python
+from ngpt.utils.cli_config import get_cli_config_dir
+
+# Get the CLI config directory
+config_dir = get_cli_config_dir()
+print(f"CLI configuration directory: {config_dir}")
+```
+
+### `get_cli_config_path`
+
+```python
+from ngpt.utils.cli_config import get_cli_config_path
+
+def get_cli_config_path():
+```
+
+Gets the path to the CLI configuration file.
+
+**Returns:**
+- Path: The path to the CLI configuration file
+
+**Example:**
+```python
+from ngpt.utils.cli_config import get_cli_config_path
+
+# Get the CLI config file path
+config_path = get_cli_config_path()
+print(f"CLI configuration file: {config_path}")
 ```
 
 ## Available CLI Configuration Options
@@ -164,18 +231,25 @@ The following options are available for configuration:
 | Option | Type | Context | Description |
 |--------|------|---------|-------------|
 | `temperature` | float | all | Controls randomness in the response (0.0-1.0) |
-| `top-p` | float | all | Controls diversity via nucleus sampling (0.0-1.0) |
+| `top_p` | float | all | Controls diversity via nucleus sampling (0.0-1.0) |
 | `no-stream` | bool | all | Disables streaming responses |
-| `max-tokens` | int | all | Maximum number of tokens to generate |
-| `web-search` | bool | all | Enables web search capability |
 | `prettify` | bool | all | Enables markdown prettification |
+| `stream-prettify` | bool | all | Enables streaming prettification |
+| `max_tokens` | int | all | Maximum number of tokens to generate |
+| `web-search` | bool | all | Enables web search capability |
 | `renderer` | string | all | Markdown renderer to use ('auto', 'rich', 'glow') |
 | `language` | string | code | Programming language for code generation |
-| `execute` | bool | shell | Whether to execute generated shell commands |
-| `markdown-format` | bool | all | Format responses with markdown |
 | `provider` | string | all | Default provider to use |
 | `config-index` | int | all | Default configuration index to use |
-| `model` | string | all | Default model to use |
+| `log` | string | all | Path to log file |
+| `preprompt` | string | all | Custom preprompt to use |
+| `message-context` | string | gitcommsg | Context for git commit message generation |
+| `recursive-chunk` | bool | gitcommsg | Enable recursive chunking for large diffs |
+| `diff` | string | gitcommsg | Path to diff file for git commit message generation |
+| `chunk-size` | int | gitcommsg | Maximum number of lines per chunk |
+| `analyses-chunk-size` | int | gitcommsg | Maximum number of lines per chunk for analyses |
+| `max-msg-lines` | int | gitcommsg | Maximum number of lines in commit message |
+| `max-recursion-depth` | int | gitcommsg | Maximum recursion depth for message condensing |
 
 ## Configuration File Location
 
@@ -194,7 +268,8 @@ from ngpt.utils.cli_config import (
     load_cli_config,
     set_cli_config_option,
     get_cli_config_option,
-    apply_cli_config
+    apply_cli_config,
+    unset_cli_config_option
 )
 from ngpt.cli.formatters import ColoredHelpFormatter, COLORS
 
@@ -215,7 +290,7 @@ def main():
     args = parser.parse_args()
     
     # Apply existing CLI configuration (for code generation context)
-    apply_cli_config(args, context="code")
+    apply_cli_config(args, mode="code")
     
     # If user wants to save current settings
     if args.save_config:

@@ -50,6 +50,7 @@ Below is a comprehensive list of all available command-line options, organized b
 | `-t, --text` | Open interactive multiline editor for complex prompts with syntax highlighting |
 | `--stdin` | Read from stdin and use content in your prompt with {} placeholder |
 | `--rewrite` | Rewrite text to improve quality while preserving original tone and meaning |
+| `--gitcommsg` | Generate AI-powered git commit messages for staged changes or from a diff file |
 
 ### Configuration Management
 
@@ -293,135 +294,141 @@ The `{}` placeholder will be replaced with stdin content. If the placeholder is 
 
 ### Text Rewriting
 
-Rewrite text to improve its quality, clarity, and flow while carefully preserving the original meaning, tone, and intent:
+Use the `--rewrite` flag to enhance text quality while preserving the original tone and meaning:
 
 ```bash
 # Rewrite text from stdin
-echo "The implementation of the feature, which was delayed due to unforeseen technical complications, is now scheduled for next week's release." | ngpt --rewrite
-```
+cat draft.txt | ngpt --rewrite
 
-The rewrite feature intelligently improves writing while preserving the original message's meaning and style.
+# Rewrite text directly from command line
+ngpt --rewrite "Text to improve and polish"
 
-#### Input Methods
-
-Rewrite mode supports three different input methods:
-
-1. **From stdin (piped input)**:
-   ```bash
-   cat document.txt | ngpt --rewrite
-   ```
-
-2. **From command-line argument**:
-   ```bash
-   ngpt --rewrite "We was hoping you could help with this issue what we are having with the server."
-   ```
-
-3. **From multiline editor**:
-   ```bash
-   ngpt --rewrite
-   # Opens an interactive editor for entering text to rewrite
-   ```
-
-#### Multiline Editor for Text Rewriting
-
-When you run `ngpt --rewrite` without piped input or a command-line argument, it opens an interactive multiline editor:
-
-```bash
+# Open interactive editor for text entry
 ngpt --rewrite
 ```
 
-This editor provides a comfortable environment for entering longer or more complex text:
+The rewrite mode is designed to improve:
+- Grammar and spelling
+- Sentence structure
+- Clarity and conciseness
+- Natural flow
 
-- **Key commands**:
-  - `Enter` - Insert a new line
-  - `Tab` - Insert tab/indentation
-  - `Ctrl+D` or `F10` - Submit the text for rewriting
-  - `Esc` - Cancel and exit
-  - `Arrow keys` - Navigate through the text
-  - `Home/End` - Move to beginning/end of line
-  
-- **Features**:
-  - Syntax highlighting
-  - Line numbering
-  - Word wrapping
-  - Multi-line editing
-  - Copy/paste support
-  
-- **When to use**:
-  - For longer documents
-  - When editing text with complex formatting
-  - For text with multiple paragraphs
-  - When working with content that has code blocks or other structured elements
-  
-```bash
-# Example workflow
-ngpt --rewrite
-# Enter or paste your text in the editor
-# Press Ctrl+D to submit
-# Review the rewritten text
-# Optionally copy to clipboard with 'y'
-```
+It preserves:
+- Original meaning
+- Tone and style
+- Technical terminology
+- Key information
 
-This approach is especially useful for documents, emails, or articles that need structural preservation while improving language quality.
+Rewrite mode works especially well for:
+- Email drafts
+- Documentation
+- Blog posts
+- Academic writing
+- Resume bullet points
 
-#### What Gets Improved
+#### Understanding Output
 
-The rewrite feature focuses on:
-- Grammar and spelling corrections
-- Improved sentence structure and flow
-- Enhanced clarity and readability
-- More concise and precise language
-- Breaking up overly long sentences
-- Converting passive voice to active when appropriate
-- Removing redundancies and filler words
+Unlike regular chat mode, rewrite mode returns only the improved text without additional commentary, making it easy to use in scripts and pipelines.
 
-#### What Gets Preserved
+#### Setting Custom Instructions
 
-While improving text, the rewrite feature carefully maintains:
-- Original meaning and information content
-- Tone (formal/casual/technical/friendly/serious/rude)
-- Author's perspective and point of view
-- Technical terminology and jargon
-- Formatting (paragraphs, lists, code blocks, markdown)
-- URLs, file paths, and special variables
-
-#### Examples
-
-**Original**: *"The implementation of the feature, which was delayed due to unforeseen technical complications, is now scheduled for next week's release."*
-
-**Rewritten**: *"We delayed the feature implementation due to unforeseen technical complications. It's now scheduled for next week's release."*
-
-**Original**: *"We was hoping you could help with this issue what we are having with the server."*
-
-**Rewritten**: *"We were hoping you could help with this issue we're having with the server."*
-
-#### Combining with Other Options
-
-Rewrite mode can be combined with other options:
+You can use the `--preprompt` option to guide the rewriting process:
 
 ```bash
-# Rewrite with syntax highlighting for the output
-cat essay.txt | ngpt --rewrite --prettify
+# Make the tone more professional
+cat email.txt | ngpt --rewrite --preprompt "Make this more professional and concise"
 
-# Rewrite with real-time syntax highlighting
-cat essay.txt | ngpt --rewrite --stream-prettify
-
-# Rewrite with specific model
-cat email.txt | ngpt --rewrite --model gpt-4o
-
-# Rewrite with logging
-cat document.txt | ngpt --rewrite --log rewrite_log.txt
+# Add SEO optimization
+cat blog.md | ngpt --rewrite --preprompt "Optimize this for SEO while maintaining readability"
 ```
 
-#### Copying to Clipboard
+### Git Commit Message Generation
 
-After rewriting, you'll be prompted to copy the result to clipboard (requires pyperclip to be installed):
+The `--gitcommsg` flag allows you to generate conventional, high-quality commit messages based on your git staged changes or diff files:
 
+```bash
+# Generate commit message from staged changes
+ngpt --gitcommsg
+
+# Generate commit message with a specific commit type
+ngpt --gitcommsg -m "type:feat"
+
+# Process large diffs in chunks with recursive analysis
+ngpt --gitcommsg -r
+
+# Use a specific diff file instead of staged changes
+ngpt --gitcommsg --diff /path/to/changes.diff
+
+# Enable logging for debugging
+ngpt --gitcommsg --log commit_log.txt
 ```
-Copy to clipboard? (y/n)
+
+#### Message Context Directives
+
+Use the `-m/--message-context` option to guide the AI with various directives:
+
+```bash
+# Force a specific commit type prefix
+ngpt --gitcommsg -m "type:feat"
+ngpt --gitcommsg -m "type:fix"
+
+# Focus only on specific file types
+ngpt --gitcommsg -m "javascript"
+ngpt --gitcommsg -m "python"
+
+# Focus on or exclude specific aspects
+ngpt --gitcommsg -m "focus on auth"
+ngpt --gitcommsg -m "ignore formatting"
+ngpt --gitcommsg -m "exclude tests"
+
+# Combine multiple directives
+ngpt --gitcommsg -m "type:feat focus on UI"
 ```
 
-Answering `y` copies the rewritten text to your clipboard for easy pasting into documents or emails.
+#### Processing Large Diffs
+
+For large diffs or pull requests, use recursive chunking to handle token limits and rate limits:
+
+```bash
+# Enable recursive chunking
+ngpt --gitcommsg -r
+
+# Customize chunk size
+ngpt --gitcommsg -r --chunk-size 150
+
+# Set analysis chunk size for processing intermediate results
+ngpt --gitcommsg -r --analyses-chunk-size 150
+
+# Control maximum message length
+ngpt --gitcommsg -r --max-msg-lines 25
+
+# Adjust recursion depth for very large changes
+ngpt --gitcommsg -r --max-recursion-depth 5
+```
+
+#### Using Diff Files
+
+Instead of using staged changes, you can provide a diff file:
+
+```bash
+# Use a specific diff file
+ngpt --gitcommsg --diff /path/to/changes.diff
+
+# Use a default diff file from CLI configuration
+ngpt --gitcommsg --diff
+```
+
+#### Automatic Clipboard Copy
+
+When a commit message is successfully generated, the tool attempts to copy it to your clipboard for easy pasting into your git commit command.
+
+#### Requirements
+
+- Git must be installed and available in your PATH
+- You must be in a git repository
+- For automatic commit message generation, you need staged changes (`git add`)
+
+For detailed documentation on git commit message generation, see the [Git Commit Message Guide](gitcommsg.md).
 
 ### Generating Code
 

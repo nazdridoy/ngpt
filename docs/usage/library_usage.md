@@ -459,6 +459,112 @@ if __name__ == "__main__":
     code_generator()
 ```
 
+### Git Commit Message Generator
+
+The following example shows how to create a CLI tool for generating git commit messages:
+
+```python
+from ngpt import NGPTClient, load_config
+from ngpt.cli.modes.gitcommsg import gitcommsg_mode
+import argparse
+import sys
+
+def git_commit_message_generator():
+    parser = argparse.ArgumentParser(description="Generate git commit messages using nGPT")
+    parser.add_argument("--diff", "-d", nargs="?", const=True, help="Path to diff file (optional)")
+    parser.add_argument("--message-context", "-m", help="Additional context for commit message generation")
+    parser.add_argument("--chunk-size", type=int, default=200, help="Maximum lines per chunk")
+    parser.add_argument("--recursive-chunk", action="store_true", help="Enable recursive chunking for large diffs")
+    parser.add_argument("--log", help="Enable logging to specified file")
+    parser.add_argument("--max-msg-lines", type=int, default=20, help="Maximum lines in commit message")
+    args = parser.parse_args()
+    
+    # Initialize client
+    config = load_config()
+    client = NGPTClient(**config)
+    
+    try:
+        # Use the gitcommsg_mode function from nGPT
+        gitcommsg_mode(client, args)
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+if __name__ == "__main__":
+    git_commit_message_generator()
+
+You can also use the Git commit message functionality directly in your applications:
+
+```python
+from ngpt import NGPTClient, load_config
+from ngpt.cli.modes.gitcommsg import get_diff_content, gitcommsg_mode
+
+def analyze_git_changes():
+    # Initialize client
+    config = load_config()
+    client = NGPTClient(**config)
+    
+    # Get staged changes from git
+    diff_content = get_diff_content()
+    if not diff_content:
+        print("No staged changes found. Use 'git add' first.")
+        return
+        
+    # Create args object with desired options
+    class Args:
+        pass
+    
+    args = Args()
+    args.diff = None  # Use staged changes
+    args.message_context = "type:feat focus on API changes"  # Customize as needed
+    args.chunk_size = 200
+    args.recursive_chunk = True
+    args.log = None
+    args.max_msg_lines = 20
+    
+    # Generate commit message
+    gitcommsg_mode(client, args)
+```
+
+For more fine-grained control, you can use the individual functions from the gitcommsg module:
+
+```python
+from ngpt import NGPTClient, load_config
+from ngpt.cli.modes.gitcommsg import (
+    get_diff_content, 
+    process_context, 
+    create_system_prompt, 
+    create_final_prompt, 
+    handle_api_call
+)
+
+def generate_commit_message_advanced():
+    # Initialize client
+    config = load_config()
+    client = NGPTClient(**config)
+    
+    # Get diff content
+    diff_content = get_diff_content()
+    if not diff_content:
+        print("No staged changes found.")
+        return
+    
+    # Process context for focus/filtering
+    context_data = process_context("type:feat focus on UI components")
+    
+    # Create appropriate system prompt
+    system_prompt = create_system_prompt(context_data)
+    
+    # Create the final prompt with the diff
+    prompt = create_final_prompt(diff_content)
+    
+    # Make the API call
+    commit_message = handle_api_call(client, prompt, system_prompt)
+    
+    # Print or use the result
+    print(commit_message)
+```
+
 ### Web Search Assistant
 
 ```python

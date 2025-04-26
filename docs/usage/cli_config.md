@@ -77,7 +77,9 @@ Some options only apply in specific modes:
 - `recursive-chunk` - Process large diffs in chunks with recursive analysis if needed (default: false)
 - `diff` - Path to diff file to use instead of staged git changes
 - `chunk-size` - Number of lines per chunk when chunking is enabled (default: 200)
-- `max-depth` - Maximum recursion depth for recursive chunking (default: 3)
+- `analyses-chunk-size` - Number of lines per chunk when recursively chunking analyses (default: 200)
+- `max-msg-lines` - Maximum number of lines in commit message before condensing (default: 20)
+- `max-recursion-depth` - Maximum recursion depth for recursive chunking and message condensing (default: 3)
 
 ### Git Commit Message Options Details
 
@@ -121,25 +123,37 @@ ngpt --cli-config set diff /path/to/changes.diff
 
 **Important Note**: The diff file from CLI config is only used when you explicitly provide the `--diff` flag without a specific path. If you don't include the `--diff` flag, the system will always use git staged changes regardless of this setting.
 
-#### chunk-size
-Controls how many lines of diff are processed in each chunk when chunking is enabled:
+#### chunk-size and analyses-chunk-size
+Controls how many lines are processed in each chunk when chunking is enabled:
 
 ```bash
-# Set a larger chunk size (default is 200)
-ngpt --cli-config set chunk-size 300
+# Set a custom chunk size for diff processing
+ngpt --cli-config set chunk-size 150
+
+# Set a custom chunk size for analysis processing
+ngpt --cli-config set analyses-chunk-size 150
 ```
 
-Larger chunk sizes can provide more context but may hit token limits with some models. Smaller chunk sizes are better for very large commits but may lose some context between chunks.
+- `chunk-size`: Controls the size of raw diff chunks (smaller chunks for very large diffs)
+- `analyses-chunk-size`: Controls the size of analysis chunks during recursive processing
 
-#### max-depth
-Sets the maximum recursion depth for recursive chunking:
+Smaller chunks (100-150 lines) work better for very large diffs or models with stricter token limits, while larger chunks (300-500 lines) provide more context but may hit token limits.
+
+#### max-msg-lines and max-recursion-depth
+Controls the commit message condensing process:
 
 ```bash
-# Increase max recursion depth (default is 3)
-ngpt --cli-config set max-depth 5
+# Allow longer commit messages
+ngpt --cli-config set max-msg-lines 25
+
+# Increase max recursion depth for extremely large diffs
+ngpt --cli-config set max-recursion-depth 5
 ```
 
-Higher values allow processing of extremely large diffs but may take longer.
+- `max-msg-lines`: Maximum number of lines in the final commit message before automatic condensing
+- `max-recursion-depth`: Maximum number of recursive analysis or condensing rounds allowed
+
+Higher recursion depth values allow processing larger diffs but may increase processing time.
 
 ### Context-Aware Application
 
@@ -219,8 +233,13 @@ ngpt --cli-config set recursive-chunk true
 # Set a default diff file path for git commit messages
 ngpt --cli-config set diff /path/to/changes.diff
 
-# Set a larger chunk size for git commit message processing
-ngpt --cli-config set chunk-size 300
+# Set custom chunk sizes for git commit message processing
+ngpt --cli-config set chunk-size 150
+ngpt --cli-config set analyses-chunk-size 150
+
+# Control commit message formatting
+ngpt --cli-config set max-msg-lines 25
+ngpt --cli-config set max-recursion-depth 5
 ```
 
 ### Using CLI Configuration
