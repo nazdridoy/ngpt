@@ -19,6 +19,12 @@ CLI_CONFIG_OPTIONS = {
     "renderer": {"type": "str", "default": "auto", "context": ["all"]},
     "config-index": {"type": "int", "default": 0, "context": ["all"], "exclusive": ["provider"]},
     "web-search": {"type": "bool", "default": False, "context": ["all"]},
+    # GitCommit message options
+    "message-context": {"type": "str", "default": None, "context": ["gitcommsg"]},
+    "recursive-chunk": {"type": "bool", "default": False, "context": ["gitcommsg"]},
+    "diff": {"type": "str", "default": None, "context": ["gitcommsg"]},
+    "chunk-size": {"type": "int", "default": 200, "context": ["gitcommsg"]},
+    "max-depth": {"type": "int", "default": 3, "context": ["gitcommsg"]},
 }
 
 def get_cli_config_dir() -> Path:

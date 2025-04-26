@@ -24,6 +24,7 @@ from .modes.code import code_mode
 from .modes.shell import shell_mode
 from .modes.text import text_mode
 from .modes.rewrite import rewrite_mode
+from .modes.gitcommsg import gitcommsg_mode
 from .args import parse_args, validate_args, handle_cli_config_args, setup_argument_parser, validate_markdown_renderer
 
 def show_cli_config_help():
@@ -227,15 +228,17 @@ def main():
             # Change log to True to create a temp file
             args.log = True
         
-        # If --log is True, it means it was used without a path value
-        log_path = None if args.log is True else args.log
-        logger = create_logger(log_path)
-        if logger:
-            logger.open()
-            print(f"{COLORS['green']}Logging session to: {logger.get_log_path()}{COLORS['reset']}")
-            # If it's a temporary log file, inform the user
-            if logger.is_temporary():
-                print(f"{COLORS['green']}Created temporary log file.{COLORS['reset']}")
+        # Skip logger initialization for gitcommsg mode as it creates its own logger
+        if not args.gitcommsg:
+            # If --log is True, it means it was used without a path value
+            log_path = None if args.log is True else args.log
+            logger = create_logger(log_path)
+            if logger:
+                logger.open()
+                print(f"{COLORS['green']}Logging session to: {logger.get_log_path()}{COLORS['reset']}")
+                # If it's a temporary log file, inform the user
+                if logger.is_temporary():
+                    print(f"{COLORS['green']}Created temporary log file.{COLORS['reset']}")
     
     # Priority order for config selection:
     # 1. Command-line arguments (args.provider, args.config_index)
@@ -461,7 +464,7 @@ def main():
         return
     
     # For interactive mode, we'll allow continuing without a specific prompt
-    if not args.prompt and not (args.shell or args.code or args.text or args.interactive or args.show_config or args.list_models or args.rewrite):
+    if not args.prompt and not (args.shell or args.code or args.text or args.interactive or args.show_config or args.list_models or args.rewrite or args.gitcommsg):
         # Simply use the parser's help
         parser = setup_argument_parser()
         parser.print_help()
@@ -556,6 +559,13 @@ def main():
             
             # Rewrite mode (process stdin)
             rewrite_mode(client, args, logger=logger)
+        
+        elif args.gitcommsg:
+            # Apply CLI config for gitcommsg mode
+            args = apply_cli_config(args, "all")
+            
+            # Git commit message generation mode
+            gitcommsg_mode(client, args, logger=logger)
         
         else:
             # Default to chat mode

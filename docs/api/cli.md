@@ -21,6 +21,7 @@ The CLI components for nGPT are organized into a modular structure under the `ng
     - `ngpt.cli.modes.code`: Code generation mode functionality
     - `ngpt.cli.modes.shell`: Shell command generation mode functionality
     - `ngpt.cli.modes.text`: Text generation mode functionality
+    - `ngpt.cli.modes.rewrite`: Text rewriting mode functionality
 
 ## Interactive Chat Module
 

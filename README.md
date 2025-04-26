@@ -74,6 +74,24 @@ echo "your text" | ngpt --rewrite
 # Rewrite text from a command-line argument
 ngpt --rewrite "your text to rewrite"
 
+# Rewrite text from a file
+cat file.txt | ngpt --rewrite
+
+# Generate AI-powered git commit messages for staged changes
+ngpt --gitcommsg
+
+# Generate commit message with context
+ngpt --gitcommsg -m "type:feat"
+
+# Process large diffs in chunks with recursive analysis
+ngpt --gitcommsg -r
+
+# Process a diff file instead of staged changes
+ngpt --gitcommsg --diff /path/to/changes.diff
+
+# Generate a commit message with logging for debugging
+ngpt --gitcommsg --log commit_log.txt
+
 # Use interactive multiline editor to enter text to rewrite
 ngpt --rewrite
 
@@ -120,6 +138,7 @@ For more examples and detailed usage, visit the [CLI Usage Guide](https://nazdri
 - 🧠 **Text Rewriting**: Improve text quality while maintaining original tone and meaning
 - 🧩 **Clean Code Generation**: Output code without markdown or explanations
 - 📝 **Rich Multiline Editor**: Interactive multiline text input with syntax highlighting and intuitive controls
+- 📑 **Git Commit Messages**: AI-powered generation of conventional, detailed commit messages from git diffs
 - 🎭 **System Prompts**: Customize model behavior with custom system prompts
 - 📃 **Conversation Logging**: Save your conversations to text files for later reference
 - 🧰 **CLI Components**: Reusable components for building custom AI-powered command-line tools

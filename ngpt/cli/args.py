@@ -88,6 +88,19 @@ def setup_argument_parser():
     global_group.add_argument('--renderer', choices=['auto', 'rich', 'glow'], default='auto',
                       help='Select which markdown renderer to use with --prettify (auto, rich, or glow)')
     
+    # GitCommit message options
+    gitcommsg_group = parser.add_argument_group('Git Commit Message Options')
+    gitcommsg_group.add_argument('-m', '--message-context', 
+                      help='Context to guide AI generation (e.g., file types, commit type)')
+    gitcommsg_group.add_argument('-r', '--recursive-chunk', action='store_true',
+                      help='Process large diffs in chunks with recursive analysis if needed')
+    gitcommsg_group.add_argument('--diff', metavar='FILE',
+                      help='Use diff from specified file instead of staged changes')
+    gitcommsg_group.add_argument('--chunk-size', type=int, default=200,
+                      help='Number of lines per chunk when chunking is enabled (default: 200)')
+    gitcommsg_group.add_argument('--max-depth', type=int, default=3,
+                      help='Maximum recursion depth for recursive chunking (default: 3)')
+    
     # Mode flags (mutually exclusive)
     mode_group = parser.add_argument_group('Modes (mutually exclusive)')
     mode_exclusive_group = mode_group.add_mutually_exclusive_group()
@@ -103,6 +116,8 @@ def setup_argument_parser():
                                       help='Read from stdin and use content with prompt. Use {} in prompt as placeholder for stdin content')
     mode_exclusive_group.add_argument('--rewrite', action='store_true',
                                       help='Rewrite text from stdin to be more natural while preserving tone and meaning')
+    mode_exclusive_group.add_argument('--gitcommsg', action='store_true',
+                                      help='Generate AI-powered git commit messages from staged changes or diff file')
     
     return parser
 
