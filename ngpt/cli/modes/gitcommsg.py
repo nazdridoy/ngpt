@@ -407,7 +407,7 @@ def handle_api_call(client, prompt, system_prompt=None, logger=None, max_retries
             # Exponential backoff
             wait_seconds *= 2
 
-def process_with_chunking(client, diff_content, context_data, chunk_size=200, recursive=False, logger=None, max_msg_lines=20, max_recursion_depth=3):
+def process_with_chunking(client, diff_content, context_data, chunk_size=200, recursive=False, logger=None, max_msg_lines=20, max_recursion_depth=3, analyses_chunk_size=None):
     """Process diff with chunking to handle large diffs.
     
     Args:
@@ -419,10 +419,15 @@ def process_with_chunking(client, diff_content, context_data, chunk_size=200, re
         logger: Optional logger instance
         max_msg_lines: Maximum number of lines in commit message before condensing
         max_recursion_depth: Maximum recursion depth for message condensing
+        analyses_chunk_size: Maximum number of lines per chunk for recursive analysis chunking
         
     Returns:
         str: Generated commit message
     """
+    # If analyses_chunk_size not provided, default to chunk_size
+    if analyses_chunk_size is None:
+        analyses_chunk_size = chunk_size
+        
     # Create system prompt
     system_prompt = create_system_prompt(context_data)
     
@@ -484,13 +489,13 @@ def process_with_chunking(client, diff_content, context_data, chunk_size=200, re
     combined_analyses = "\n\n".join(partial_analyses)
     combined_line_count = len(combined_analyses.splitlines())
     
-    if recursive and combined_line_count > chunk_size:
+    if recursive and combined_line_count > analyses_chunk_size:
         # Use recursive analysis chunking
         return recursive_chunk_analysis(
             client, 
             combined_analyses, 
             context_data, 
-            chunk_size,
+            analyses_chunk_size,
             logger,
             max_msg_lines,
             max_recursion_depth
@@ -944,6 +949,11 @@ def gitcommsg_mode(client, args, logger=None):
         if active_logger:
             active_logger.info(f"Maximum recursion depth for message condensing: {max_recursion_depth}")
         
+        # Get analyses_chunk_size from args or use default
+        analyses_chunk_size = getattr(args, 'analyses_chunk_size', args.chunk_size)  # Default to chunk_size if not specified
+        if active_logger:
+            active_logger.info(f"Analyses chunk size: {analyses_chunk_size}")
+        
         if args.recursive_chunk:
             # Use chunking with recursive processing
             if active_logger:
@@ -957,7 +967,8 @@ def gitcommsg_mode(client, args, logger=None):
                 recursive=True,
                 logger=active_logger,
                 max_msg_lines=max_msg_lines,
-                max_recursion_depth=max_recursion_depth
+                max_recursion_depth=max_recursion_depth,
+                analyses_chunk_size=analyses_chunk_size
             )
         else:
             # Direct processing without chunking
