@@ -6,13 +6,19 @@ import tempfile
 from pathlib import Path
 from typing import Optional, TextIO, Dict, Any, Union
 
-# Simple color definitions for fallback message
+# Define colors locally to avoid circular imports
 COLORS = {
-    "green": "\033[32m",
+    "reset": "\033[0m",
+    "bold": "\033[1m",
+    "cyan": "\033[36m",
+    "green": "\033[32m", 
     "yellow": "\033[33m",
     "red": "\033[31m",
-    "cyan": "\033[36m",
-    "reset": "\033[0m"
+    "blue": "\033[34m",
+    "magenta": "\033[35m",
+    "gray": "\033[90m",
+    "bg_blue": "\033[44m",
+    "bg_cyan": "\033[46m"
 }
 
 class Logger:
