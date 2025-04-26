@@ -113,8 +113,74 @@ def process_context(context):
     
     return context_data
 
+def create_technical_analysis_system_prompt(context_data=None):
+    """Create system prompt for technical analysis based on context data.
+    
+    Args:
+        context_data: The processed context data
+        
+    Returns:
+        str: System prompt for the technical analysis stage
+    """
+    base_prompt = """You are an expert at analyzing git diffs and extracting precise technical details. Your task is to analyze the git diff and create a detailed technical summary of the changes.
+
+OUTPUT FORMAT:
+[FILES]: Comma-separated list of affected files with full paths
+
+[CHANGES]: 
+- Technical detail 1 (include specific function/method names and line numbers)
+- Technical detail 2 (be precise about exactly what code was added/modified/removed)
+- Additional technical details (include ALL significant changes in this chunk)
+
+[IMPACT]: Brief technical description of what the changes accomplish
+
+RULES:
+1. BE 100% FACTUAL - Mention ONLY code explicitly shown in the diff
+2. NEVER invent or assume changes not directly visible in the code
+3. ALWAYS identify exact function names, method names, class names, and line numbers where possible
+4. Use format 'filename:function_name()' or 'filename:line_number' when referencing code locations
+5. Be precise and factual - only describe code that actually changed
+6. Include ALL significant changes (do not skip any important modifications)
+7. Focus on technical specifics, avoid general statements
+8. When analyzing multiple files, clearly separate each file's changes
+9. Include proper technical details (method names, component identifiers, etc.)"""
+
+    if not context_data:
+        return base_prompt
+    
+    # Add file type filtering instructions
+    if context_data.get("file_type_filter"):
+        file_type = context_data["file_type_filter"]
+        file_type_prompt = f"""
+
+CRITICAL FILE TYPE FILTERING:
+You MUST INCLUDE ONLY changes to {file_type} files or files related to {file_type}.
+You MUST EXCLUDE ALL other files completely from your output.
+This is a strict filter - no exceptions allowed."""
+        base_prompt += file_type_prompt
+    
+    # Add focus/exclusion directives
+    if context_data.get("focus"):
+        focus = context_data["focus"]
+        focus_prompt = f"""
+
+FOCUS DIRECTIVE:
+Focus exclusively on changes related to {focus}.
+Exclude everything else from your analysis."""
+        base_prompt += focus_prompt
+    
+    if context_data.get("exclusions"):
+        exclusions = ", ".join(context_data["exclusions"])
+        exclusion_prompt = f"""
+
+EXCLUSION DIRECTIVE:
+Completely ignore and exclude any mentions of: {exclusions}."""
+        base_prompt += exclusion_prompt
+    
+    return base_prompt
+
 def create_system_prompt(context_data=None):
-    """Create system prompt based on context data.
+    """Create system prompt for commit message generation based on context data.
     
     Args:
         context_data: The processed context data
@@ -218,21 +284,14 @@ def create_chunk_prompt(chunk):
     Returns:
         str: Prompt for the AI
     """
-    return f"""Analyze this PARTIAL git diff and create a detailed technical summary with this EXACT format:
+    return f"""Analyze this PARTIAL git diff and create a detailed technical summary.
 
-[FILES]: Comma-separated list of affected files with full paths
+The system prompt already contains your output format instructions with [FILES], [CHANGES], and [IMPACT] sections.
 
-[CHANGES]: 
-- Technical detail 1 (include specific function/method names and line numbers)
-- Technical detail 2 (be precise about exactly what code was added/modified/removed)
-- Additional technical details (include ALL significant changes in this chunk)
-
-[IMPACT]: Brief technical description of what the changes accomplish
-
-CRITICALLY IMPORTANT: Be extremely specific with technical details.
-ALWAYS identify exact function names, method names, class names, and line numbers where possible.
-Use format 'filename:function_name()' or 'filename:line_number' when referencing code locations.
-Be precise and factual - only describe code that actually changed.
+REMINDER: 
+- Identify exact function names, method names, class names, and line numbers
+- Use format 'filename:function_name()' or 'filename:line_number' for references
+- Be precise and factual - only describe code that actually changed
 
 Diff chunk:
 
@@ -251,15 +310,10 @@ def create_rechunk_prompt(combined_analysis, depth):
     return f"""IMPORTANT: You are analyzing SUMMARIES of git changes, not raw git diff.
 
 You are in a re-chunking process (depth: {depth}) where the input is already summarized changes.
-Create a TERSE summary of these summaries focusing ONLY ON TECHNICAL CHANGES:
-
-[CHANGES]:
-- Technical change 1 (specific file and function)
-- Technical change 2 (specific file and function)
-- Additional relevant changes
+Create a terse technical summary following the format in the system prompt.
 
 DO NOT ask for raw git diff. These summaries are all you need to work with.
-Keep your response FACTUAL and SPECIFIC to what's in the summaries.
+Keep your response factual and specific to what's in the summaries.
 
 Section to summarize:
 
@@ -428,8 +482,9 @@ def process_with_chunking(client, diff_content, context_data, chunk_size=200, re
     if analyses_chunk_size is None:
         analyses_chunk_size = chunk_size
         
-    # Create system prompt
-    system_prompt = create_system_prompt(context_data)
+    # Create different system prompts for different stages
+    technical_system_prompt = create_technical_analysis_system_prompt(context_data)
+    commit_system_prompt = create_system_prompt(context_data)
     
     # Log initial diff content
     if logger:
@@ -460,10 +515,10 @@ def process_with_chunking(client, diff_content, context_data, chunk_size=200, re
         if logger:
             logger.log_template("DEBUG", "CHUNK", chunk_prompt)
         
-        # Process chunk
+        # Process chunk - use technical system prompt for analysis
         print(f"{COLORS['yellow']}Analyzing changes...{COLORS['reset']}")
         try:
-            result = handle_api_call(client, chunk_prompt, system_prompt, logger)
+            result = handle_api_call(client, chunk_prompt, technical_system_prompt, logger)
             partial_analyses.append(result)
             print(f"{COLORS['green']}✓ Chunk {i+1} processed{COLORS['reset']}")
         except Exception as e:
@@ -510,14 +565,15 @@ def process_with_chunking(client, diff_content, context_data, chunk_size=200, re
             logger.log_template("DEBUG", "COMBINE", combine_prompt)
         
         try:
-            commit_message = handle_api_call(client, combine_prompt, system_prompt, logger)
+            # Use commit message system prompt for final generation
+            commit_message = handle_api_call(client, combine_prompt, commit_system_prompt, logger)
             
             # If the commit message is too long, we need to condense it
             if len(commit_message.splitlines()) > max_msg_lines:
                 return condense_commit_message(
                     client,
                     commit_message,
-                    system_prompt,
+                    commit_system_prompt,
                     max_msg_lines,
                     max_recursion_depth,
                     1,  # Start at depth 1
@@ -546,7 +602,9 @@ def recursive_chunk_analysis(client, combined_analysis, context_data, chunk_size
     Returns:
         str: Generated commit message
     """
-    system_prompt = create_system_prompt(context_data)
+    # Create different system prompts for different stages
+    technical_system_prompt = create_technical_analysis_system_prompt(context_data)
+    commit_system_prompt = create_system_prompt(context_data)
     
     print(f"\n{COLORS['cyan']}Recursive analysis chunking level {current_depth}...{COLORS['reset']}")
     
@@ -590,8 +648,8 @@ DO NOT include any explanation or commentary outside the commit message format."
         if logger:
             logger.log_template("DEBUG", f"FINAL_PROMPT_DEPTH_{current_depth}", final_prompt)
         
-        # Generate the commit message
-        commit_message = handle_api_call(client, final_prompt, system_prompt, logger)
+        # Generate the commit message - use commit message system prompt
+        commit_message = handle_api_call(client, final_prompt, commit_system_prompt, logger)
         
         if logger:
             logger.log_content("DEBUG", f"COMMIT_MESSAGE_DEPTH_{current_depth}", commit_message)
@@ -601,7 +659,7 @@ DO NOT include any explanation or commentary outside the commit message format."
             return condense_commit_message(
                 client,
                 commit_message,
-                system_prompt,
+                commit_system_prompt,
                 max_msg_lines,
                 max_recursion_depth,
                 1,  # Start at depth 1
@@ -632,24 +690,22 @@ DO NOT include any explanation or commentary outside the commit message format."
 
 Take this SECTION of technical analysis and condense it to be UNDER {target_size} lines while preserving the most important technical details.
 
+Keep the format consistent with the system prompt.
 Preserve full file paths, function names, and technical changes.
-Focus on detailed technical changes and group related changes when appropriate.
-Preserve all distinct files and changes.
+Group related changes when appropriate.
 
 SECTION OF ANALYSIS TO CONDENSE:
 
-{analysis_chunk}
-
-Create a CONDENSED ANALYSIS SUMMARY for this section only."""
+{analysis_chunk}"""
         
         if logger:
             logger.log_template("DEBUG", f"CONDENSE_ANALYSIS_DEPTH_{current_depth}_CHUNK_{i+1}", condense_prompt)
         
         print(f"{COLORS['yellow']}Condensing analysis chunk {i+1}/{analysis_chunk_count}...{COLORS['reset']}")
         
-        # Condense this analysis chunk
+        # Condense this analysis chunk - use technical system prompt for condensing analysis
         try:
-            condensed_chunk = handle_api_call(client, condense_prompt, system_prompt, logger)
+            condensed_chunk = handle_api_call(client, condense_prompt, technical_system_prompt, logger)
             condensed_chunks.append(condensed_chunk)
             
             if logger:
@@ -704,6 +760,10 @@ def condense_commit_message(client, commit_message, system_prompt, max_msg_lines
     Returns:
         str: Condensed commit message
     """
+    # Always use commit message system prompt for condensing commit messages
+    if not isinstance(system_prompt, str) or not system_prompt.startswith("You are an expert Git commit message writer"):
+        system_prompt = create_system_prompt(None)  # Use default commit message system prompt
+    
     commit_lines = len(commit_message.splitlines())
     print(f"\n{COLORS['cyan']}Commit message has {commit_lines} lines (depth {current_depth}/{max_recursion_depth}){COLORS['reset']}")
     
@@ -820,39 +880,21 @@ def create_combine_prompt(partial_analyses):
     return f"""===CRITICAL INSTRUCTION===
 You are working with ANALYZED SUMMARIES of git changes, NOT raw git diff.
 The raw git diff has ALREADY been processed into these summaries.
-DO NOT ask for or expect to see the original git diff.
 
-TASK: Synthesize these partial analyses into a complete conventional commit message:
+TASK: Synthesize these partial analyses into a complete conventional commit message 
+following the format specified in the system prompt.
+
+The analyses to combine:
 
 {all_analyses}
 
-Create a CONVENTIONAL COMMIT MESSAGE with:
-1. First line: "type[(scope)]: brief summary" (50 chars max)
-   - Include scope ONLY if you are 100% confident about the affected area
-   - Omit scope if changes affect multiple areas or scope is unclear
-2. ⚠️ ONE BLANK LINE IS MANDATORY - NEVER SKIP THIS STEP ⚠️
-   - This blank line MUST be present in EVERY commit message
-   - The blank line separates the summary from the detailed changes
-   - Without this blank line, the commit message format is invalid
-3. Bullet points with specific changes, each with appropriate [type] tag in square brackets
-4. Reference files in EACH bullet point with function names or line numbers
+REMINDER:
+- First line must be under 50 characters
+- Include a blank line after the first line
+- Each bullet must include specific file references with format [type]
+- Include specific technical details in each bullet point
 
-BULLET POINT FORMAT:
-- Each bullet MUST start with a type in square brackets: [type]
-- DO NOT use the format "- type: description" (without square brackets)
-- Instead, ALWAYS use "- [type] description" (with square brackets)
-- Example: "- [feat] Add new login component" (correct)
-- Not: "- feat: Add new login component" (incorrect)
-
-FILENAME & FUNCTION HANDLING RULES:
-- Include SPECIFIC function names, method names, or line numbers when available
-- Format as filename:function() or filename:line_number
-- Use short relative paths for files
-- Group related changes to the same file when appropriate
-- Avoid breaking long filenames across lines
-
-STRICTLY follow this format with NO EXPLANATION or additional commentary.
-DO NOT mention insufficient information or ask for the original diff."""
+DO NOT ask for the original diff or add explanations outside the commit message format."""
 
 def gitcommsg_mode(client, args, logger=None):
     """Handle the Git commit message generation mode.
@@ -923,12 +965,14 @@ def gitcommsg_mode(client, args, logger=None):
                 active_logger.debug(f"Processed context: {context_data}")
                 active_logger.log_content("DEBUG", "CONTEXT_DATA", str(context_data))
         
-        # Create system prompt
-        system_prompt = create_system_prompt(context_data)
+        # Create system prompts for different stages
+        technical_system_prompt = create_technical_analysis_system_prompt(context_data)
+        commit_system_prompt = create_system_prompt(context_data)
         
-        # Log system prompt
+        # Log system prompts
         if active_logger:
-            active_logger.log_template("DEBUG", "SYSTEM", system_prompt)
+            active_logger.log_template("DEBUG", "TECHNICAL_SYSTEM", technical_system_prompt)
+            active_logger.log_template("DEBUG", "COMMIT_SYSTEM", commit_system_prompt)
         
         print(f"\n{COLORS['green']}Generating commit message...{COLORS['reset']}")
         
@@ -981,7 +1025,8 @@ def gitcommsg_mode(client, args, logger=None):
             if active_logger:
                 active_logger.log_template("DEBUG", "DIRECT_PROCESSING", prompt)
             
-            result = handle_api_call(client, prompt, system_prompt, active_logger)
+            # Use commit message system prompt for direct processing
+            result = handle_api_call(client, prompt, commit_system_prompt, active_logger)
             
             # Check if the result exceeds max_msg_lines and recursive_chunk is enabled
             if result and len(result.splitlines()) > max_msg_lines:
@@ -989,11 +1034,11 @@ def gitcommsg_mode(client, args, logger=None):
                 if active_logger:
                     active_logger.info(f"Commit message exceeds {max_msg_lines} lines, starting condensing process")
                 
-                # Use our condense_commit_message function
+                # Use our condense_commit_message function with commit message system prompt
                 result = condense_commit_message(
                     client,
                     result,
-                    system_prompt,
+                    commit_system_prompt,
                     max_msg_lines,
                     max_recursion_depth,
                     1,  # Start at depth 1
