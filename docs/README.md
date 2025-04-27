@@ -1,6 +1,6 @@
 # nGPT Documentation
 
-Welcome to the documentation for nGPT, a lightweight Python CLI and library for interacting with OpenAI-compatible APIs, supporting both official and self-hosted LLM endpoints. nGPT offers three main modes of use:
+Welcome to the documentation for nGPT, a versatile Python LLM client that functions as a CLI utility, library, and development framework. It supports multiple providers (OpenAI, Ollama, Groq, Claude) with features including interactive chat, code generation, shell command execution, git commit messages generation, and markdown rendering. nGPT offers three main modes of use:
 
 - A command-line interface (CLI) tool for quick AI interactions
 - A Python library for integration into your applications

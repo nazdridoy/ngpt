@@ -2,6 +2,35 @@
 
 nGPT uses a flexible configuration system that supports multiple profiles for different API providers and models. This guide explains how to configure and manage your nGPT settings.
 
+## API Key Setup
+
+### OpenAI API Key
+1. Create an account at [OpenAI](https://platform.openai.com/)
+2. Navigate to API keys: https://platform.openai.com/api-keys
+3. Click "Create new secret key" and copy your API key
+4. Configure nGPT with your key:
+   ```bash
+   ngpt --config
+   # Enter provider: OpenAI
+   # Enter API key: your-openai-api-key
+   # Enter base URL: https://api.openai.com/v1/
+   # Enter model: gpt-3.5-turbo (or other model)
+   ```
+
+### Google Gemini API Key
+1. Create or use an existing Google account
+2. Go to [Google AI Studio](https://aistudio.google.com/)
+3. Navigate to API keys in the left sidebar (or visit https://aistudio.google.com/app/apikeys)
+4. Create an API key and copy it
+5. Configure nGPT with your key:
+   ```bash
+   ngpt --config
+   # Enter provider: Gemini
+   # Enter API key: your-gemini-api-key
+   # Enter base URL: https://generativelanguage.googleapis.com/v1beta/openai
+   # Enter model: gemini-2.0-flash
+   ```
+
 ## Configuration File Location
 
 nGPT stores its configuration in a JSON file located at:
@@ -17,7 +46,7 @@ The configuration file uses a JSON list format that allows you to store multiple
 ```json
 [
   {
-    "api_key": "your-openai-api-key-here",
+    "api_key": "your-openai-api-key",
     "base_url": "https://api.openai.com/v1/",
     "provider": "OpenAI",
     "model": "gpt-4o"

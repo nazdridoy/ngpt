@@ -2,7 +2,7 @@
 
 ## What is nGPT?
 
-nGPT is a lightweight Python library and command-line interface (CLI) tool designed for interacting with OpenAI-compatible APIs. It provides a simple, flexible way to communicate with various large language model (LLM) endpoints, including official OpenAI services and self-hosted alternatives.
+nGPT is a versatile Python LLM client that functions as a CLI utility, library, and development framework. It supports multiple providers (OpenAI, Ollama, Groq, Claude) with features including interactive chat, code generation, shell command execution, git commit messages generation, and markdown rendering.
 
 ## Key Features
 

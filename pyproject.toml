@@ -1,6 +1,6 @@
 [project]
 name = "ngpt"
-version = "2.16.0"
+version = "2.16.1"
 description = "A lightweight Python CLI and library for interacting with OpenAI-compatible APIs, supporting both official and self-hosted LLM endpoints."
 authors = [
     {name = "nazDridoy", email = "nazdridoy399@gmail.com"},

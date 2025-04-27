@@ -5,7 +5,7 @@
 [![Python Versions](https://img.shields.io/pypi/pyversions/ngpt.svg)](https://pypi.org/project/ngpt/)
 [![Documentation](https://img.shields.io/badge/docs-available-brightgreen.svg)](https://nazdridoy.github.io/ngpt/)
 
-A lightweight Python CLI and library for interacting with OpenAI-compatible APIs, supporting both official and self-hosted LLM endpoints.
+A versatile Python LLM client that functions as a CLI utility, library, and development framework. Supports multiple providers (OpenAI, Ollama, Groq, Claude) with features including interactive chat, code generation, shell command execution, git commit messages generation, and markdown rendering.
 
 ![2025-04-23_16-18-01](https://github.com/user-attachments/assets/b8e58926-5165-4352-b48b-9f4a982da86e)
 
@@ -26,6 +26,9 @@ A lightweight Python CLI and library for interacting with OpenAI-compatible APIs
   - [Interactive Configuration](#interactive-configuration)
   - [Configuration File](#configuration-file)
   - [Configuration Priority](#configuration-priority)
+  - [API Key Setup](#api-key-setup)
+  - [OpenAI API Key](#openai-api-key)
+  - [Google Gemini API Key](#google-gemini-api-key)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -360,6 +363,35 @@ This allows you to build specialized AI tools like:
 For detailed information about building CLI tools with nGPT, see the [CLI Framework Guide](https://nazdridoy.github.io/ngpt/usage/cli_framework.html) and explore the [CLI Component Examples](https://nazdridoy.github.io/ngpt/examples/cli_components.html).
 
 ## Configuration
+
+### API Key Setup
+
+#### OpenAI API Key
+1. Create an account at [OpenAI](https://platform.openai.com/)
+2. Navigate to API keys: https://platform.openai.com/api-keys
+3. Click "Create new secret key" and copy your API key
+4. Configure nGPT with your key:
+   ```bash
+   ngpt --config
+   # Enter provider: OpenAI
+   # Enter API key: your-openai-api-key
+   # Enter base URL: https://api.openai.com/v1/
+   # Enter model: gpt-3.5-turbo (or other model)
+   ```
+
+#### Google Gemini API Key
+1. Create or use an existing Google account
+2. Go to [Google AI Studio](https://aistudio.google.com/)
+3. Navigate to API keys in the left sidebar (or visit https://aistudio.google.com/app/apikeys)
+4. Create an API key and copy it
+5. Configure nGPT with your key:
+   ```bash
+   ngpt --config
+   # Enter provider: Gemini
+   # Enter API key: your-gemini-api-key
+   # Enter base URL: https://generativelanguage.googleapis.com/v1beta/openai
+   # Enter model: gemini-2.0-flash
+   ```
 
 ### Command Line Options
 
