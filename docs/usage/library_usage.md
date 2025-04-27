@@ -513,7 +513,6 @@ nGPT includes a specialized module for generating Git commit messages based on s
 from ngpt import NGPTClient, load_config
 from ngpt.cli.modes.gitcommsg import (
     get_diff_content, 
-    process_context, 
     create_system_prompt, 
     create_final_prompt, 
     handle_api_call
@@ -531,10 +530,10 @@ def generate_commit_message():
         return
     
     # Process context for focus/filtering
-    context_data = process_context("type:feat focus on UI components")
+    context = "type:feat focus on UI components"
     
     # Create appropriate system prompt
-    system_prompt = create_system_prompt(context_data)
+    system_prompt = create_system_prompt(context)
     
     # Create the final prompt with the diff
     prompt = create_final_prompt(diff_content)

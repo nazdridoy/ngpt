@@ -68,56 +68,11 @@ def split_into_chunks(content, chunk_size=200):
         
     return chunks
 
-def process_context(context):
-    """Process context string to extract directives and filters.
-    
-    Args:
-        context: The context string provided with -m/--message-context
-        
-    Returns:
-        dict: Extracted context data
-    """
-    context_data = {
-        "file_type_filter": None,
-        "commit_type": None,
-        "focus": None,
-        "exclusions": [],
-        "raw_context": context
-    }
-    
-    if not context:
-        return context_data
-    
-    # Extract commit type directive (e.g., "type:feat")
-    if "type:" in context:
-        match = re.search(r"type:(\w+)", context)
-        if match:
-            context_data["commit_type"] = match.group(1)
-    
-    # Extract file type filters
-    file_type_keywords = ["html", "css", "javascript", "python", "js", "py", "ui", "api", "config"]
-    for keyword in file_type_keywords:
-        if keyword in context.lower():
-            context_data["file_type_filter"] = keyword
-            break
-    
-    # Process focus/exclusion directives
-    if "focus on" in context.lower() or "only mention" in context.lower():
-        focus_match = re.search(r"focus(?:\s+on)?\s+(\w+)", context.lower())
-        if focus_match:
-            context_data["focus"] = focus_match.group(1)
-    
-    if any(x in context.lower() for x in ["ignore", "don't include", "exclude"]):
-        exclusion_matches = re.findall(r"(?:ignore|don't include|exclude)\s+(\w+)", context.lower())
-        context_data["exclusions"] = exclusion_matches
-    
-    return context_data
-
-def create_technical_analysis_system_prompt(context_data=None):
+def create_technical_analysis_system_prompt(context=None):
     """Create system prompt for technical analysis based on context data.
     
     Args:
-        context_data: The processed context data
+        context: The raw context string from -m flag
         
     Returns:
         str: System prompt for the technical analysis stage
@@ -145,45 +100,25 @@ RULES:
 8. When analyzing multiple files, clearly separate each file's changes
 9. Include proper technical details (method names, component identifiers, etc.)"""
 
-    if not context_data:
-        return base_prompt
-    
-    # Add file type filtering instructions
-    if context_data.get("file_type_filter"):
-        file_type = context_data["file_type_filter"]
-        file_type_prompt = f"""
+    # If context is provided, append it with strong wording about absolute priority
+    if context:
+        context_prompt = f"""
 
-CRITICAL FILE TYPE FILTERING:
-You MUST INCLUDE ONLY changes to {file_type} files or files related to {file_type}.
-You MUST EXCLUDE ALL other files completely from your output.
-This is a strict filter - no exceptions allowed."""
-        base_prompt += file_type_prompt
-    
-    # Add focus/exclusion directives
-    if context_data.get("focus"):
-        focus = context_data["focus"]
-        focus_prompt = f"""
+===CRITICAL USER CONTEXT - ABSOLUTE HIGHEST PRIORITY===
+The following context from the user OVERRIDES ALL OTHER INSTRUCTIONS and must be followed exactly:
 
-FOCUS DIRECTIVE:
-Focus exclusively on changes related to {focus}.
-Exclude everything else from your analysis."""
-        base_prompt += focus_prompt
-    
-    if context_data.get("exclusions"):
-        exclusions = ", ".join(context_data["exclusions"])
-        exclusion_prompt = f"""
+{context}
 
-EXCLUSION DIRECTIVE:
-Completely ignore and exclude any mentions of: {exclusions}."""
-        base_prompt += exclusion_prompt
+THIS USER CONTEXT HAS ABSOLUTE PRIORITY over any other instructions in this prompt. If it contradicts other instructions, the user context MUST be followed. No exceptions."""
+        base_prompt += context_prompt
     
     return base_prompt
 
-def create_system_prompt(context_data=None):
+def create_system_prompt(context=None):
     """Create system prompt for commit message generation based on context data.
     
     Args:
-        context_data: The processed context data
+        context: The raw context string from -m flag
         
     Returns:
         str: System prompt for the AI
@@ -196,6 +131,15 @@ type[(scope)]: <concise summary> (max 50 chars)
 - [type] <specific change 1> (filename:function/method/line)
 - [type] <specific change 2> (filename:function/method/line)
 - [type] <additional changes...>
+
+RULES FOR FILENAMES:
+1. For the FIRST mention of a file, use the full relative path
+2. For SUBSEQUENT mentions of the same file, use ONLY the filename without path
+   - Example: First mention: "utils/helpers/format.js" → Subsequent mentions: "format.js"
+3. Only include the full path again if there are multiple files with the same name
+4. For repeated mentions of the same file, consider grouping related changes in one bullet
+5. Avoid breaking filenames across lines
+6. Only include function names when they add clarity
 
 COMMIT TYPES:
 - feat: New user-facing features
@@ -217,6 +161,46 @@ COMMIT TYPES:
 - ui: User interface changes
 - api: API-related changes
 
+EXAMPLES:
+
+1. Bug fix with UI scope:
+fix(ui): correct primary button focus style
+
+- [fix] Add :focus outline to Button component (Button.jsx:Button())
+- [chore] Bump Tailwind config to include ring-offset (tailwind.config.js:1-8)
+- [refactor] Extract common styles into buttonStyles util (styles/buttons.js:1-15)
+
+2. Feature with API scope:
+feat(api): add authentication endpoint for OAuth
+
+- [feat] Implement OAuth authentication route (auth/routes.js:createOAuthRoute())
+- [feat] Add token validation middleware (middleware/auth.js:validateToken())
+- [test] Add integration tests for OAuth flow (tests/auth.test.js:45-87)
+
+3. Multiple types in one commit:
+refactor(core): simplify data processing pipeline
+
+- [refactor] Replace nested loops with map/reduce (utils/process.js:transformData())
+- [perf] Optimize memory usage in large dataset handling (utils/memory.js:optimize())
+- [fix] Correct edge case in null value handling (utils/validators.js:checkNull())
+- [test] Update tests for new pipeline structure (tests/pipeline.test.js)
+
+4. Multiple changes to the same file:
+refactor(core): simplify context handling for commit prompts
+
+- [refactor] Remove process_context function (cli/modes/gitcommsg.py:69-124)
+- [refactor] Update all functions to accept raw context string (gitcommsg.py:create_system_prompt())
+- [refactor] Replace context_data usages with context (gitcommsg.py)
+- [docs] Update library usage doc (docs/usage/library_usage.md:516,531-537)
+- [chore] Bump project version to 2.15.1 (pyproject.toml:3, uv.lock:137)
+
+BULLET POINT FORMAT:
+- Each bullet MUST start with a type in square brackets: [type]
+- DO NOT use the format "- type: description" (without square brackets)
+- Instead, ALWAYS use "- [type] description" (with square brackets)
+- Example: "- [feat] Add new login component" (correct)
+- Not: "- feat: Add new login component" (incorrect)
+
 RULES:
 1. BE 100% FACTUAL - Mention ONLY code explicitly shown in the diff
 2. NEVER invent or assume changes not directly visible in the code
@@ -230,48 +214,17 @@ RULES:
 10. Include proper technical details (method names, component identifiers, etc.)
 11. When all changes are to the same file, mention it once in the summary"""
 
-    if not context_data:
-        return base_prompt
-    
-    # Add file type filtering instructions
-    if context_data.get("file_type_filter"):
-        file_type = context_data["file_type_filter"]
-        file_type_prompt = f"""
+    # If context is provided, append it with strong wording about absolute priority
+    if context:
+        context_prompt = f"""
 
-CRITICAL FILE TYPE FILTERING:
-You MUST INCLUDE ONLY changes to {file_type} files or files related to {file_type}.
-You MUST EXCLUDE ALL other files completely from your output.
-This is a strict filter - no exceptions allowed."""
-        base_prompt += file_type_prompt
-    
-    # Add commit type directive
-    if context_data.get("commit_type"):
-        commit_type = context_data["commit_type"]
-        commit_type_prompt = f"""
+===CRITICAL USER CONTEXT - ABSOLUTE HIGHEST PRIORITY===
+The following context from the user OVERRIDES ALL OTHER INSTRUCTIONS and must be followed exactly:
 
-CRITICAL COMMIT TYPE DIRECTIVE:
-You MUST use exactly "{commit_type}:" as the commit type prefix.
-This takes highest priority over any other commit type you might determine.
-Do not override this commit type based on your own analysis."""
-        base_prompt += commit_type_prompt
-    
-    # Add focus/exclusion directives
-    if context_data.get("focus"):
-        focus = context_data["focus"]
-        focus_prompt = f"""
+{context}
 
-FOCUS DIRECTIVE:
-Focus exclusively on changes related to {focus}.
-Exclude everything else from your analysis."""
-        base_prompt += focus_prompt
-    
-    if context_data.get("exclusions"):
-        exclusions = ", ".join(context_data["exclusions"])
-        exclusion_prompt = f"""
-
-EXCLUSION DIRECTIVE:
-Completely ignore and exclude any mentions of: {exclusions}."""
-        base_prompt += exclusion_prompt
+THIS USER CONTEXT HAS ABSOLUTE PRIORITY over any other instructions in this prompt. If it contradicts other instructions, the user context MUST be followed. No exceptions."""
+        base_prompt += context_prompt
     
     return base_prompt
 
@@ -338,11 +291,13 @@ type[(scope)]: <concise summary> (max 50 chars)
 - [type] <additional changes...>
 
 RULES FOR FILENAMES:
-1. Use short relative paths when possible
-2. For multiple changes to the same file, consider grouping them
-3. Abbreviate long paths when they're repeated (e.g., 'commit.zsh' instead of full path)
-4. Avoid breaking filenames across lines
-5. Only include function names when they add clarity
+1. For the FIRST mention of a file, use the full relative path
+2. For SUBSEQUENT mentions of the same file, use ONLY the filename without path
+   - Example: First mention: "utils/helpers/format.js" → Subsequent mentions: "format.js"
+3. Only include the full path again if there are multiple files with the same name
+4. For repeated mentions of the same file, consider grouping related changes in one bullet
+5. Avoid breaking filenames across lines
+6. Only include function names when they add clarity
 
 COMMIT TYPES:
 - feat: New user-facing features
@@ -363,6 +318,39 @@ COMMIT TYPES:
 - config: Configuration changes
 - ui: User interface changes
 - api: API-related changes
+
+EXAMPLES:
+
+1. Bug fix with UI scope:
+fix(ui): correct primary button focus style
+
+- [fix] Add :focus outline to Button component (Button.jsx:Button())
+- [chore] Bump Tailwind config to include ring-offset (tailwind.config.js:1-8)
+- [refactor] Extract common styles into buttonStyles util (styles/buttons.js:1-15)
+
+2. Feature with API scope:
+feat(api): add authentication endpoint for OAuth
+
+- [feat] Implement OAuth authentication route (auth/routes.js:createOAuthRoute())
+- [feat] Add token validation middleware (middleware/auth.js:validateToken())
+- [test] Add integration tests for OAuth flow (tests/auth.test.js:45-87)
+
+3. Multiple types in one commit:
+refactor(core): simplify data processing pipeline
+
+- [refactor] Replace nested loops with map/reduce (utils/process.js:transformData())
+- [perf] Optimize memory usage in large dataset handling (utils/memory.js:optimize())
+- [fix] Correct edge case in null value handling (utils/validators.js:checkNull())
+- [test] Update tests for new pipeline structure (tests/pipeline.test.js)
+
+4. Multiple changes to the same file:
+refactor(core): simplify context handling for commit prompts
+
+- [refactor] Remove process_context function (cli/modes/gitcommsg.py:69-124)
+- [refactor] Update all functions to accept raw context string (gitcommsg.py:create_system_prompt())
+- [refactor] Replace context_data usages with context (gitcommsg.py)
+- [docs] Update library usage doc (docs/usage/library_usage.md:516,531-537)
+- [chore] Bump project version to 2.15.1 (pyproject.toml:3, uv.lock:137)
 
 BULLET POINT FORMAT:
 - Each bullet MUST start with a type in square brackets: [type]
@@ -461,13 +449,13 @@ def handle_api_call(client, prompt, system_prompt=None, logger=None, max_retries
             # Exponential backoff
             wait_seconds *= 2
 
-def process_with_chunking(client, diff_content, context_data, chunk_size=200, recursive=False, logger=None, max_msg_lines=20, max_recursion_depth=3, analyses_chunk_size=None):
+def process_with_chunking(client, diff_content, context, chunk_size=200, recursive=False, logger=None, max_msg_lines=20, max_recursion_depth=3, analyses_chunk_size=None):
     """Process diff with chunking to handle large diffs.
     
     Args:
         client: The NGPTClient instance
         diff_content: The diff content to process
-        context_data: The processed context data
+        context: The raw context string
         chunk_size: Maximum number of lines per chunk
         recursive: Whether to use recursive chunking
         logger: Optional logger instance
@@ -483,8 +471,8 @@ def process_with_chunking(client, diff_content, context_data, chunk_size=200, re
         analyses_chunk_size = chunk_size
         
     # Create different system prompts for different stages
-    technical_system_prompt = create_technical_analysis_system_prompt(context_data)
-    commit_system_prompt = create_system_prompt(context_data)
+    technical_system_prompt = create_technical_analysis_system_prompt(context)
+    commit_system_prompt = create_system_prompt(context)
     
     # Log initial diff content
     if logger:
@@ -549,7 +537,7 @@ def process_with_chunking(client, diff_content, context_data, chunk_size=200, re
         return recursive_chunk_analysis(
             client, 
             combined_analyses, 
-            context_data, 
+            context, 
             analyses_chunk_size,
             logger,
             max_msg_lines,
@@ -586,13 +574,13 @@ def process_with_chunking(client, diff_content, context_data, chunk_size=200, re
                 logger.error(f"Error combining analyses: {str(e)}")
             return None
 
-def recursive_chunk_analysis(client, combined_analysis, context_data, chunk_size, logger=None, max_msg_lines=20, max_recursion_depth=3, current_depth=1):
+def recursive_chunk_analysis(client, combined_analysis, context, chunk_size, logger=None, max_msg_lines=20, max_recursion_depth=3, current_depth=1):
     """Recursively chunk and process large analysis results until they're small enough.
     
     Args:
         client: The NGPTClient instance
         combined_analysis: The combined analysis to process
-        context_data: The processed context data
+        context: The raw context string
         chunk_size: Maximum number of lines per chunk
         logger: Optional logger instance
         max_msg_lines: Maximum number of lines in commit message before condensing
@@ -603,8 +591,8 @@ def recursive_chunk_analysis(client, combined_analysis, context_data, chunk_size
         str: Generated commit message
     """
     # Create different system prompts for different stages
-    technical_system_prompt = create_technical_analysis_system_prompt(context_data)
-    commit_system_prompt = create_system_prompt(context_data)
+    technical_system_prompt = create_technical_analysis_system_prompt(context)
+    commit_system_prompt = create_system_prompt(context)
     
     print(f"\n{COLORS['cyan']}Recursive analysis chunking level {current_depth}...{COLORS['reset']}")
     
@@ -737,7 +725,7 @@ SECTION OF ANALYSIS TO CONDENSE:
     return recursive_chunk_analysis(
         client,
         combined_condensed,
-        context_data,
+        context,
         chunk_size,
         logger,
         max_msg_lines,
@@ -888,6 +876,29 @@ The analyses to combine:
 
 {all_analyses}
 
+RULES FOR FILENAMES:
+1. For the FIRST mention of a file, use the full relative path
+2. For SUBSEQUENT mentions of the same file, use ONLY the filename without path
+   - Example: First mention: "utils/helpers/format.js" → Subsequent mentions: "format.js"
+3. Only include the full path again if there are multiple files with the same name
+4. For repeated mentions of the same file, consider grouping related changes in one bullet
+
+BULLET POINT FORMAT:
+- Each bullet MUST start with a type in square brackets: [type]
+- DO NOT use the format "- type: description" (without square brackets)
+- Instead, ALWAYS use "- [type] description" (with square brackets)
+- Example: "- [feat] Add new login component" (correct)
+- Not: "- feat: Add new login component" (incorrect)
+
+EXAMPLE OF PROPERLY FORMATTED COMMIT MESSAGE:
+refactor(core): simplify context handling for commit prompts
+
+- [refactor] Remove process_context function (cli/modes/gitcommsg.py:69-124)
+- [refactor] Update all functions to accept raw context string (gitcommsg.py:create_system_prompt())
+- [refactor] Replace context_data usages with context (gitcommsg.py)
+- [docs] Update library usage doc (docs/usage/library_usage.md:516,531-537)
+- [chore] Bump project version to 2.15.1 (pyproject.toml:3, uv.lock:137)
+
 REMINDER:
 - First line must be under 50 characters
 - Include a blank line after the first line
@@ -958,16 +969,16 @@ def gitcommsg_mode(client, args, logger=None):
             active_logger.log_diff("DEBUG", diff_content)
         
         # Process context if provided
-        context_data = None
+        context = None
         if args.message_context:
-            context_data = process_context(args.message_context)
+            context = args.message_context
             if active_logger:
-                active_logger.debug(f"Processed context: {context_data}")
-                active_logger.log_content("DEBUG", "CONTEXT_DATA", str(context_data))
+                active_logger.debug(f"Using raw context: {context}")
+                active_logger.log_content("DEBUG", "CONTEXT", context)
         
         # Create system prompts for different stages
-        technical_system_prompt = create_technical_analysis_system_prompt(context_data)
-        commit_system_prompt = create_system_prompt(context_data)
+        technical_system_prompt = create_technical_analysis_system_prompt(context)
+        commit_system_prompt = create_system_prompt(context)
         
         # Log system prompts
         if active_logger:
@@ -1006,7 +1017,7 @@ def gitcommsg_mode(client, args, logger=None):
             result = process_with_chunking(
                 client, 
                 diff_content, 
-                context_data, 
+                context, 
                 chunk_size=args.chunk_size,
                 recursive=True,
                 logger=active_logger,
