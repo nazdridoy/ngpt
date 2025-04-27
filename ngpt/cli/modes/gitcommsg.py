@@ -7,6 +7,7 @@ import subprocess
 from datetime import datetime
 import logging
 from ..formatters import COLORS
+from ..ui import spinner
 from ...utils.log import create_gitcommsg_logger
 from ...utils.cli_config import get_cli_config_option
 
@@ -436,15 +437,8 @@ def handle_api_call(client, prompt, system_prompt=None, logger=None, max_retries
             print(f"{COLORS['yellow']}{error_msg}{COLORS['reset']}")
             print(f"{COLORS['yellow']}Retrying in {wait_seconds} seconds...{COLORS['reset']}")
             
-            # Create a spinner effect for waiting
-            spinner = "⣾⣽⣻⢿⡿⣟⣯⣷"
-            for _ in range(wait_seconds * 5):
-                for char in spinner:
-                    sys.stdout.write(f"\r{COLORS['yellow']}Waiting... {char}{COLORS['reset']}")
-                    sys.stdout.flush()
-                    time.sleep(0.2)
-            
-            print("\r" + " " * 20 + "\r", end="")
+            # Use the spinner function
+            spinner(f"Retrying in {wait_seconds} seconds...", wait_seconds, color=COLORS['yellow'])
             
             # Exponential backoff
             wait_seconds *= 2
@@ -517,8 +511,8 @@ def process_with_chunking(client, diff_content, context, chunk_size=200, recursi
         
         # Rate limit protection between chunks
         if i < chunk_count - 1:
-            print(f"{COLORS['yellow']}Waiting to avoid rate limits...{COLORS['reset']}")
-            time.sleep(5)
+            # Use the spinner function
+            spinner("Waiting to avoid rate limits...", 5, color=COLORS['yellow'])
     
     # Combine partial analyses
     print(f"\n{COLORS['cyan']}Combining analyses from {len(partial_analyses)} chunks...{COLORS['reset']}")
@@ -708,8 +702,8 @@ SECTION OF ANALYSIS TO CONDENSE:
         
         # Rate limit protection between chunks
         if i < analysis_chunk_count - 1:
-            print(f"{COLORS['yellow']}Waiting to avoid rate limits...{COLORS['reset']}")
-            time.sleep(5)
+            # Use the spinner function
+            spinner("Waiting to avoid rate limits...", 5, color=COLORS['yellow'])
     
     # Combine condensed chunks
     combined_condensed = "\n\n".join(condensed_chunks)

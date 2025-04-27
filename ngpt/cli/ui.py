@@ -1,4 +1,5 @@
 import sys
+import time
 import shutil
 
 # Optional imports for enhanced UI
@@ -151,4 +152,37 @@ def get_multiline_input():
             
         except KeyboardInterrupt:
             print("\nInput cancelled by user. Exiting gracefully.")
-            return None 
+            return None
+
+def spinner(message, duration=5, spinner_chars="⣾⣽⣻⢿⡿⣟⣯⣷", color=None):
+    """Display a spinner animation with a message.
+    
+    Args:
+        message: The message to display alongside the spinner
+        duration: Duration in seconds to show the spinner
+        spinner_chars: Characters to use for the spinner animation
+        color: Optional color from COLORS dict to use for the message
+    """
+    # Default color handling
+    color_start = ""
+    color_end = ""
+    if color:
+        color_start = color
+        color_end = "\033[0m"  # Reset
+    
+    # Each character shows for 0.2 seconds
+    char_duration = 0.2
+    # Total number of characters to show (not iterations through the entire spinner sequence)
+    total_chars = int(duration / char_duration)
+    
+    # Run the spinner
+    for i in range(total_chars):
+        # Get the appropriate character by cycling through the spinner characters
+        char = spinner_chars[i % len(spinner_chars)]
+        sys.stdout.write(f"\r{color_start}{message} {char}{color_end}")
+        sys.stdout.flush()
+        time.sleep(char_duration)
+    
+    # Clear the line when done
+    sys.stdout.write("\r" + " " * (len(message) + 10) + "\r")
+    sys.stdout.flush() 
