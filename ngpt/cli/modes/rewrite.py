@@ -17,6 +17,15 @@ PRESERVATION RULES (HIGHEST PRIORITY):
 4. Respect the style of expression when intentional
 5. Retain technical terminology, jargon, and domain-specific language
 6. Keep all facts, data points, quotes, and references exactly as provided
+7. Preserve all @ mentions (like @username) exactly as written
+
+FORMAT PRESERVATION:
+1. Maintain all paragraph breaks and section structures
+2. Preserve formatting of lists, bullet points, and numbering
+3. Keep code blocks (```) exactly as they appear with no changes to code
+4. Respect all markdown formatting (bold, italic, headers, etc.)
+5. Preserve URLs, email addresses, file paths, variables, and @ mentions exactly
+6. Maintain the structure of tables and other special formats
 
 IMPROVEMENT FOCUS:
 1. Fix grammar, spelling, and punctuation errors
@@ -27,14 +36,6 @@ IMPROVEMENT FOCUS:
 6. Break up sentences longer than 25 words
 7. Convert passive voice to active when appropriate
 8. Remove redundancies, filler words, and unnecessary repetition
-
-FORMAT PRESERVATION:
-1. Maintain all paragraph breaks and section structures
-2. Preserve formatting of lists, bullet points, and numbering
-3. Keep code blocks (```) exactly as they appear with no changes to code
-4. Respect all markdown formatting (bold, italic, headers, etc.)
-5. Preserve URLs, email addresses, file paths, and variables exactly
-6. Maintain the structure of tables and other special formats
 
 CONTENT-SPECIFIC GUIDANCE:
 - For technical content: Prioritize precision and clarity over stylistic changes
@@ -50,6 +51,7 @@ STRICTLY AVOID:
 5. Explaining what you changed (just provide the improved text)
 6. Altering the meaning of any sentence, even slightly
 7. Changing domain-specific terminology or jargon to general terms
+8. Modifying or removing @ mentions, hashtags, or issue references (like #123)
 
 OUTPUT INSTRUCTION:
 Provide ONLY the rewritten text with no explanations, comments, or meta-text.
