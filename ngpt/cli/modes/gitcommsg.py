@@ -4,6 +4,7 @@ import sys
 import tempfile
 import time
 import subprocess
+import threading
 from datetime import datetime
 import logging
 from ..formatters import COLORS
@@ -498,12 +499,27 @@ def process_with_chunking(client, diff_content, context, chunk_size=200, recursi
             logger.log_template("DEBUG", "CHUNK", chunk_prompt)
         
         # Process chunk - use technical system prompt for analysis
-        print(f"{COLORS['yellow']}Analyzing changes...{COLORS['reset']}")
+        stop_spinner = threading.Event()
+        spinner_thread = threading.Thread(
+            target=spinner, 
+            args=("Analyzing changes...",), 
+            kwargs={"stop_event": stop_spinner, "color": COLORS['yellow']}
+        )
+        spinner_thread.daemon = True
+        spinner_thread.start()
+        
         try:
             result = handle_api_call(client, chunk_prompt, technical_system_prompt, logger)
-            partial_analyses.append(result)
+            # Stop the spinner
+            stop_spinner.set()
+            spinner_thread.join()
+            # Show success message
             print(f"{COLORS['green']}✓ Chunk {i+1} processed{COLORS['reset']}")
+            partial_analyses.append(result)
         except Exception as e:
+            # Stop the spinner
+            stop_spinner.set()
+            spinner_thread.join()
             print(f"{COLORS['red']}Error processing chunk {i+1}: {str(e)}{COLORS['reset']}")
             if logger:
                 logger.error(f"Error processing chunk {i+1}: {str(e)}")
@@ -511,7 +527,7 @@ def process_with_chunking(client, diff_content, context, chunk_size=200, recursi
         
         # Rate limit protection between chunks
         if i < chunk_count - 1:
-            # Use the spinner function
+            # Use the spinner function with fixed duration
             spinner("Waiting to avoid rate limits...", 5, color=COLORS['yellow'])
     
     # Combine partial analyses
@@ -539,7 +555,16 @@ def process_with_chunking(client, diff_content, context, chunk_size=200, recursi
         )
     else:
         # Combined analysis is under the chunk size limit, generate the commit message
-        print(f"{COLORS['green']}Generating commit message from combined analysis...{COLORS['reset']}")
+        # Start spinner for generating commit message
+        stop_spinner = threading.Event()
+        spinner_thread = threading.Thread(
+            target=spinner, 
+            args=("Generating commit message from combined analysis...",), 
+            kwargs={"stop_event": stop_spinner, "color": COLORS['green']}
+        )
+        spinner_thread.daemon = True
+        spinner_thread.start()
+        
         combine_prompt = create_combine_prompt(partial_analyses)
         
         # Log combine template
@@ -549,6 +574,10 @@ def process_with_chunking(client, diff_content, context, chunk_size=200, recursi
         try:
             # Use commit message system prompt for final generation
             commit_message = handle_api_call(client, combine_prompt, commit_system_prompt, logger)
+            
+            # Stop the spinner
+            stop_spinner.set()
+            spinner_thread.join()
             
             # If the commit message is too long, we need to condense it
             if len(commit_message.splitlines()) > max_msg_lines:
@@ -563,6 +592,10 @@ def process_with_chunking(client, diff_content, context, chunk_size=200, recursi
                 )
             return commit_message
         except Exception as e:
+            # Stop the spinner
+            stop_spinner.set()
+            spinner_thread.join()
+            
             print(f"{COLORS['red']}Error combining analyses: {str(e)}{COLORS['reset']}")
             if logger:
                 logger.error(f"Error combining analyses: {str(e)}")
@@ -683,18 +716,33 @@ SECTION OF ANALYSIS TO CONDENSE:
         if logger:
             logger.log_template("DEBUG", f"CONDENSE_ANALYSIS_DEPTH_{current_depth}_CHUNK_{i+1}", condense_prompt)
         
-        print(f"{COLORS['yellow']}Condensing analysis chunk {i+1}/{analysis_chunk_count}...{COLORS['reset']}")
+        # Start spinner for analysis
+        stop_spinner = threading.Event()
+        spinner_thread = threading.Thread(
+            target=spinner, 
+            args=(f"Condensing analysis chunk {i+1}/{analysis_chunk_count}...",), 
+            kwargs={"stop_event": stop_spinner, "color": COLORS['yellow']}
+        )
+        spinner_thread.daemon = True
+        spinner_thread.start()
         
         # Condense this analysis chunk - use technical system prompt for condensing analysis
         try:
             condensed_chunk = handle_api_call(client, condense_prompt, technical_system_prompt, logger)
+            # Stop the spinner
+            stop_spinner.set()
+            spinner_thread.join()
+            
+            print(f"{COLORS['green']}✓ Analysis chunk {i+1}/{analysis_chunk_count} condensed{COLORS['reset']}")
             condensed_chunks.append(condensed_chunk)
             
             if logger:
                 logger.log_content("DEBUG", f"CONDENSED_ANALYSIS_DEPTH_{current_depth}_CHUNK_{i+1}", condensed_chunk)
-                
-            print(f"{COLORS['green']}✓ Analysis chunk {i+1}/{analysis_chunk_count} condensed{COLORS['reset']}")
         except Exception as e:
+            # Stop the spinner
+            stop_spinner.set()
+            spinner_thread.join()
+            
             print(f"{COLORS['red']}Error condensing analysis chunk {i+1}: {str(e)}{COLORS['reset']}")
             if logger:
                 logger.error(f"Error condensing analysis chunk {i+1} at depth {current_depth}: {str(e)}")
@@ -702,7 +750,7 @@ SECTION OF ANALYSIS TO CONDENSE:
         
         # Rate limit protection between chunks
         if i < analysis_chunk_count - 1:
-            # Use the spinner function
+            # Use the spinner function with fixed duration
             spinner("Waiting to avoid rate limits...", 5, color=COLORS['yellow'])
     
     # Combine condensed chunks
@@ -812,10 +860,21 @@ REQUIREMENTS:
     if logger:
         logger.log_template("DEBUG", f"CONDENSE_PROMPT_DEPTH_{current_depth}", condense_prompt)
     
-    print(f"{COLORS['yellow']}Condensing commit message (depth {current_depth}/{max_recursion_depth})...{COLORS['reset']}")
+    # Start spinner for condensing
+    stop_spinner = threading.Event()
+    spinner_thread = threading.Thread(
+        target=spinner, 
+        args=(f"Condensing commit message (depth {current_depth}/{max_recursion_depth})...",), 
+        kwargs={"stop_event": stop_spinner, "color": COLORS['yellow']}
+    )
+    spinner_thread.daemon = True
+    spinner_thread.start()
     
     try:
         condensed_result = handle_api_call(client, condense_prompt, system_prompt, logger)
+        # Stop the spinner
+        stop_spinner.set()
+        spinner_thread.join()
         
         if logger:
             logger.log_content("DEBUG", f"CONDENSED_RESULT_DEPTH_{current_depth}", condensed_result)
@@ -842,6 +901,10 @@ REQUIREMENTS:
         else:
             return condensed_result
     except Exception as e:
+        # Stop the spinner
+        stop_spinner.set()
+        spinner_thread.join()
+        
         print(f"{COLORS['red']}Error condensing commit message: {str(e)}{COLORS['reset']}")
         if logger:
             logger.error(f"Error condensing commit message at depth {current_depth}: {str(e)}")

@@ -154,14 +154,16 @@ def get_multiline_input():
             print("\nInput cancelled by user. Exiting gracefully.")
             return None
 
-def spinner(message, duration=5, spinner_chars="⣾⣽⣻⢿⡿⣟⣯⣷", color=None):
+def spinner(message, duration=5, spinner_chars="⣾⣽⣻⢿⡿⣟⣯⣷", color=None, stop_event=None):
     """Display a spinner animation with a message.
     
     Args:
         message: The message to display alongside the spinner
-        duration: Duration in seconds to show the spinner
+        duration: Duration in seconds to show the spinner (used if stop_event is None)
         spinner_chars: Characters to use for the spinner animation
         color: Optional color from COLORS dict to use for the message
+        stop_event: Optional threading.Event to signal when to stop the spinner
+                   If provided, duration is ignored and spinner runs until event is set
     """
     # Default color handling
     color_start = ""
@@ -172,16 +174,24 @@ def spinner(message, duration=5, spinner_chars="⣾⣽⣻⢿⡿⣟⣯⣷", color
     
     # Each character shows for 0.2 seconds
     char_duration = 0.2
-    # Total number of characters to show (not iterations through the entire spinner sequence)
-    total_chars = int(duration / char_duration)
     
-    # Run the spinner
-    for i in range(total_chars):
-        # Get the appropriate character by cycling through the spinner characters
-        char = spinner_chars[i % len(spinner_chars)]
-        sys.stdout.write(f"\r{color_start}{message} {char}{color_end}")
-        sys.stdout.flush()
-        time.sleep(char_duration)
+    if stop_event:
+        # Run until stop_event is set
+        i = 0
+        while not stop_event.is_set():
+            char = spinner_chars[i % len(spinner_chars)]
+            sys.stdout.write(f"\r{color_start}{message} {char}{color_end}")
+            sys.stdout.flush()
+            i += 1
+            time.sleep(char_duration)
+    else:
+        # Run for fixed duration
+        total_chars = int(duration / char_duration)
+        for i in range(total_chars):
+            char = spinner_chars[i % len(spinner_chars)]
+            sys.stdout.write(f"\r{color_start}{message} {char}{color_end}")
+            sys.stdout.flush()
+            time.sleep(char_duration)
     
     # Clear the line when done
     sys.stdout.write("\r" + " " * (len(message) + 10) + "\r")
