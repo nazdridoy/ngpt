@@ -382,7 +382,7 @@ For detailed information about building CLI tools with nGPT, see the [CLI Framew
 #### Google Gemini API Key
 1. Create or use an existing Google account
 2. Go to [Google AI Studio](https://aistudio.google.com/)
-3. Navigate to API keys in the left sidebar (or visit https://aistudio.google.com/app/apikeys)
+3. Navigate to API keys in the left sidebar (or visit https://aistudio.google.com/app/apikey)
 4. Create an API key and copy it
 5. Configure nGPT with your key:
    ```bash
