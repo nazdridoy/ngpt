@@ -1,6 +1,8 @@
 import os
 import shutil
 import traceback
+import threading
+import sys
 from .formatters import COLORS
 from .renderers import prettify_markdown, prettify_streaming_markdown
 
@@ -197,21 +199,53 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
             # Setup for stream-prettify
             stream_callback = None
             live_display = None
+            stop_spinner_func = None
+            stop_spinner_event = None
+            first_content_received = False
             
             if stream_prettify and should_stream:
                 # Get the correct header for interactive mode
                 header = ngpt_header()
-                live_display, stream_callback = prettify_streaming_markdown(renderer, is_interactive=True, header_text=header)
+                live_display, stream_callback, setup_spinner = prettify_streaming_markdown(renderer, is_interactive=True, header_text=header)
                 if not live_display:
                     # Fallback to normal prettify if live display setup failed
                     prettify = True
                     stream_prettify = False
                     should_stream = False
                     print(f"{COLORS['yellow']}Falling back to regular prettify mode.{COLORS['reset']}")
-            
-            # Start live display if using stream-prettify
-            if stream_prettify and live_display:
-                live_display.start()
+                else:
+                    # Create a wrapper for the stream callback that handles spinner and live display
+                    original_callback = stream_callback
+                    
+                    def spinner_handling_callback(content):
+                        nonlocal first_content_received
+                        
+                        # On first content, stop the spinner and start the live display
+                        if not first_content_received:
+                            first_content_received = True
+                            
+                            # Stop the spinner if it's running
+                            if stop_spinner_func:
+                                stop_spinner_func()
+                                
+                            # Clear the spinner line completely
+                            sys.stdout.write("\r" + " " * 100 + "\r")
+                            sys.stdout.flush()
+                            
+                            # Now start the live display
+                            if live_display:
+                                live_display.start()
+                        
+                        # Call the original callback to update content
+                        if original_callback:
+                            original_callback(content)
+                    
+                    # Use our wrapper callback
+                    stream_callback = spinner_handling_callback
+                    
+                    # Set up and start the spinner
+                    stop_spinner_event = threading.Event()
+                    stop_spinner_func = setup_spinner(stop_spinner_event, "Waiting for response...", color=COLORS['green'])
             
             # Get AI response with conversation history
             response = client.chat(
@@ -226,8 +260,14 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
                 stream_callback=stream_callback
             )
             
+            # Ensure spinner is stopped if no content was received
+            if stop_spinner_event and not first_content_received:
+                stop_spinner_event.set()
+                sys.stdout.write("\r" + " " * 100 + "\r")
+                sys.stdout.flush()
+            
             # Stop live display if using stream-prettify
-            if stream_prettify and live_display:
+            if stream_prettify and live_display and first_content_received:
                 live_display.stop()
             
             # Add AI response to conversation history
