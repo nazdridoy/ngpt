@@ -12,8 +12,8 @@ def chat_mode(client, args, logger=None):
         args: The parsed command-line arguments
         logger: Optional logger instance
     """
-    # Handle stdin mode
-    if args.stdin:
+    # Handle pipe mode
+    if args.pipe:
         # Read input from stdin
         stdin_content = sys.stdin.read().strip()
         

@@ -73,7 +73,7 @@ ngpt --code --stream-prettify "function to calculate the Fibonacci sequence"
 ngpt --shell "list all files in the current directory"
 
 # Read from stdin and use the content in your prompt
-echo "What is this text about?" | ngpt --stdin "Analyze the following text: {}"
+echo "What is this text about?" | ngpt -p "Analyze the following text: {}"
 
 # Rewrite text to improve quality while preserving tone and meaning
 echo "your text" | ngpt --rewrite
@@ -124,7 +124,7 @@ ngpt --interactive --log conversation.log
 ngpt --log "Tell me about quantum computing"
 
 # Process text from stdin using the {} placeholder
-cat README.md | ngpt --stdin "Summarize this document: {}"
+cat README.md | ngpt -p "Summarize this document: {}"
 
 # Use different model providers by specifying the provider name
 ngpt --provider Groq "Explain quantum computing"
@@ -406,7 +406,7 @@ You can configure nGPT using the following options:
 | `-s, --shell` | Generate and execute shell commands appropriate for your operating system |
 | `-c, --code` | Generate clean code without markdown formatting or explanations |
 | `-t, --text` | Open interactive multiline editor for complex prompts with syntax highlighting |
-| `--stdin` | Read from stdin and use content with prompt. Use {} in prompt as placeholder for stdin content |
+| `-p, --pipe` | Read from stdin and use content with prompt. Use {} in prompt as placeholder for stdin content |
 | `--rewrite` | Rewrite text to improve quality while preserving original tone and meaning |
 | `--gitcommsg` | Generate AI-powered git commit messages from staged changes or diff files |
 

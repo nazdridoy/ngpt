@@ -158,7 +158,7 @@ You can also set configuration options directly via command-line arguments:
 - `-c, --code`: Generate code.
   - `--language <lang>`: Specify the programming language for code generation (default: `python`).
 - `-t, --text`: Use a multiline editor for input.
-- `--stdin`: Read from stdin and use content in your prompt with {} placeholder.
+- `-p, --pipe`: Read from stdin and use content in your prompt with {} placeholder.
 - `--rewrite`: Rewrite text from stdin to be more natural while preserving tone and meaning.
 - `--gitcommsg`: Generate AI-powered git commit messages from staged changes or diff file.
 
@@ -216,7 +216,7 @@ ngpt --interactive --log conversation.log
 ngpt --log "Tell me about quantum computing"
 
 # Process text from stdin using the {} placeholder
-echo "What is this text about?" | ngpt --stdin "Analyze the following text: {}"
+echo "What is this text about?" | ngpt -p "Analyze the following text: {}"
 
 # Generate git commit message from staged changes
 ngpt --gitcommsg

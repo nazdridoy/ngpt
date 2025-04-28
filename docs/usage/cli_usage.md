@@ -48,7 +48,7 @@ Below is a comprehensive list of all available command-line options, organized b
 | `-s, --shell` | Generate and execute shell commands appropriate for your operating system |
 | `-c, --code` | Generate clean code without markdown formatting or explanations |
 | `-t, --text` | Open interactive multiline editor for complex prompts with syntax highlighting |
-| `--stdin` | Read from stdin and use content in your prompt with {} placeholder |
+| `-p, --pipe` | Read from stdin and use content in your prompt with {} placeholder |
 | `--rewrite` | Rewrite text to improve quality while preserving original tone and meaning |
 | `--gitcommsg` | Generate AI-powered git commit messages for staged changes or from a diff file |
 
@@ -254,41 +254,34 @@ ngpt -s "check if port 8080 is open"
 
 ### Stdin Mode
 
-Process text from standard input and incorporate it into your prompt using the `{}` placeholder:
+nGPT can read input directly from stdin (standard input) using the `-p` or `--pipe` flag. This allows you to pipe the output of other commands into nGPT for processing.
 
 ```bash
-echo "Who are you?" | ngpt --stdin "answer {}"
+# Basic stdin usage
+echo "Who are you?" | ngpt -p "answer {}"
 ```
 
 The content from stdin replaces the `{}` placeholder in your prompt. This is useful for:
 
-1. Processing files or command output
-2. Integrating nGPT into shell pipelines
-3. Analyzing text from other commands
+- **Summarizing command output:**
+  ```bash
+  ls -la | ngpt -p "Explain what these files do based on their names: {}"
+  ```
 
-#### Examples
+- **Analyzing log files:**
+  ```bash
+  cat error.log | ngpt -p "What's causing these errors? {}"
+  ```
 
-Analyze command output:
-```bash
-ls -la | ngpt --stdin "Explain what these files do based on their names: {}"
-```
+- **Summarizing documents:**
+  ```bash
+  cat README.md | ngpt -p "Summarize this documentation: {}"
+  ```
 
-Analyze a log file:
-```bash
-cat error.log | ngpt --stdin "What's causing these errors? {}"
-```
-
-Summarize documentation:
-```bash
-cat README.md | ngpt --stdin "Summarize this documentation: {}"
-```
-
-Translate text from a file:
-```bash
-cat french_text.txt | ngpt --stdin "Translate this French text to English: {}"
-```
-
-#### Placeholder Behavior
+- **Translating text:**
+  ```bash
+  cat french_text.txt | ngpt -p "Translate this French text to English: {}"
+  ```
 
 The `{}` placeholder will be replaced with stdin content. If the placeholder is not found in your prompt, stdin content will be appended to the end of your prompt with a warning.
 

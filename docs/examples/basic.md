@@ -242,13 +242,13 @@ ngpt -t --preprompt "You are a markdown documentation expert"
 
 ```bash
 # Process text from stdin
-cat file.txt | ngpt --stdin "Summarize this: {}"
+cat file.txt | ngpt -p "Summarize this: {}"
 
 # Analyze code from stdin
-cat script.py | ngpt --stdin "Review this Python code and suggest improvements: {}"
+cat script.py | ngpt -p "Review this Python code and suggest improvements: {}"
 
 # Process JSON data
-curl https://api.example.com/data | ngpt --stdin "Parse this JSON data and explain what it contains: {}"
+curl https://api.example.com/data | ngpt -p "Parse this JSON data and explain what it contains: {}"
 ```
 
 ### Text Rewriting
