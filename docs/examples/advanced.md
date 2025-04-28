@@ -217,38 +217,33 @@ def custom_streaming_markdown():
     # Create a Rich console
     console = Console()
     
-    # Initialize the markdown renderer
-    markdown_renderer = prettify_streaming_markdown(renderer='rich')
+    # Initialize a real-time markdown renderer
+    live_display, update_function, setup_spinner = prettify_streaming_markdown(renderer='rich')
     
-    # Start a conversation
-    console.print("[bold green]Starting conversation with markdown rendering[/bold green]")
-    console.print("[bold]Type 'exit' to quit[/bold]")
-    console.print("-" * 50)
+    # Set up spinner for waiting period
+    import threading
+    stop_spinner_event = threading.Event()
+    if setup_spinner:
+        stop_spinner_func = setup_spinner(stop_spinner_event, "Waiting for response...")
     
-    messages = [
-        {"role": "system", "content": "You are a helpful assistant with markdown capabilities. Use formatting like headers, lists, code blocks, and tables to present information clearly."}
-    ]
+    # Start the live display
+    markdown_renderer.start()
     
-    while True:
-        user_input = input("You: ")
-        if user_input.lower() in ['exit', 'quit', 'bye']:
-            break
+    # Stream the response with real-time rendering
+    for chunk in client.chat(
+        "Explain quantum computing briefly",
+        stream=True
+    ):
+        full_response += chunk
+        update_function(full_response)
+    
+    # Ensure spinner is stopped if still running
+    if not stop_spinner_event.is_set():
+        stop_spinner_event.set()
         
-        # Add user message to history
-        messages.append({"role": "user", "content": user_input})
-        
-        # Call the API with the custom renderer
-        console.print("[bold blue]Assistant:[/bold blue]")
-        response = client.chat(
-            "", 
-            messages=messages, 
-            stream=True, 
-            markdown_format=True,
-            stream_callback=markdown_renderer.update_content
-        )
-        
-        # Add the response to history
-        messages.append({"role": "assistant", "content": response})
+    # Stop the live display when done
+    if live_display:
+        live_display.stop()
 
 if __name__ == "__main__":
     custom_streaming_markdown()
@@ -584,101 +579,114 @@ def main():
                 log_file=log_file
             )
             
-        # Standard chat mode
-        else:
-            # Real-time prettified markdown mode
-            if args.stream_prettify:
-                streamer = prettify_streaming_markdown(renderer='rich')
+        # Real-time prettified markdown mode
+        if args.stream_prettify:
+            live_display, update_function, setup_spinner = prettify_streaming_markdown(renderer='rich')
+            
+            # Set up spinner for waiting period
+            import threading
+            stop_spinner_event = threading.Event()
+            if setup_spinner:
+                stop_spinner_func = setup_spinner(stop_spinner_event, "Waiting for response...")
+            
+            response = client.chat(
+                prompt, 
+                temperature=args.temperature,
+                stream=True,
+                stream_callback=update_function,
+                markdown_format=True,
+                web_search=args.web_search,
+                messages=messages
+            )
+            
+            # Ensure spinner is stopped if still running
+            if not stop_spinner_event.is_set():
+                stop_spinner_event.set()
+            
+            # Stop the live display when done
+            if live_display:
+                live_display.stop()
+            
+            if args.output:
+                with open(args.output, 'w') as f:
+                    f.write(response)
+                print(f"{COLORS['green']}Response saved to {args.output}{COLORS['reset']}")
+                
+            if log_file:
+                log_file.write(f"Assistant: {response}\n\n")
+            
+        # Basic prettify mode
+        elif args.prettify:
+            from rich.markdown import Markdown
+            from rich.console import Console
+            
+            console = Console()
+            
+            if args.output:
+                # No streaming if saving to file
                 response = client.chat(
                     prompt, 
-                    temperature=args.temperature,
-                    stream=True,
-                    stream_callback=streamer.update_content,
+                    temperature=args.temperature, 
+                    stream=False,
+                    web_search=args.web_search,
                     markdown_format=True,
+                    messages=messages
+                )
+                with open(args.output, 'w') as f:
+                    f.write(response)
+                print(f"{COLORS['green']}Response saved to {args.output}{COLORS['reset']}")
+                
+                if log_file:
+                    log_file.write(f"Assistant: {response}\n\n")
+            else:
+                # Use rich to render markdown after completion
+                response = client.chat(
+                    prompt, 
+                    temperature=args.temperature, 
+                    stream=False,
+                    web_search=args.web_search,
+                    markdown_format=True,
+                    messages=messages
+                )
+                console.print(Markdown(response))
+                
+                if log_file:
+                    log_file.write(f"Assistant: {response}\n\n")
+            
+        # Simple mode
+        else:
+            if args.output:
+                # No streaming if saving to file
+                response = client.chat(
+                    prompt, 
+                    temperature=args.temperature, 
+                    stream=False,
                     web_search=args.web_search,
                     messages=messages
                 )
+                with open(args.output, 'w') as f:
+                    f.write(response)
+                print(f"{COLORS['green']}Response saved to {args.output}{COLORS['reset']}")
                 
-                if args.output:
-                    with open(args.output, 'w') as f:
-                        f.write(response)
-                    print(f"{COLORS['green']}Response saved to {args.output}{COLORS['reset']}")
-                    
                 if log_file:
                     log_file.write(f"Assistant: {response}\n\n")
-                    
-            # Basic prettify mode
-            elif args.prettify:
-                from rich.markdown import Markdown
-                from rich.console import Console
-                
-                console = Console()
-                
-                if args.output:
-                    # No streaming if saving to file
-                    response = client.chat(
-                        prompt, 
-                        temperature=args.temperature, 
-                        stream=False,
-                        web_search=args.web_search,
-                        markdown_format=True,
-                        messages=messages
-                    )
-                    with open(args.output, 'w') as f:
-                        f.write(response)
-                    print(f"{COLORS['green']}Response saved to {args.output}{COLORS['reset']}")
-                    
-                    if log_file:
-                        log_file.write(f"Assistant: {response}\n\n")
-                else:
-                    # Use rich to render markdown after completion
-                    response = client.chat(
-                        prompt, 
-                        temperature=args.temperature, 
-                        stream=False,
-                        web_search=args.web_search,
-                        markdown_format=True,
-                        messages=messages
-                    )
-                    console.print(Markdown(response))
-                    
-                    if log_file:
-                        log_file.write(f"Assistant: {response}\n\n")
-                        
-            # Simple mode
             else:
-                if args.output:
-                    # No streaming if saving to file
-                    response = client.chat(
-                        prompt, 
-                        temperature=args.temperature, 
-                        stream=False,
-                        web_search=args.web_search,
-                        messages=messages
-                    )
-                    with open(args.output, 'w') as f:
-                        f.write(response)
-                    print(f"{COLORS['green']}Response saved to {args.output}{COLORS['reset']}")
-                    
-                    if log_file:
-                        log_file.write(f"Assistant: {response}\n\n")
-                else:
-                    # Stream to console
-                    full_response = ""
-                    for chunk in client.chat(
-                        prompt, 
-                        temperature=args.temperature, 
-                        stream=True,
-                        web_search=args.web_search,
-                        messages=messages
-                    ):
-                        print(chunk, end="", flush=True)
-                        full_response += chunk
-                    print()  # Final newline
-                    
-                    if log_file:
-                        log_file.write(f"Assistant: {full_response}\n\n")
+                # Stream to console
+                full_response = ""
+                for chunk in client.chat(
+                    prompt, 
+                    temperature=args.temperature, 
+                    stream=True,
+                    web_search=args.web_search,
+                    messages=messages
+                ):
+                    print(chunk, end="", flush=True)
+                    full_response += chunk
+                print()  # Final newline
                 
+                if log_file:
+                    log_file.write(f"Assistant: {full_response}\n\n")
+        
         if log_file:
             log_file.close()
             

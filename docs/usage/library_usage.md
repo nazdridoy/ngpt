@@ -381,37 +381,51 @@ config = load_config()
 client = NGPTClient(**config)
 
 # Get the markdown streamer
-markdown_streamer = prettify_streaming_markdown(
+live_display, update_function, setup_spinner = prettify_streaming_markdown(
     renderer='rich',
     header_text="Streaming Response:"
 )
 
-# Start the live display
-if markdown_streamer[0]:  # Check if setup was successful
-    markdown_streamer[0].start()
+# Set up spinner while waiting for first content
+if live_display and setup_spinner:
+    import threading
+    stop_spinner_event = threading.Event()
+    stop_spinner_func = setup_spinner(stop_spinner_event, "Waiting for response...")
+    
+    # The live display will start automatically when the first content is received
+    # (no need to call live_display.start() manually)
 
-    # Use the streamer with the client
+    # Use the update function with the client
     response = client.chat(
         "Explain quantum computing with code examples",
         stream=True,
         markdown_format=True,
-        stream_callback=markdown_streamer[1]
+        stream_callback=update_function
     )
     
+    # Ensure spinner is stopped if no content was received
+    if not stop_spinner_event.is_set():
+        stop_spinner_event.set()
+    
     # Stop the live display when done
-    markdown_streamer[0].stop()
+    live_display.stop()
 ```
 
 For more control, you can access the live display and update function directly:
 
 ```python
-live_display, update_function = prettify_streaming_markdown(
+live_display, update_function, setup_spinner = prettify_streaming_markdown(
     renderer='rich',
     header_text="Custom Header"
 )
 
 if live_display:  # Check if setup was successful
-    live_display.start()
+    # Optional: Set up a spinner while waiting for content
+    import threading
+    stop_spinner_event = threading.Event()
+    stop_spinner_func = setup_spinner(stop_spinner_event, "Processing...")
+    
+    # The first update_function call will automatically start the display and stop the spinner
     
     # Update the content manually
     update_function("# Header\nThis is *formatted* content")

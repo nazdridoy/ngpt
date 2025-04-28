@@ -160,7 +160,7 @@ from ngpt.cli.renderers import prettify_streaming_markdown
 def prettify_streaming_markdown(renderer='rich', is_interactive=False, header_text=None)
 ```
 
-Creates a streaming markdown renderer that updates in real-time.
+Creates a streaming markdown renderer that updates in real-time with loading spinner functionality.
 
 **Parameters:**
 - `renderer` (str): Which renderer to use ('auto', 'rich', 'glow')
@@ -168,21 +168,47 @@ Creates a streaming markdown renderer that updates in real-time.
 - `header_text` (str, optional): Header text to display above the content
 
 **Returns:**
-- object: A streaming markdown renderer object with an `update_content` method
+- tuple: (live_display, update_function, setup_spinner_func) if successful, (None, None, None) otherwise
+  - `live_display`: The rich.Live display object for controlling the display lifecycle
+  - `update_function`: Function to call with updated content that will refresh the display
+  - `setup_spinner_func`: Function to set up a spinner while waiting for first content
 
 **Example:**
 ```python
 from ngpt import NGPTClient, load_config
 from ngpt.cli.renderers import prettify_streaming_markdown
+import threading
 
 client = NGPTClient(**load_config())
-streamer = prettify_streaming_markdown(renderer='rich')
 
-client.chat(
-    "Explain quantum computing with code examples",
+# Get components for streaming display with spinner
+live_display, update_function, setup_spinner = prettify_streaming_markdown(renderer='rich')
+
+# Set up spinner (optional)
+stop_spinner_event = threading.Event()
+stop_spinner_func = None
+if setup_spinner:
+    stop_spinner_func = setup_spinner(stop_spinner_event, "Waiting for response...")
+
+# The update_function will automatically:
+# 1. Start the live display when first content arrives
+# 2. Stop the spinner when first content arrives
+# 3. Update the display with new content
+
+# Use with client
+response = client.chat(
+    "Explain quantum computing",
     stream=True,
-    stream_callback=streamer.update_content
+    stream_callback=update_function
 )
+
+# Ensure spinner is stopped if no content was received
+if not stop_spinner_event.is_set():
+    stop_spinner_event.set()
+
+# Stop the display when done
+if live_display:
+    live_display.stop()
 ```
 
 ### `has_markdown_renderer`

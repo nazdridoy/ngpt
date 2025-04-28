@@ -260,17 +260,35 @@ CODE:
     # Use streaming markdown renderer if Rich is available
     if has_rich and has_markdown_renderer(renderer='rich'):
         # Create a streaming markdown renderer
-        markdown_streamer = prettify_streaming_markdown(
+        live_display, update_function, setup_spinner = prettify_streaming_markdown(
             renderer='rich',
             header_text=f"Documentation for {args.file}"
         )
+        
+        # Setup spinner for waiting period
+        import threading
+        stop_spinner_event = threading.Event()
+        stop_spinner_func = None
+        if setup_spinner:
+            stop_spinner_func = setup_spinner(stop_spinner_event, "Generating documentation...")
         
         # Stream the response with live updating
         try:
             for chunk in client.chat(prompt, stream=True):
                 full_response += chunk
-                markdown_streamer.update_content(full_response)
+                update_function(full_response)
+            
+            # Ensure spinner is stopped if still running
+            if not stop_spinner_event.is_set():
+                stop_spinner_event.set()
+            
+            # Stop the display when done
+            if live_display:
+                live_display.stop()
         except Exception as e:
+            # Ensure spinner is stopped on error
+            if not stop_spinner_event.is_set():
+                stop_spinner_event.set()
             print(f"\nError generating documentation: {e}", file=sys.stderr)
             sys.exit(1)
     else:
@@ -511,10 +529,17 @@ Return ONLY the improved text without explanations or notes."""
         if args.stream:
             # Stream with live updates
             if args.prettify:
-                streamer = prettify_streaming_markdown(
+                live_display, update_function, setup_spinner = prettify_streaming_markdown(
                     renderer='rich',
                     header_text="Improved Text"
                 )
+                
+                # Setup spinner for waiting period
+                import threading
+                stop_spinner_event = threading.Event()
+                stop_spinner_func = None
+                if setup_spinner:
+                    stop_spinner_func = setup_spinner(stop_spinner_event, "Improving text...")
                 
                 full_response = ""
                 for chunk in client.chat(
@@ -523,7 +548,15 @@ Return ONLY the improved text without explanations or notes."""
                     stream=True
                 ):
                     full_response += chunk
-                    streamer.update_content(full_response)
+                    update_function(full_response)
+                
+                # Ensure spinner is stopped if still running
+                if not stop_spinner_event.is_set():
+                    stop_spinner_event.set()
+                
+                # Stop the display when done
+                if live_display:
+                    live_display.stop()
                 
                 improved_text = full_response
             else:
