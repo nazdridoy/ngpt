@@ -2,6 +2,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import sys
 from .formatters import COLORS
 
 # Try to import markdown rendering libraries
@@ -191,7 +192,8 @@ def prettify_streaming_markdown(renderer='rich', is_interactive=False, header_te
         header_text (str): Header text to include at the top (for interactive mode)
         
     Returns:
-        tuple: (live_display, update_function) if successful, (None, None) otherwise
+        tuple: (live_display, update_function, stop_spinner_func) if successful, (None, None, None) otherwise
+              stop_spinner_func is a function that should be called when first content is received
     """
     # Only warn if explicitly specifying a renderer other than 'rich' or 'auto'
     if renderer != 'rich' and renderer != 'auto':
@@ -204,7 +206,7 @@ def prettify_streaming_markdown(renderer='rich', is_interactive=False, header_te
     if not HAS_RICH:
         print(f"{COLORS['yellow']}Warning: Rich is not available for streaming prettify.{COLORS['reset']}")
         print(f"{COLORS['yellow']}Install with: pip install \"ngpt[full]\" or pip install rich{COLORS['reset']}")
-        return None, None
+        return None, None, None
         
     try:
         from rich.live import Live
@@ -238,11 +240,26 @@ def prettify_streaming_markdown(renderer='rich', is_interactive=False, header_te
             md_obj = Markdown("")
         
         # Initialize the Live display with an empty markdown
-        live = Live(md_obj, console=console, refresh_per_second=10)
+        live = Live(md_obj, console=console, refresh_per_second=10, auto_refresh=False)
+        
+        # Track if this is the first content update
+        first_update = True
+        stop_spinner_event = None
+        spinner_thread = None
         
         # Define an update function that will be called with new content
         def update_content(content):
-            nonlocal md_obj
+            nonlocal md_obj, first_update
+            
+            # Start live display on first content
+            if first_update:
+                first_update = False
+                # Clear the spinner line completely before starting the display
+                sys.stdout.write("\r" + " " * 100 + "\r")
+                sys.stdout.flush()
+                live.start()
+            
+            # Update content
             if is_interactive and header_text:
                 # Update the panel content
                 md_obj.renderable = Markdown(content)
@@ -250,8 +267,32 @@ def prettify_streaming_markdown(renderer='rich', is_interactive=False, header_te
             else:
                 md_obj = Markdown(content)
                 live.update(md_obj)
+                
+            # Ensure the display refreshes with new content
+            live.refresh()
             
-        return live, update_content
+        # Define a function to set up and start the spinner
+        def setup_spinner(stop_event, message="Waiting for AI response..."):
+            nonlocal stop_spinner_event, spinner_thread
+            from .ui import spinner
+            import threading
+            
+            # Store the event so the update function can access it
+            stop_spinner_event = stop_event
+            
+            # Create and start spinner thread
+            spinner_thread = threading.Thread(
+                target=spinner,
+                args=(message,),
+                kwargs={"stop_event": stop_event}
+            )
+            spinner_thread.daemon = True
+            spinner_thread.start()
+            
+            # Return a function that can be used to stop the spinner
+            return lambda: stop_event.set() if stop_event else None
+                
+        return live, update_content, setup_spinner
     except Exception as e:
         print(f"{COLORS['yellow']}Error setting up Rich streaming display: {str(e)}{COLORS['reset']}")
-        return None, None 
+        return None, None, None 

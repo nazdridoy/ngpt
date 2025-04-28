@@ -1,6 +1,8 @@
 from ..formatters import COLORS
 from ..renderers import prettify_markdown, prettify_streaming_markdown, has_markdown_renderer, show_available_renderers
+from ..ui import spinner
 import sys
+import threading
 
 def code_mode(client, args, logger=None):
     """Handle the code generation mode.
@@ -27,6 +29,7 @@ def code_mode(client, args, logger=None):
     # Setup for streaming and prettify logic
     stream_callback = None
     live_display = None
+    stop_spinner_func = None
     should_stream = True # Default to streaming
     use_stream_prettify = False
     use_regular_prettify = False
@@ -37,7 +40,7 @@ def code_mode(client, args, logger=None):
         if has_markdown_renderer('rich'):
             should_stream = True
             use_stream_prettify = True
-            live_display, stream_callback = prettify_streaming_markdown(args.renderer)
+            live_display, stream_callback, setup_spinner = prettify_streaming_markdown(args.renderer)
             if not live_display:
                 # Fallback if live display fails
                 use_stream_prettify = False
@@ -71,9 +74,39 @@ def code_mode(client, args, logger=None):
     
     print("\nGenerating code...")
     
-    # Start live display if using stream-prettify
+    # Show a static message if no live_display is available
+    if use_stream_prettify and not live_display:
+        print("Waiting for AI response...")
+    
+    # Set up the spinner if we have a live display
+    stop_spinner_event = None
     if use_stream_prettify and live_display:
-        live_display.start()
+        stop_spinner_event = threading.Event()
+        stop_spinner_func = setup_spinner(stop_spinner_event)
+    
+    # Create a wrapper for the stream callback that will stop the spinner on first content
+    original_callback = stream_callback
+    first_content_received = False
+    
+    def spinner_handling_callback(content):
+        nonlocal first_content_received
+        
+        # On first content, stop the spinner 
+        if not first_content_received and stop_spinner_func:
+            first_content_received = True
+            # Stop the spinner
+            stop_spinner_func()
+            # Ensure spinner message is cleared with an extra blank line
+            sys.stdout.write("\r" + " " * 100 + "\r")
+            sys.stdout.flush()
+        
+        # Call the original callback to update the display
+        if original_callback:
+            original_callback(content)
+    
+    # Use our wrapper callback
+    if use_stream_prettify and live_display:
+        stream_callback = spinner_handling_callback
         
     generated_code = client.generate_code(
         prompt=prompt, 
@@ -87,6 +120,10 @@ def code_mode(client, args, logger=None):
         stream=should_stream,
         stream_callback=stream_callback
     )
+    
+    # Ensure spinner is stopped if no content was received
+    if stop_spinner_event and not first_content_received:
+        stop_spinner_event.set()
     
     # Stop live display if using stream-prettify
     if use_stream_prettify and live_display:

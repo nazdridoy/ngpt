@@ -1,8 +1,9 @@
 import sys
 import platform
+import threading
 from ..formatters import COLORS
 from ..renderers import prettify_markdown, prettify_streaming_markdown
-from ..ui import get_multiline_input
+from ..ui import get_multiline_input, spinner
 
 # System prompt for rewriting text
 REWRITE_SYSTEM_PROMPT = """You are an expert text editor and rewriter. Your task is to rewrite the user's text to improve readability and flow while carefully preserving the original meaning, tone, and style.
@@ -143,10 +144,11 @@ def rewrite_mode(client, args, logger=None):
     # If stream-prettify is enabled
     stream_callback = None
     live_display = None
+    stop_spinner_func = None
     
     if args.stream_prettify:
         should_stream = True  # Enable streaming
-        live_display, stream_callback = prettify_streaming_markdown(args.renderer)
+        live_display, stream_callback, setup_spinner = prettify_streaming_markdown(args.renderer)
         if not live_display:
             # Fallback to normal prettify if live display setup failed
             args.prettify = True
@@ -158,9 +160,39 @@ def rewrite_mode(client, args, logger=None):
     if args.prettify and not args.no_stream:
         print(f"{COLORS['yellow']}Note: Streaming disabled to enable markdown rendering.{COLORS['reset']}")
     
-    # Start live display if using stream-prettify
+    # Show a static message if live_display is not available
+    if args.stream_prettify and not live_display:
+        print("\nWaiting for AI response...")
+    
+    # Set up the spinner if we have a live display
+    stop_spinner_event = None
     if args.stream_prettify and live_display:
-        live_display.start()
+        stop_spinner_event = threading.Event()
+        stop_spinner_func = setup_spinner(stop_spinner_event)
+    
+    # Create a wrapper for the stream callback that will stop the spinner on first content
+    original_callback = stream_callback
+    first_content_received = False
+    
+    def spinner_handling_callback(content):
+        nonlocal first_content_received
+        
+        # On first content, stop the spinner 
+        if not first_content_received and stop_spinner_func:
+            first_content_received = True
+            # Stop the spinner
+            stop_spinner_func()
+            # Ensure spinner message is cleared with an extra blank line
+            sys.stdout.write("\r" + " " * 100 + "\r")
+            sys.stdout.flush()
+        
+        # Call the original callback to update the display
+        if original_callback:
+            original_callback(content)
+    
+    # Use our wrapper callback
+    if args.stream_prettify and live_display:
+        stream_callback = spinner_handling_callback
     
     response = client.chat(
         prompt=None,  # Not used when messages are provided
@@ -173,6 +205,10 @@ def rewrite_mode(client, args, logger=None):
         stream_callback=stream_callback,
         messages=messages  # Use messages array instead of prompt
     )
+    
+    # Ensure spinner is stopped if no content was received
+    if stop_spinner_event and not first_content_received:
+        stop_spinner_event.set()
     
     # Stop live display if using stream-prettify
     if args.stream_prettify and live_display:

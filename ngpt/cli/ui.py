@@ -165,34 +165,21 @@ def spinner(message, duration=5, spinner_chars="⣾⣽⣻⢿⡿⣟⣯⣷", color
         stop_event: Optional threading.Event to signal when to stop the spinner
                    If provided, duration is ignored and spinner runs until event is set
     """
-    # Default color handling
-    color_start = ""
-    color_end = ""
-    if color:
-        color_start = color
-        color_end = "\033[0m"  # Reset
-    
-    # Each character shows for 0.2 seconds
     char_duration = 0.2
-    
+
     if stop_event:
-        # Run until stop_event is set
         i = 0
         while not stop_event.is_set():
             char = spinner_chars[i % len(spinner_chars)]
-            sys.stdout.write(f"\r{color_start}{message} {char}{color_end}")
-            sys.stdout.flush()
+            print(f"\r{message} {char}", end="", flush=True)
             i += 1
             time.sleep(char_duration)
     else:
-        # Run for fixed duration
         total_chars = int(duration / char_duration)
         for i in range(total_chars):
             char = spinner_chars[i % len(spinner_chars)]
-            sys.stdout.write(f"\r{color_start}{message} {char}{color_end}")
-            sys.stdout.flush()
+            print(f"\r{message} {char}", end="", flush=True)
             time.sleep(char_duration)
-    
+
     # Clear the line when done
-    sys.stdout.write("\r" + " " * (len(message) + 10) + "\r")
-    sys.stdout.flush() 
+    print("\r" + " " * (len(message) + 10) + "\r", end="", flush=True) 
