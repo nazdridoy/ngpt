@@ -21,8 +21,6 @@ def text_mode(client, args, logger=None):
             print("Exiting.")
             return
     
-    print("\nSubmission successful. Waiting for response...")
-    
     # Log the user message if logging is enabled
     if logger:
         logger.log("user", prompt)

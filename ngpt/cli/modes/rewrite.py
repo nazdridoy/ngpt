@@ -131,8 +131,6 @@ def rewrite_mode(client, args, logger=None):
         {"role": "user", "content": input_text}
     ]
     
-    print("\nSubmission successful. Waiting for response...")
-    
     # Log the messages if logging is enabled
     if logger:
         logger.log("system", REWRITE_SYSTEM_PROMPT)
