@@ -2,14 +2,19 @@
 
 🤖 nGPT: A Swiss army knife for LLMs: powerful CLI, interactive chatbot, and flexible library all in one package. Seamlessly work with OpenAI, Ollama, Groq, Claude, Gemini, or any OpenAI-compatible API to generate code, craft git commits, rewrite text, and execute shell commands. Fast, lightweight, and designed for both casual users and developers.
 
-[![PyPI version](https://img.shields.io/pypi/v/ngpt.svg)](https://pypi.org/project/ngpt/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Documentation](https://img.shields.io/badge/docs-available-brightgreen.svg)](https://nazdridoy.github.io/ngpt/)
-[![Linux](https://img.shields.io/badge/Linux-support-blue?logo=linux)](https://nazdridoy.github.io/ngpt/installation.html)
-[![Windows](https://img.shields.io/badge/Windows-support-blue?logo=windows)](https://nazdridoy.github.io/ngpt/installation.html)
-[![macOS](https://img.shields.io/badge/macOS-support-blue?logo=apple)](https://nazdridoy.github.io/ngpt/installation.html)
-[![Android](https://img.shields.io/badge/Android-Termux-blue?logo=android)](https://nazdridoy.github.io/ngpt/installation.html)
-[![Python Versions](https://img.shields.io/pypi/pyversions/ngpt.svg)](https://pypi.org/project/ngpt/)
+
+<p align="center">
+  <a href="https://pypi.org/project/ngpt/"><img src="https://img.shields.io/pypi/v/ngpt.svg" alt="PyPI version"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <a href="https://nazdridoy.github.io/ngpt/"><img src="https://img.shields.io/badge/docs-available-brightgreen.svg" alt="Documentation"></a>
+</p>
+
+<p align="center">
+  <a href="https://nazdridoy.github.io/ngpt/installation.html"><img src="https://img.shields.io/badge/Linux-support-blue?logo=linux" alt="Linux"></a>
+  <a href="https://nazdridoy.github.io/ngpt/installation.html"><img src="https://img.shields.io/badge/Windows-support-blue?logo=windows" alt="Windows"></a>
+  <a href="https://nazdridoy.github.io/ngpt/installation.html"><img src="https://img.shields.io/badge/macOS-support-blue?logo=apple" alt="macOS"></a>
+  <a href="https://nazdridoy.github.io/ngpt/installation.html"><img src="https://img.shields.io/badge/Android-Termux-blue?logo=android" alt="Android"></a>
+</p> 
 
 ![2025-04-23_16-18-01](https://github.com/user-attachments/assets/b8e58926-5165-4352-b48b-9f4a982da86e)
 
