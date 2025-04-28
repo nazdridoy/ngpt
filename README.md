@@ -5,7 +5,7 @@
 [![Python Versions](https://img.shields.io/pypi/pyversions/ngpt.svg)](https://pypi.org/project/ngpt/)
 [![Documentation](https://img.shields.io/badge/docs-available-brightgreen.svg)](https://nazdridoy.github.io/ngpt/)
 
-A versatile Python LLM client that functions as a CLI utility, library, and development framework. Supports multiple providers (OpenAI, Ollama, Groq, Claude) with features including interactive chat, code generation, shell command execution, git commit messages generation, and markdown rendering.
+🤖 nGPT: A Swiss army knife for LLMs: powerful CLI, interactive chatbot, and flexible library all in one package. Seamlessly work with OpenAI, Ollama, Groq, Claude, or any OpenAI-compatible API to generate code, craft git commits, rewrite text, and execute shell commands. Fast, lightweight, and designed for both casual users and developers.
 
 ![2025-04-23_16-18-01](https://github.com/user-attachments/assets/b8e58926-5165-4352-b48b-9f4a982da86e)
 

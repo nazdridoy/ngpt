@@ -1,6 +1,6 @@
 # Usage Guide
 
-This section contains comprehensive documentation on how to use nGPT, both as a command-line interface (CLI) tool and as a Python library.
+This section contains comprehensive documentation on how to use nGPT, a Swiss army knife for LLMs that combines a powerful CLI, interactive chatbot, and flexible library in one package. Learn how to seamlessly work with OpenAI, Ollama, Groq, Claude, or any OpenAI-compatible API to generate code, craft git commits, rewrite text, and execute shell commands.
 
 ## Table of Contents
 

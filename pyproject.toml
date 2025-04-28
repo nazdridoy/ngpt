@@ -1,7 +1,7 @@
 [project]
 name = "ngpt"
-version = "2.16.2"
-description = "A lightweight Python CLI and library for interacting with OpenAI-compatible APIs, supporting both official and self-hosted LLM endpoints."
+version = "2.16.3"
+description = "Swiss army knife for LLMs: powerful CLI, interactive chatbot, and flexible Python library. Works with OpenAI, Ollama, Groq, Claude, and any OpenAI-compatible API."
 authors = [
     {name = "nazDridoy", email = "nazdridoy399@gmail.com"},
 ]
@@ -14,7 +14,7 @@ dependencies = [
 requires-python = ">=3.8"
 readme = "README.md"
 license = {text = "MIT"}
-keywords = ["openai", "cli", "api-client", "llm", "ai", "gpt", "chatgpt", "gpt4free", "ngpt"]
+keywords = ["openai", "cli", "api-client", "llm", "ai", "gpt", "chatgpt", "chatbot", "cli-tool", "shell-commands", "git-commit", "code-generation", "text-rewriting", "markdown-rendering", "groq", "ollama", "claude"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",

@@ -1,5 +1,5 @@
 title: nGPT Documentation
-description: A lightweight Python CLI and library for interacting with OpenAI-compatible APIs
+description: Swiss army knife for LLMs - powerful CLI, interactive chatbot, and flexible Python library
 baseurl: /ngpt
 remote_theme: pages-themes/hacker
 plugins:
