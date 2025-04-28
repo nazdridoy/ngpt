@@ -14,6 +14,33 @@
 ![2025-04-23_16-18-01](https://github.com/user-attachments/assets/b8e58926-5165-4352-b48b-9f4a982da86e)
 
 
+## Features
+
+- ✅ **Versatile**: Use as a CLI tool, Python library, or CLI framework for building custom tools
+- 🪶 **Lightweight**: Minimal dependencies with everything you need included
+- 🔄 **API Flexibility**: Works with OpenAI, Ollama, Groq, Claude, Gemini, and any compatible endpoint
+- 💬 **Interactive Chat**: Continuous conversation with memory in modern UI
+- 📊 **Streaming Responses**: Real-time output for better user experience
+- 🔍 **Web Search**: Integrated with compatible API endpoints
+- 📥 **Stdin Processing**: Process piped content by using `{}` placeholder in prompts
+- 🎨 **Markdown Rendering**: Beautiful formatting of markdown and code with syntax highlighting
+- ⚡ **Real-time Markdown**: Stream responses with live updating syntax highlighting and formatting
+- ⚙️ **Multiple Configurations**: Cross-platform config system supporting different profiles
+- 💻 **Shell Command Generation**: OS-aware command execution
+- 🧠 **Text Rewriting**: Improve text quality while maintaining original tone and meaning
+- 🧩 **Clean Code Generation**: Output code without markdown or explanations
+- 📝 **Rich Multiline Editor**: Interactive multiline text input with syntax highlighting and intuitive controls
+- 📑 **Git Commit Messages**: AI-powered generation of conventional, detailed commit messages from git diffs
+- 🎭 **System Prompts**: Customize model behavior with custom system prompts
+- 📃 **Conversation Logging**: Save your conversations to text files for later reference
+- 🧰 **CLI Components**: Reusable components for building custom AI-powered command-line tools
+- 🔌 **Modular Architecture**: Well-structured codebase with clean separation of concerns
+- 🔄 **Provider Switching**: Easily switch between different LLM providers with a single parameter
+- 🚀 **Performance Optimized**: Fast response times and minimal resource usage
+
+See the [Feature Overview](https://nazdridoy.github.io/ngpt/overview.html) for more details.
+
+
 ## Table of Contents
 - [Quick Start](#quick-start)
 - [Features](#features)
@@ -135,32 +162,6 @@ ngpt --provider Ollama "Explain quantum physics" > ollama_response.txt
 ```
 
 For more examples and detailed usage, visit the [CLI Usage Guide](https://nazdridoy.github.io/ngpt/usage/cli_usage.html).
-
-## Features
-
-- ✅ **Versatile**: Use as a CLI tool, Python library, or CLI framework for building custom tools
-- 🪶 **Lightweight**: Minimal dependencies with everything you need included
-- 🔄 **API Flexibility**: Works with OpenAI, Ollama, Groq, Claude, Gemini, and any compatible endpoint
-- 💬 **Interactive Chat**: Continuous conversation with memory in modern UI
-- 📊 **Streaming Responses**: Real-time output for better user experience
-- 🔍 **Web Search**: Integrated with compatible API endpoints
-- 📥 **Stdin Processing**: Process piped content by using `{}` placeholder in prompts
-- 🎨 **Markdown Rendering**: Beautiful formatting of markdown and code with syntax highlighting
-- ⚡ **Real-time Markdown**: Stream responses with live updating syntax highlighting and formatting
-- ⚙️ **Multiple Configurations**: Cross-platform config system supporting different profiles
-- 💻 **Shell Command Generation**: OS-aware command execution
-- 🧠 **Text Rewriting**: Improve text quality while maintaining original tone and meaning
-- 🧩 **Clean Code Generation**: Output code without markdown or explanations
-- 📝 **Rich Multiline Editor**: Interactive multiline text input with syntax highlighting and intuitive controls
-- 📑 **Git Commit Messages**: AI-powered generation of conventional, detailed commit messages from git diffs
-- 🎭 **System Prompts**: Customize model behavior with custom system prompts
-- 📃 **Conversation Logging**: Save your conversations to text files for later reference
-- 🧰 **CLI Components**: Reusable components for building custom AI-powered command-line tools
-- 🔌 **Modular Architecture**: Well-structured codebase with clean separation of concerns
-- 🔄 **Provider Switching**: Easily switch between different LLM providers with a single parameter
-- 🚀 **Performance Optimized**: Fast response times and minimal resource usage
-
-See the [Feature Overview](https://nazdridoy.github.io/ngpt/overview.html) for more details.
 
 ## Documentation
 
