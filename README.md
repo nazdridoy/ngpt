@@ -4,9 +4,12 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/ngpt.svg)](https://pypi.org/project/ngpt/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python Versions](https://img.shields.io/pypi/pyversions/ngpt.svg)](https://pypi.org/project/ngpt/)
 [![Documentation](https://img.shields.io/badge/docs-available-brightgreen.svg)](https://nazdridoy.github.io/ngpt/)
-
+[![Linux](https://img.shields.io/badge/Linux-support-blue?logo=linux)](https://nazdridoy.github.io/ngpt/installation.html)
+[![Windows](https://img.shields.io/badge/Windows-support-blue?logo=windows)](https://nazdridoy.github.io/ngpt/installation.html)
+[![macOS](https://img.shields.io/badge/macOS-support-blue?logo=apple)](https://nazdridoy.github.io/ngpt/installation.html)
+[![Android](https://img.shields.io/badge/Android-Termux-blue?logo=android)](https://nazdridoy.github.io/ngpt/installation.html)
+[![Python Versions](https://img.shields.io/pypi/pyversions/ngpt.svg)](https://pypi.org/project/ngpt/)
 
 ![2025-04-23_16-18-01](https://github.com/user-attachments/assets/b8e58926-5165-4352-b48b-9f4a982da86e)
 
@@ -207,20 +210,17 @@ ngpt --interactive --log conversation.log
 # Use custom system prompt to guide AI behavior
 ngpt --preprompt "You are a Python programming tutor" "Explain decorators"
 
-# Show version information
-ngpt -v
-
-# Show active configuration
-ngpt --show-config
-
-# Show all configurations
+# Show all API configurations
 ngpt --show-config --all
 
 # List available models for the active configuration
 ngpt --list-models
 
-# List models for a specific configuration
+# List models for a specific configuration (index)
 ngpt --list-models --config-index 1
+
+# List models for a specific configuration (provider)
+ngpt --list-models --provider Gemini
 
 # With custom options
 ngpt --api-key your-key --base-url http://your-endpoint --model your-model "Hello"
