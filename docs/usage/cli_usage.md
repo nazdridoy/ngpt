@@ -49,8 +49,8 @@ Below is a comprehensive list of all available command-line options, organized b
 | `-c, --code` | Generate clean code without markdown formatting or explanations |
 | `-t, --text` | Open interactive multiline editor for complex prompts with syntax highlighting |
 | `-p, --pipe` | Read from stdin and use content in your prompt with {} placeholder |
-| `--rewrite` | Rewrite text to improve quality while preserving original tone and meaning |
-| `--gitcommsg` | Generate AI-powered git commit messages for staged changes or from a diff file |
+| `-r, --rewrite` | Rewrite text to improve quality while preserving original tone and meaning |
+| `-g, --gitcommsg` | Generate AI-powered git commit messages for staged changes or from a diff file |
 
 ### Configuration Management
 
@@ -287,17 +287,17 @@ The `{}` placeholder will be replaced with stdin content. If the placeholder is 
 
 ### Text Rewriting
 
-Use the `--rewrite` flag to enhance text quality while preserving the original tone and meaning:
+Use the `-r` or `--rewrite` flag to enhance text quality while preserving the original tone and meaning:
 
 ```bash
 # Rewrite text from stdin
-cat draft.txt | ngpt --rewrite
+cat draft.txt | ngpt -r
 
 # Rewrite text directly from command line
-ngpt --rewrite "Text to improve and polish"
+ngpt -r "Text to improve and polish"
 
 # Open interactive editor for text entry
-ngpt --rewrite
+ngpt -r
 ```
 
 The rewrite mode is designed to improve:
@@ -338,10 +338,10 @@ You can use the `--preprompt` option to guide the rewriting process:
 
 ```bash
 # Make the tone more professional
-cat email.txt | ngpt --rewrite --preprompt "Make this more professional and concise"
+cat email.txt | ngpt -r --preprompt "Make this more professional and concise"
 
 # Add SEO optimization
-cat blog.md | ngpt --rewrite --preprompt "Optimize this for SEO while maintaining readability"
+cat blog.md | ngpt -r --preprompt "Optimize this for SEO while maintaining readability"
 ```
 
 #### Advanced Rewrite Options
@@ -367,23 +367,23 @@ When using custom instructions with `--preprompt`, these supplement rather than 
 
 ### Git Commit Message Generation
 
-The `--gitcommsg` flag allows you to generate conventional, high-quality commit messages based on your git staged changes or diff files:
+The `-g` or `--gitcommsg` flag allows you to generate conventional, high-quality commit messages based on your git staged changes or diff files:
 
 ```bash
 # Generate commit message from staged changes
-ngpt --gitcommsg
+ngpt -g
 
 # Generate commit message with a specific commit type
-ngpt --gitcommsg -m "type:feat"
+ngpt -g -m "type:feat"
 
 # Process large diffs in chunks with recursive analysis
-ngpt --gitcommsg --rec-chunk
+ngpt -g --rec-chunk
 
 # Use a specific diff file instead of staged changes
-ngpt --gitcommsg --diff /path/to/changes.diff
+ngpt -g --diff /path/to/changes.diff
 
 # Enable logging for debugging
-ngpt --gitcommsg --log commit_log.txt
+ngpt -g --log commit_log.txt
 ```
 
 #### Message Context Directives
@@ -392,20 +392,20 @@ Use the `--preprompt` option to guide the AI with various directives:
 
 ```bash
 # Force a specific commit type prefix
-ngpt --gitcommsg -m "type:feat"
-ngpt --gitcommsg -m "type:fix"
+ngpt -g -m "type:feat"
+ngpt -g -m "type:fix"
 
 # Focus only on specific file types
-ngpt --gitcommsg -m "javascript"
-ngpt --gitcommsg -m "python"
+ngpt -g -m "javascript"
+ngpt -g -m "python"
 
 # Focus on or exclude specific aspects
-ngpt --gitcommsg -m "focus on auth"
-ngpt --gitcommsg -m "ignore formatting"
-ngpt --gitcommsg -m "exclude tests"
+ngpt -g -m "focus on auth"
+ngpt -g -m "ignore formatting"
+ngpt -g -m "exclude tests"
 
 # Combine multiple directives
-ngpt --gitcommsg -m "type:feat focus on UI"
+ngpt -g -m "type:feat focus on UI"
 ```
 
 #### Processing Large Diffs
@@ -414,16 +414,16 @@ For large diffs or pull requests, use recursive chunking to handle token limits 
 
 ```bash
 # Set custom chunk size
-ngpt --gitcommsg --rec-chunk --chunk-size 150
+ngpt -g --rec-chunk --chunk-size 150
 
 # Set custom analyses chunk size
-ngpt --gitcommsg --rec-chunk --analyses-chunk-size 150
+ngpt -g --rec-chunk --analyses-chunk-size 150
 
 # Set maximum message lines before condensing
-ngpt --gitcommsg --rec-chunk --max-msg-lines 25
+ngpt -g --rec-chunk --max-msg-lines 25
 
 # Set recursion depth for very large diffs
-ngpt --gitcommsg --rec-chunk --max-recursion-depth 5
+ngpt -g --rec-chunk --max-recursion-depth 5
 ```
 
 #### Using Diff Files
@@ -432,10 +432,10 @@ Instead of using staged changes, you can provide a diff file:
 
 ```bash
 # Use a specific diff file
-ngpt --gitcommsg --diff /path/to/changes.diff
+ngpt -g --diff /path/to/changes.diff
 
 # Use a default diff file from CLI configuration
-ngpt --gitcommsg --diff
+ngpt -g --diff
 ```
 
 #### Automatic Clipboard Copy
@@ -904,19 +904,19 @@ ngpt "Write a haiku about mountains"
 
 ```bash
 # Improve email drafts
-cat draft_email.txt | ngpt --rewrite
+cat draft_email.txt | ngpt -r
 
 # Enhance documentation clarity
-cat documentation.md | ngpt --rewrite
+cat documentation.md | ngpt -r
 
 # Improve resume bullet points
-ngpt --rewrite "Responsible for managing team of 5 developers and ensuring project deadlines were met"
+ngpt -r "Responsible for managing team of 5 developers and ensuring project deadlines were met"
 
 # Edit academic writing for clarity
-cat thesis_chapter.txt | ngpt --rewrite
+cat thesis_chapter.txt | ngpt -r
 
 # Polish blog posts
-cat blog_draft.md | ngpt --rewrite
+cat blog_draft.md | ngpt -r
 ```
 
 ### Programming Help

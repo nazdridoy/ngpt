@@ -76,31 +76,31 @@ ngpt --shell "list all files in the current directory"
 echo "What is this text about?" | ngpt -p "Analyze the following text: {}"
 
 # Rewrite text to improve quality while preserving tone and meaning
-echo "your text" | ngpt --rewrite
+echo "your text" | ngpt -r
 
 # Rewrite text from a command-line argument
-ngpt --rewrite "your text to rewrite"
+ngpt -r "your text to rewrite"
 
 # Rewrite text from a file
-cat file.txt | ngpt --rewrite
+cat file.txt | ngpt -r
 
 # Generate AI-powered git commit messages for staged changes
-ngpt --gitcommsg
+ngpt -g
 
 # Generate commit message from staged changes with a context directive
-ngpt --gitcommsg --preprompt "type:feat"
+ngpt -g --preprompt "type:feat"
 
 # Process large diffs in chunks with recursive analysis
-ngpt --gitcommsg --rec-chunk
+ngpt -g --rec-chunk
 
 # Process a diff file instead of staged changes
-ngpt --gitcommsg --diff /path/to/changes.diff
+ngpt -g --diff /path/to/changes.diff
 
 # Generate a commit message with logging for debugging
-ngpt --gitcommsg --log commit_log.txt
+ngpt -g --log commit_log.txt
 
 # Use interactive multiline editor to enter text to rewrite
-ngpt --rewrite
+ngpt -r
 
 # Display markdown responses with beautiful formatting
 ngpt --prettify "Explain markdown syntax with examples"
@@ -407,8 +407,8 @@ You can configure nGPT using the following options:
 | `-c, --code` | Generate clean code without markdown formatting or explanations |
 | `-t, --text` | Open interactive multiline editor for complex prompts with syntax highlighting |
 | `-p, --pipe` | Read from stdin and use content with prompt. Use {} in prompt as placeholder for stdin content |
-| `--rewrite` | Rewrite text to improve quality while preserving original tone and meaning |
-| `--gitcommsg` | Generate AI-powered git commit messages from staged changes or diff files |
+| `-r, --rewrite` | Rewrite text to improve quality while preserving original tone and meaning |
+| `-g, --gitcommsg` | Generate AI-powered git commit messages from staged changes or diff files |
 
 #### Global Options
 

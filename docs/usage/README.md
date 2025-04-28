@@ -76,7 +76,7 @@ ngpt --code "function to calculate prime numbers"
 ngpt --gitcommsg
 
 # Generate commit message with context directive
-ngpt --gitcommsg --preprompt "type:feat focus on UI"
+ngpt -g --preprompt "type:feat focus on UI"
 ```
 
 ### Library Quick Start
@@ -84,7 +84,7 @@ ngpt --gitcommsg --preprompt "type:feat focus on UI"
 ```python
 from ngpt import NGPTClient, load_config
 
-# Load configuration
+# Load configuration--gitcommsg
 config = load_config()
 
 # Initialize client

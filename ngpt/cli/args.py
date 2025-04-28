@@ -116,9 +116,9 @@ def setup_argument_parser():
                                       help='Enter multi-line text input (submit with Ctrl+D)')
     mode_exclusive_group.add_argument('-p', '--pipe', action='store_true',
                                       help='Read from stdin and use content with prompt. Use {} in prompt as placeholder for stdin content')
-    mode_exclusive_group.add_argument('--rewrite', action='store_true',
+    mode_exclusive_group.add_argument('-r', '--rewrite', action='store_true',
                                       help='Rewrite text from stdin to be more natural while preserving tone and meaning')
-    mode_exclusive_group.add_argument('--gitcommsg', action='store_true',
+    mode_exclusive_group.add_argument('-g', '--gitcommsg', action='store_true',
                                       help='Generate AI-powered git commit messages from staged changes or diff file')
     
     return parser

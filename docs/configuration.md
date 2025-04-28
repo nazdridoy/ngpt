@@ -159,8 +159,8 @@ You can also set configuration options directly via command-line arguments:
   - `--language <lang>`: Specify the programming language for code generation (default: `python`).
 - `-t, --text`: Use a multiline editor for input.
 - `-p, --pipe`: Read from stdin and use content in your prompt with {} placeholder.
-- `--rewrite`: Rewrite text from stdin to be more natural while preserving tone and meaning.
-- `--gitcommsg`: Generate AI-powered git commit messages from staged changes or diff file.
+- `-r, --rewrite`: Rewrite text from stdin to be more natural while preserving tone and meaning.
+- `-g, --gitcommsg`: Generate AI-powered git commit messages from staged changes or diff file.
 
 ### Output Control Flags
 
@@ -219,10 +219,10 @@ ngpt --log "Tell me about quantum computing"
 echo "What is this text about?" | ngpt -p "Analyze the following text: {}"
 
 # Generate git commit message from staged changes
-ngpt --gitcommsg
+ngpt -g
 
 # Generate git commit message from a diff file
-ngpt --gitcommsg --diff changes.diff
+ngpt -g --diff changes.diff
 ```
 
 ## Environment Variables

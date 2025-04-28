@@ -1,6 +1,6 @@
 [project]
 name = "ngpt"
-version = "2.16.7"
+version = "3.0.0"
 description = "Swiss army knife for LLMs: powerful CLI, interactive chatbot, and flexible Python library. Works with OpenAI, Ollama, Groq, Claude, Gemini, and any OpenAI-compatible API."
 authors = [
     {name = "nazDridoy", email = "nazdridoy399@gmail.com"},

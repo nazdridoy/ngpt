@@ -1,24 +1,24 @@
 # Git Commit Message Generation
 
-The `--gitcommsg` mode in NGPT helps you generate high-quality, conventional commit messages using AI to analyze your git diffs.
+The `-g` or `--gitcommsg` mode in NGPT helps you generate high-quality, conventional commit messages using AI to analyze your git diffs.
 
 ## Basic Usage
 
 ```bash
 # Generate commit message from staged changes
-ngpt --gitcommsg
+ngpt -g
 
 # Generate commit message with context/directives
-ngpt --gitcommsg --preprompt "type:feat"
+ngpt -g --preprompt "type:feat"
 
 # Process large diffs in chunks with recursive analysis
 ngpt --gitcommsg --rec-chunk
 
 # Use a diff file instead of staged changes
-ngpt --gitcommsg --diff /path/to/changes.diff
+ngpt -g --diff /path/to/changes.diff
 
 # Enable logging for debugging
-ngpt --gitcommsg --log commit_log.txt
+ngpt -g --log commit_log.txt
 ```
 
 ## Command Line Options
@@ -44,13 +44,13 @@ Force a specific commit type prefix:
 
 ```bash
 # Force "feat:" prefix
-ngpt --gitcommsg --preprompt "type:feat"
+ngpt -g --preprompt "type:feat"
 
 # Force "fix:" prefix 
 ngpt --gitcommsg --preprompt "type:fix"
 
 # Force "docs:" prefix
-ngpt --gitcommsg --preprompt "type:docs"
+ngpt -g --preprompt "type:docs"
 ```
 
 ### File Type Filtering
@@ -59,13 +59,13 @@ Focus only on specific file types:
 
 ```bash
 # Focus only on JavaScript changes
-ngpt --gitcommsg --preprompt "javascript"
+ngpt -g --preprompt "javascript"
 
 # Focus only on CSS files 
 ngpt --gitcommsg --preprompt "css"
 
 # Focus only on Python files
-ngpt --gitcommsg --preprompt "python"
+ngpt -g --preprompt "python"
 ```
 
 The file type filter applies a strict filter to only include changes to files of that type or related to that technology in the analysis and commit message. Other file changes will be excluded from the message.
@@ -76,13 +76,13 @@ Control what to include or exclude:
 
 ```bash
 # Focus only on authentication-related changes
-ngpt --gitcommsg --preprompt "focus on auth"
+ngpt -g --preprompt "focus on auth"
 
 # Ignore formatting changes
 ngpt --gitcommsg --preprompt "ignore formatting"
 
 # Exclude test files from the summary
-ngpt --gitcommsg --preprompt "exclude tests"
+ngpt -g --preprompt "exclude tests"
 ```
 
 Focus directives instruct the tool to exclusively analyze changes related to a specific feature or component, while exclusion directives tell it to completely ignore certain aspects like formatting changes or test files.
@@ -93,7 +93,7 @@ You can combine multiple directives:
 
 ```bash
 # Force "feat:" prefix and focus only on UI changes
-ngpt --gitcommsg --preprompt "type:feat focus on UI"
+ngpt -g --preprompt "type:feat focus on UI"
 
 # Force "fix:" prefix and ignore formatting changes
 ngpt --gitcommsg --preprompt "type:fix ignore formatting"
@@ -116,16 +116,16 @@ For very large diffs or complex codebases, you can fine-tune the chunking proces
 
 ```bash
 # Set a custom chunk size
-ngpt --gitcommsg --rec-chunk --chunk-size 150
+ngpt -g --rec-chunk --chunk-size 150
 
 # Set a different analysis chunk size (for processing intermediate results)
-ngpt --gitcommsg --rec-chunk --chunk-size 200 --analyses-chunk-size 150
+ngpt -g --rec-chunk --chunk-size 200 --analyses-chunk-size 150
 
 # Control message length limits
 ngpt --gitcommsg --rec-chunk --max-msg-lines 25
 
 # Increase the recursion depth for extremely large diffs
-ngpt --gitcommsg --rec-chunk --max-recursion-depth 5
+ngpt -g --rec-chunk --max-recursion-depth 5
 ```
 
 ## CLI Configuration
@@ -247,19 +247,19 @@ The diff file from CLI config is only used when you specifically request it with
 
 1. **Use git staged changes** (ignore the CLI config diff):
    ```bash
-   ngpt --gitcommsg
+   ngpt -g
    ```
    This will always use git staged changes regardless of your CLI config.
 
 2. **Use the CLI config diff file**:
    ```bash
-   ngpt --gitcommsg --diff
+   ngpt -g --diff
    ```
    This explicitly tells ngpt to use the diff file specified in your CLI config.
 
 3. **Use a specific diff file** (override CLI config):
    ```bash
-   ngpt --gitcommsg --diff /path/to/another.diff
+   ngpt -g --diff /path/to/another.diff
    ```
    This overrides both git staged changes and your CLI config to use the specified file.
 
@@ -358,10 +358,10 @@ To debug issues or review the AI's analysis process, use the `--log` option:
 
 ```bash
 # Log to a specific file
-ngpt --gitcommsg --log commit_log.txt
+ngpt -g --log commit_log.txt
 
 # Create a temporary log file automatically
-ngpt --gitcommsg --log
+ngpt -g --log
 ```
 
 The log will include:

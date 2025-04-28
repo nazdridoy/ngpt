@@ -258,10 +258,10 @@ curl https://api.example.com/data | ngpt -p "Parse this JSON data and explain wh
 ngpt --rewrite "This is a draft text that needs to be better written with improved grammar and style"
 
 # Rewrite text from a file
-cat draft.txt | ngpt --rewrite
+cat draft.txt | ngpt -r
 
 # Rewrite with specific guidance
-echo "Text to improve" | ngpt --rewrite --preprompt "Improve this text while making it more formal and professional"
+echo "Text to improve" | ngpt -r --preprompt "Improve this text while making it more formal and professional"
 ```
 
 ### Git Commit Message Generation
@@ -271,16 +271,16 @@ echo "Text to improve" | ngpt --rewrite --preprompt "Improve this text while mak
 ngpt --gitcommsg
 
 # Generate commit message with specific type
-ngpt --gitcommsg --preprompt "type:feat"
+ngpt -g --preprompt "type:feat"
 
 # Generate message for large changes with recursive analysis
-ngpt --gitcommsg --rec-chunk
+ngpt -g --rec-chunk
 
 # Process a specific diff file
-ngpt --gitcommsg --diff changes.diff
+ngpt -g --diff changes.diff
 
 # Log the commit message generation process
-ngpt --gitcommsg --log commit_debug.log
+ngpt -g --log commit_debug.log
 ```
 
 ## Using CLI Config
