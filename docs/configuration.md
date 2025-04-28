@@ -180,8 +180,8 @@ You can also set configuration options directly via command-line arguments:
 
 ### Git Commit Message Flags
 
-- `-m, --message-context <text>`: Context to guide AI generation (e.g., file types, commit type).
-- `-r, --recursive-chunk`: Process large diffs in chunks with recursive analysis if needed.
+- `--preprompt <text>`: Context to guide AI generation (e.g., file types, commit type).
+- `-r, --rec-chunk`: Process large diffs in chunks with recursive analysis if needed.
 - `--diff [file]`: Use diff from specified file instead of staged changes.
 - `--chunk-size <number>`: Number of lines per chunk when chunking is enabled (default: 200).
 - `--analyses-chunk-size <number>`: Number of lines per chunk when recursively chunking analyses (default: 200).
@@ -297,7 +297,7 @@ The following options can be configured persistently:
   - `top_p`: Set top_p value for generations
   - `max_tokens`: Set maximum tokens for response
   - `log`: Set default log file path
-  - `preprompt`: Set default system prompt
+  - `preprompt`: Set default preprompt guidance
   - `no-stream`: Disable streaming by default
   - `prettify`: Enable formatted output by default
   - `stream-prettify`: Enable streaming with formatting
@@ -309,8 +309,8 @@ The following options can be configured persistently:
   - `language`: Set default programming language
 
 - Git commit message mode options:
-  - `message-context`: Set default context guidance
-  - `recursive-chunk`: Enable recursive chunking by default
+  - `preprompt`: Set default preprompt guidance
+  - `rec-chunk`: Enable recursive chunking by default
   - `diff`: Set default diff file path
   - `chunk-size`: Set default chunk size
   - `analyses-chunk-size`: Set default analyses chunk size
@@ -333,7 +333,7 @@ ngpt --cli-config set stream-prettify true
 ngpt --cli-config set provider Groq
 
 # Enable recursive chunking for git commit messages
-ngpt --cli-config set recursive-chunk true
+ngpt --cli-config set rec-chunk true
 
 # Check current temperature setting
 ngpt --cli-config get temperature

@@ -90,9 +90,7 @@ def setup_argument_parser():
     
     # GitCommit message options
     gitcommsg_group = parser.add_argument_group('Git Commit Message Options')
-    gitcommsg_group.add_argument('-m', '--message-context', 
-                      help='Context to guide AI generation (e.g., file types, commit type)')
-    gitcommsg_group.add_argument('-r', '--recursive-chunk', action='store_true',
+    gitcommsg_group.add_argument('--rec-chunk', action='store_true',
                       help='Process large diffs in chunks with recursive analysis if needed')
     gitcommsg_group.add_argument('--diff', metavar='FILE', nargs='?', const=True,
                       help='Use diff from specified file instead of staged changes. If used without a path, uses the path from CLI config.')

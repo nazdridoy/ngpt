@@ -87,11 +87,11 @@ cat file.txt | ngpt --rewrite
 # Generate AI-powered git commit messages for staged changes
 ngpt --gitcommsg
 
-# Generate commit message with context
-ngpt --gitcommsg -m "type:feat"
+# Generate commit message from staged changes with a context directive
+ngpt --gitcommsg --preprompt "type:feat"
 
 # Process large diffs in chunks with recursive analysis
-ngpt --gitcommsg -r
+ngpt --gitcommsg --rec-chunk
 
 # Process a diff file instead of staged changes
 ngpt --gitcommsg --diff /path/to/changes.diff

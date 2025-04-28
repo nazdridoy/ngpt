@@ -573,9 +573,9 @@ client = NGPTClient(**config)
 class Args:
     def __init__(self):
         self.diff = None  # Use staged changes
-        self.message_context = "type:feat focus on API changes"
+        self.preprompt = "type:feat focus on API changes"
         self.chunk_size = 200
-        self.recursive_chunk = True
+        self.rec_chunk = True
         self.log = None
         self.max_msg_lines = 20
 

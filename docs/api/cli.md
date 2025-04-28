@@ -716,13 +716,14 @@ Executes a git commit message generation operation to create commit messages bas
 - `client` (NGPTClient): The initialized client for the operation
 - `args` (namespace): Parsed command-line arguments including:
   - `diff_file` (str, optional): Path to diff file to use instead of git diff --staged
-  - `message_context` (str, optional): Additional context or instructions for commit message generation
+  - `preprompt` (str, optional): Custom system prompt to guide AI behavior (used here as context for gitcommsg)
   - `temperature` (float): Temperature setting (0.0-1.0) 
   - `max_tokens` (int, optional): Maximum tokens to generate
   - `chunk_size` (int): Number of lines per chunk for large diffs
-  - `max_lines` (int): Maximum lines in the generated commit message
-  - `recursive` (bool): Whether to use recursive chunking for large diffs
-  - `deep_recursive` (bool): Whether to use deeper recursive analysis
+  - `analyses_chunk_size` (int): Number of lines per chunk for recursive analysis chunks
+  - `max_msg_lines` (int): Maximum lines in the generated commit message
+  - `max_recursion_depth` (int): Maximum recursion depth for message condensing
+  - `rec_chunk` (bool): Whether to use recursive chunking for large diffs
   - `web_search` (bool): Whether to enable web search
 - `logger` (object, optional): Logger instance
 
@@ -730,7 +731,7 @@ Executes a git commit message generation operation to create commit messages bas
 - **Git Diff Analysis**: Analyzes staged git changes to create relevant commit messages
 - **Conventional Commit Format**: Follows standard commit message format (type(scope): message)
 - **Chunking Strategy**: Handles large diffs by splitting into manageable chunks
-- **Recursive Analysis**: Optional deep analysis of complex changes
+- **Recursive Analysis**: Optional analysis of complex changes
 - **Context Directives**: Supports filtering and focusing on specific file types/components
 - **Technical Detail Extraction**: Extracts function names, line numbers, and specific changes
 
@@ -745,13 +746,14 @@ client = NGPTClient(**load_config())
 # Create args namespace with required parameters
 args = argparse.Namespace()
 args.diff_file = None  # Use git staged changes
-args.message_context = "type:feat focus on authentication"
+args.preprompt = "type:feat focus on authentication"
 args.temperature = 0.4
 args.max_tokens = None
 args.chunk_size = 200
-args.max_lines = 20
-args.recursive = True
-args.deep_recursive = False
+args.analyses_chunk_size = 200
+args.max_msg_lines = 20
+args.max_recursion_depth = 3
+args.rec_chunk = True
 args.web_search = False
 
 gitcommsg_mode(

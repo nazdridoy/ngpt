@@ -73,8 +73,8 @@ Some options only apply in specific modes:
 - `log` - Filepath to log conversation (for interactive and text modes)
 
 #### Git Commit Message Mode Options
-- `message-context` - Context to guide AI generation (e.g., file types, commit type directive)
-- `recursive-chunk` - Process large diffs in chunks with recursive analysis if needed (default: false)
+- `preprompt` - Context to guide AI generation (e.g., file types, commit type directive)
+- `rec-chunk` - Process large diffs in chunks with recursive analysis if needed (default: false)
 - `diff` - Path to diff file to use instead of staged git changes
 - `chunk-size` - Number of lines per chunk when chunking is enabled (default: 200)
 - `analyses-chunk-size` - Number of lines per chunk when recursively chunking analyses (default: 200)
@@ -85,26 +85,26 @@ Some options only apply in specific modes:
 
 These options control the behavior of the `--gitcommsg` mode, which helps generate conventional commit messages from git diffs.
 
-#### message-context
+#### preprompt
 This option provides contextual information to guide the AI when generating commit messages. It accepts various directives:
 
 ```bash
-# Set a default context for commit message generation
-ngpt --cli-config set message-context "type:feat focus on UI"
+# Set a default preprompt for commit message generation
+ngpt --cli-config set preprompt "type:feat focus on UI"
 ```
 
-The context can include:
+The preprompt can include:
 - **Commit type directives**: `type:feat`, `type:fix`, `type:docs`, etc.
 - **File type filtering**: `javascript`, `python`, `css`, etc.
 - **Focus directives**: `focus on auth`, `focus on UI`, etc.
 - **Exclusion directives**: `ignore formatting`, `exclude tests`, etc.
 
-#### recursive-chunk
+#### rec-chunk
 When set to `true`, this enables recursive chunking for processing large diffs, which is helpful for large commits:
 
 ```bash
 # Enable recursive chunking by default
-ngpt --cli-config set recursive-chunk true
+ngpt --cli-config set rec-chunk true
 ```
 
 With recursive chunking enabled, the system will:
@@ -227,7 +227,7 @@ ngpt --cli-config set prettify true
 ngpt --cli-config set provider Gemini
 
 # Enable recursive chunking for git commit messages by default
-ngpt --cli-config set recursive-chunk true
+ngpt --cli-config set rec-chunk true
 
 # Set a default diff file path for git commit messages
 ngpt --cli-config set diff /path/to/changes.diff

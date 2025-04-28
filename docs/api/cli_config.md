@@ -277,9 +277,8 @@ The following options are available for configuration:
 | `config-index` | int | all | Default configuration index to use |
 | `log` | string | all | Path to log file |
 | `preprompt` | string | all | Custom preprompt to use |
-| `message-context` | string | gitcommsg | Context for git commit message generation |
-| `recursive-chunk` | bool | gitcommsg | Enable recursive chunking for large diffs |
-| `diff` | string | gitcommsg | Path to diff file for git commit message generation |
+| `rec-chunk` | bool | gitcommsg | Enable recursive chunking for large diffs |
+| `diff` | string | gitcommsg | Path to diff file |
 | `chunk-size` | int | gitcommsg | Maximum number of lines per chunk |
 | `analyses-chunk-size` | int | gitcommsg | Maximum number of lines per chunk for analyses |
 | `max-msg-lines` | int | gitcommsg | Maximum number of lines in commit message |

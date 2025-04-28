@@ -271,10 +271,10 @@ echo "Text to improve" | ngpt --rewrite --preprompt "Improve this text while mak
 ngpt --gitcommsg
 
 # Generate commit message with specific type
-ngpt --gitcommsg -m "type:feat"
+ngpt --gitcommsg --preprompt "type:feat"
 
 # Generate message for large changes with recursive analysis
-ngpt --gitcommsg -r
+ngpt --gitcommsg --rec-chunk
 
 # Process a specific diff file
 ngpt --gitcommsg --diff changes.diff

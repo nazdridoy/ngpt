@@ -9,10 +9,10 @@ The `--gitcommsg` mode in NGPT helps you generate high-quality, conventional com
 ngpt --gitcommsg
 
 # Generate commit message with context/directives
-ngpt --gitcommsg -m "type:feat"
+ngpt --gitcommsg --preprompt "type:feat"
 
 # Process large diffs in chunks with recursive analysis
-ngpt --gitcommsg -r
+ngpt --gitcommsg --rec-chunk
 
 # Use a diff file instead of staged changes
 ngpt --gitcommsg --diff /path/to/changes.diff
@@ -25,8 +25,8 @@ ngpt --gitcommsg --log commit_log.txt
 
 | Option | Description |
 |--------|-------------|
-| `-m, --message-context` | Context to guide AI (file types, commit type directive, focus) |
-| `-r, --recursive-chunk` | Process large diffs in chunks with recursive analysis if needed |
+| `--preprompt` | Context to guide AI (file types, commit type directive, focus) |
+| `--rec-chunk` | Process large diffs in chunks with recursive analysis if needed |
 | `--diff [FILE]` | Use diff from specified file instead of staged changes. If used without a value, uses the path from CLI config |
 | `--log [FILE]` | Enable detailed logging (to specified file or auto-generated temp file) |
 | `--chunk-size NUM` | Set number of lines per chunk (default: 200) |
@@ -36,7 +36,7 @@ ngpt --gitcommsg --log commit_log.txt
 
 ## Context Directives
 
-The `-m/--message-context` option is powerful and supports several directive types:
+The `--preprompt` option is powerful and supports several directive types:
 
 ### Commit Type Directive
 
@@ -44,13 +44,13 @@ Force a specific commit type prefix:
 
 ```bash
 # Force "feat:" prefix
-ngpt --gitcommsg -m "type:feat"
+ngpt --gitcommsg --preprompt "type:feat"
 
 # Force "fix:" prefix 
-ngpt --gitcommsg -m "type:fix"
+ngpt --gitcommsg --preprompt "type:fix"
 
 # Force "docs:" prefix
-ngpt --gitcommsg -m "type:docs"
+ngpt --gitcommsg --preprompt "type:docs"
 ```
 
 ### File Type Filtering
@@ -59,13 +59,13 @@ Focus only on specific file types:
 
 ```bash
 # Focus only on JavaScript changes
-ngpt --gitcommsg -m "javascript"
+ngpt --gitcommsg --preprompt "javascript"
 
 # Focus only on CSS files 
-ngpt --gitcommsg -m "css"
+ngpt --gitcommsg --preprompt "css"
 
 # Focus only on Python files
-ngpt --gitcommsg -m "python"
+ngpt --gitcommsg --preprompt "python"
 ```
 
 The file type filter applies a strict filter to only include changes to files of that type or related to that technology in the analysis and commit message. Other file changes will be excluded from the message.
@@ -76,13 +76,13 @@ Control what to include or exclude:
 
 ```bash
 # Focus only on authentication-related changes
-ngpt --gitcommsg -m "focus on auth"
+ngpt --gitcommsg --preprompt "focus on auth"
 
 # Ignore formatting changes
-ngpt --gitcommsg -m "ignore formatting"
+ngpt --gitcommsg --preprompt "ignore formatting"
 
 # Exclude test files from the summary
-ngpt --gitcommsg -m "exclude tests"
+ngpt --gitcommsg --preprompt "exclude tests"
 ```
 
 Focus directives instruct the tool to exclusively analyze changes related to a specific feature or component, while exclusion directives tell it to completely ignore certain aspects like formatting changes or test files.
@@ -93,15 +93,15 @@ You can combine multiple directives:
 
 ```bash
 # Force "feat:" prefix and focus only on UI changes
-ngpt --gitcommsg -m "type:feat focus on UI"
+ngpt --gitcommsg --preprompt "type:feat focus on UI"
 
 # Force "fix:" prefix and ignore formatting changes
-ngpt --gitcommsg -m "type:fix ignore formatting"
+ngpt --gitcommsg --preprompt "type:fix ignore formatting"
 ```
 
 ## Chunking Mechanism
 
-When processing large diffs with `-r/--recursive-chunk`, the chunking mechanism helps manage rate limits and token limits:
+When processing large diffs with `--rec-chunk`, the chunking mechanism helps manage rate limits and token limits:
 
 1. Diffs are split into chunks (default 200 lines) and processed separately
 2. The partial analyses are then combined into a final commit message
@@ -116,16 +116,16 @@ For very large diffs or complex codebases, you can fine-tune the chunking proces
 
 ```bash
 # Set a custom chunk size
-ngpt --gitcommsg -r --chunk-size 150
+ngpt --gitcommsg --rec-chunk --chunk-size 150
 
 # Set a different analysis chunk size (for processing intermediate results)
-ngpt --gitcommsg -r --chunk-size 200 --analyses-chunk-size 150
+ngpt --gitcommsg --rec-chunk --chunk-size 200 --analyses-chunk-size 150
 
 # Control message length limits
-ngpt --gitcommsg -r --max-msg-lines 25
+ngpt --gitcommsg --rec-chunk --max-msg-lines 25
 
 # Increase the recursion depth for extremely large diffs
-ngpt --gitcommsg -r --max-recursion-depth 5
+ngpt --gitcommsg --rec-chunk --max-recursion-depth 5
 ```
 
 ## CLI Configuration
@@ -134,7 +134,7 @@ You can set default values for gitcommsg options using the CLI configuration sys
 
 ```bash
 # Enable recursive chunking by default
-ngpt --cli-config set recursive-chunk true
+ngpt --cli-config set rec-chunk true
 
 # Set a default diff file path (used with --diff flag)
 ngpt --cli-config set diff /path/to/your/changes.diff
@@ -152,30 +152,30 @@ ngpt --cli-config set max-msg-lines 25
 ngpt --cli-config set max-recursion-depth 5
 
 # Set a context directive to always apply
-ngpt --cli-config set message-context "type:feat"
+ngpt --cli-config set preprompt "type:feat"
 ```
 
 ### Available CLI Configuration Options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `recursive-chunk` | bool | false | Process large diffs in chunks with recursive analysis |
+| `rec-chunk` | bool | false | Process large diffs in chunks with recursive analysis |
 | `diff` | string | null | Path to diff file to use instead of staged changes |
 | `chunk-size` | int | 200 | Number of lines per chunk when chunking is enabled |
 | `analyses-chunk-size` | int | 200 | Number of lines per chunk when recursively chunking analyses |
 | `max-msg-lines` | int | 20 | Maximum number of lines in commit message before condensing |
 | `max-recursion-depth` | int | 3 | Maximum recursion depth for recursive chunking and message condensing |
-| `message-context` | string | null | Context to guide AI generation |
+| `preprompt` | string | null | Context to guide AI generation |
 
 ### Option Details
 
-#### recursive-chunk
+#### rec-chunk
 
 When enabled, this option automatically processes large diffs in chunks and then combines the results:
 
 ```bash
 # Enable recursive chunking by default
-ngpt --cli-config set recursive-chunk true
+ngpt --cli-config set rec-chunk true
 ```
 
 This is particularly useful for large commits or codebases, as it helps:
@@ -217,19 +217,19 @@ ngpt --cli-config set max-recursion-depth 5
 
 Higher recursion depth values allow processing larger diffs but may increase processing time.
 
-#### message-context
+#### preprompt
 
 Provides contextual guidance for the AI when generating commit messages:
 
 ```bash
 # Always focus on a specific aspect
-ngpt --cli-config set message-context "focus on API changes"
+ngpt --cli-config set preprompt "focus on API changes"
 
 # Always use a specific commit type
-ngpt --cli-config set message-context "type:feat"
+ngpt --cli-config set preprompt "type:feat"
 
 # Combined directives
-ngpt --cli-config set message-context "type:fix exclude tests"
+ngpt --cli-config set preprompt "type:fix exclude tests"
 ```
 
 This is useful when you consistently work on the same type of changes and want to standardize your commit messages.

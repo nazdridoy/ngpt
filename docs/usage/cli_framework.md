@@ -305,10 +305,10 @@ gitcommsg_mode(client, args)
 from argparse import Namespace
 args = Namespace(
     diff=None,  # Use staged changes
-    message_context="focus on UI components, type:feat",
+    preprompt="focus on UI components, type:feat",
     log=None,
     chunk_size=200,
-    recursive_chunk=True,
+    rec_chunk=True,
     max_msg_lines=20
 )
 gitcommsg_mode(client, args)
@@ -714,10 +714,10 @@ client = NGPTClient(**load_config())
 # Create args with desired options
 args = Namespace(
     diff=None,  # Use staged git changes
-    message_context="focus on authentication",
+    preprompt="focus on authentication",
     log="commit_generation.log",  # Optional logging
     chunk_size=200,  # Lines per chunk for large diffs
-    recursive_chunk=True,  # Enable recursive chunking
+    rec_chunk=True,  # Enable recursive chunking
     max_msg_lines=20  # Maximum lines in final message
 )
 
@@ -729,29 +729,29 @@ gitcommsg_mode(client, args)
 
 - **Staged Changes Analysis**: Analyzes git staged changes by default
 - **External Diff Files**: Can process diff files with `args.diff="path/to/diff.txt"`
-- **Context Directives**: Supports focusing on specific changes with `message_context`
+- **Context Directives**: Supports focusing on specific changes with `--preprompt`
 - **Diff Chunking**: Handles large diffs by processing in chunks
 - **Clipboard Integration**: Automatically copies result to clipboard when available
 
 ### Context Directives
 
-The message context parameter supports several helpful directives:
+The `--preprompt` option supports several helpful directives:
 
 ```python
 # Focus on specific file types
-args.message_context = "javascript"  # Focus on JS files
+args.preprompt = "javascript"  # Focus on JS files
 
 # Specify commit type
-args.message_context = "type:feat"  # Force "feat:" prefix
+args.preprompt = "type:feat"  # Force "feat:" prefix
 
 # Focus on specific components
-args.message_context = "focus on authentication"
+args.preprompt = "focus on authentication"
 
 # Exclude certain changes
-args.message_context = "exclude tests"
+args.preprompt = "exclude tests"
 
 # Combine directives
-args.message_context = "type:fix focus on API exclude logging"
+args.preprompt = "type:fix focus on API exclude logging"
 ```
 
 ### Processing Large Diffs
@@ -762,7 +762,7 @@ For large repositories with extensive changes:
 args = Namespace(
     diff=None,
     chunk_size=200,  # Process 200 lines at a time
-    recursive_chunk=True,  # Enable recursive processing
+    rec_chunk=True,  # Enable recursive processing
     max_msg_lines=20,  # Condense final message if needed
     analyses_chunk_size=300  # Size for recursive analysis chunks
 )

@@ -70,11 +70,11 @@ def split_into_chunks(content, chunk_size=200):
         
     return chunks
 
-def create_technical_analysis_system_prompt(context=None):
-    """Create system prompt for technical analysis based on context data.
+def create_technical_analysis_system_prompt(preprompt=None):
+    """Create system prompt for technical analysis based on preprompt data.
     
     Args:
-        context: The raw context string from -m flag
+        preprompt: The raw preprompt string from --preprompt flag
         
     Returns:
         str: System prompt for the technical analysis stage
@@ -102,25 +102,25 @@ RULES:
 8. When analyzing multiple files, clearly separate each file's changes
 9. Include proper technical details (method names, component identifiers, etc.)"""
 
-    # If context is provided, append it with strong wording about absolute priority
-    if context:
-        context_prompt = f"""
+    # If preprompt is provided, prepend it to the base prompt with strong wording about absolute priority
+    if preprompt:
+        preprompt_section = f"""===CRITICAL USER PREPROMPT - ABSOLUTE HIGHEST PRIORITY===
+The following preprompt from the user OVERRIDES ALL OTHER INSTRUCTIONS and must be followed exactly:
 
-===CRITICAL USER CONTEXT - ABSOLUTE HIGHEST PRIORITY===
-The following context from the user OVERRIDES ALL OTHER INSTRUCTIONS and must be followed exactly:
+{preprompt}
 
-{context}
+THIS USER PREPROMPT HAS ABSOLUTE PRIORITY over any other instructions that follow. If it contradicts other instructions, the user preprompt MUST be followed. No exceptions.
 
-THIS USER CONTEXT HAS ABSOLUTE PRIORITY over any other instructions in this prompt. If it contradicts other instructions, the user context MUST be followed. No exceptions."""
-        base_prompt += context_prompt
+"""
+        return preprompt_section + base_prompt
     
     return base_prompt
 
-def create_system_prompt(context=None):
-    """Create system prompt for commit message generation based on context data.
+def create_system_prompt(preprompt=None):
+    """Create system prompt for commit message generation based on preprompt data.
     
     Args:
-        context: The raw context string from -m flag
+        preprompt: The raw preprompt string from --preprompt flag
         
     Returns:
         str: System prompt for the AI
@@ -188,11 +188,11 @@ refactor(core): simplify data processing pipeline
 - [test] Update tests for new pipeline structure (tests/pipeline.test.js)
 
 4. Multiple changes to the same file:
-refactor(core): simplify context handling for commit prompts
+refactor(core): simplify preprompt handling for commit prompts
 
-- [refactor] Remove process_context function (cli/modes/gitcommsg.py:69-124)
-- [refactor] Update all functions to accept raw context string (gitcommsg.py:create_system_prompt())
-- [refactor] Replace context_data usages with context (gitcommsg.py)
+- [refactor] Remove process_preprompt function (cli/modes/gitcommsg.py:69-124)
+- [refactor] Update all functions to accept raw preprompt string (gitcommsg.py:create_system_prompt())
+- [refactor] Replace preprompt_data usages with preprompt (gitcommsg.py)
 - [docs] Update library usage doc (docs/usage/library_usage.md:516,531-537)
 - [chore] Bump project version to 2.15.1 (pyproject.toml:3, uv.lock:137)
 
@@ -216,17 +216,17 @@ RULES:
 10. Include proper technical details (method names, component identifiers, etc.)
 11. When all changes are to the same file, mention it once in the summary"""
 
-    # If context is provided, append it with strong wording about absolute priority
-    if context:
-        context_prompt = f"""
+    # If preprompt is provided, prepend it with strong wording about absolute priority
+    if preprompt:
+        preprompt_section = f"""===CRITICAL USER PREPROMPT - ABSOLUTE HIGHEST PRIORITY===
+The following preprompt from the user OVERRIDES ALL OTHER INSTRUCTIONS and must be followed exactly:
 
-===CRITICAL USER CONTEXT - ABSOLUTE HIGHEST PRIORITY===
-The following context from the user OVERRIDES ALL OTHER INSTRUCTIONS and must be followed exactly:
+{preprompt}
 
-{context}
+THIS USER PREPROMPT HAS ABSOLUTE PRIORITY over any other instructions that follow. If it contradicts other instructions, the user preprompt MUST be followed. No exceptions.
 
-THIS USER CONTEXT HAS ABSOLUTE PRIORITY over any other instructions in this prompt. If it contradicts other instructions, the user context MUST be followed. No exceptions."""
-        base_prompt += context_prompt
+"""
+        return preprompt_section + base_prompt
     
     return base_prompt
 
@@ -346,11 +346,11 @@ refactor(core): simplify data processing pipeline
 - [test] Update tests for new pipeline structure (tests/pipeline.test.js)
 
 4. Multiple changes to the same file:
-refactor(core): simplify context handling for commit prompts
+refactor(core): simplify preprompt handling for commit prompts
 
-- [refactor] Remove process_context function (cli/modes/gitcommsg.py:69-124)
-- [refactor] Update all functions to accept raw context string (gitcommsg.py:create_system_prompt())
-- [refactor] Replace context_data usages with context (gitcommsg.py)
+- [refactor] Remove process_preprompt function (cli/modes/gitcommsg.py:69-124)
+- [refactor] Update all functions to accept raw preprompt string (gitcommsg.py:create_system_prompt())
+- [refactor] Replace preprompt_data usages with preprompt (gitcommsg.py)
 - [docs] Update library usage doc (docs/usage/library_usage.md:516,531-537)
 - [chore] Bump project version to 2.15.1 (pyproject.toml:3, uv.lock:137)
 
@@ -444,13 +444,13 @@ def handle_api_call(client, prompt, system_prompt=None, logger=None, max_retries
             # Exponential backoff
             wait_seconds *= 2
 
-def process_with_chunking(client, diff_content, context, chunk_size=200, recursive=False, logger=None, max_msg_lines=20, max_recursion_depth=3, analyses_chunk_size=None):
+def process_with_chunking(client, diff_content, preprompt, chunk_size=200, recursive=False, logger=None, max_msg_lines=20, max_recursion_depth=3, analyses_chunk_size=None):
     """Process diff with chunking to handle large diffs.
     
     Args:
         client: The NGPTClient instance
         diff_content: The diff content to process
-        context: The raw context string
+        preprompt: The raw preprompt string
         chunk_size: Maximum number of lines per chunk
         recursive: Whether to use recursive chunking
         logger: Optional logger instance
@@ -466,8 +466,8 @@ def process_with_chunking(client, diff_content, context, chunk_size=200, recursi
         analyses_chunk_size = chunk_size
         
     # Create different system prompts for different stages
-    technical_system_prompt = create_technical_analysis_system_prompt(context)
-    commit_system_prompt = create_system_prompt(context)
+    technical_system_prompt = create_technical_analysis_system_prompt(preprompt)
+    commit_system_prompt = create_system_prompt(preprompt)
     
     # Log initial diff content
     if logger:
@@ -547,7 +547,7 @@ def process_with_chunking(client, diff_content, context, chunk_size=200, recursi
         return recursive_chunk_analysis(
             client, 
             combined_analyses, 
-            context, 
+            preprompt, 
             analyses_chunk_size,
             logger,
             max_msg_lines,
@@ -601,13 +601,13 @@ def process_with_chunking(client, diff_content, context, chunk_size=200, recursi
                 logger.error(f"Error combining analyses: {str(e)}")
             return None
 
-def recursive_chunk_analysis(client, combined_analysis, context, chunk_size, logger=None, max_msg_lines=20, max_recursion_depth=3, current_depth=1):
+def recursive_chunk_analysis(client, combined_analysis, preprompt, chunk_size, logger=None, max_msg_lines=20, max_recursion_depth=3, current_depth=1):
     """Recursively chunk and process large analysis results until they're small enough.
     
     Args:
         client: The NGPTClient instance
         combined_analysis: The combined analysis to process
-        context: The raw context string
+        preprompt: The raw preprompt string
         chunk_size: Maximum number of lines per chunk
         logger: Optional logger instance
         max_msg_lines: Maximum number of lines in commit message before condensing
@@ -618,8 +618,8 @@ def recursive_chunk_analysis(client, combined_analysis, context, chunk_size, log
         str: Generated commit message
     """
     # Create different system prompts for different stages
-    technical_system_prompt = create_technical_analysis_system_prompt(context)
-    commit_system_prompt = create_system_prompt(context)
+    technical_system_prompt = create_technical_analysis_system_prompt(preprompt)
+    commit_system_prompt = create_system_prompt(preprompt)
     
     print(f"\n{COLORS['cyan']}Recursive analysis chunking level {current_depth}...{COLORS['reset']}")
     
@@ -767,7 +767,7 @@ SECTION OF ANALYSIS TO CONDENSE:
     return recursive_chunk_analysis(
         client,
         combined_condensed,
-        context,
+        preprompt,
         chunk_size,
         logger,
         max_msg_lines,
@@ -948,11 +948,11 @@ BULLET POINT FORMAT:
 - Not: "- feat: Add new login component" (incorrect)
 
 EXAMPLE OF PROPERLY FORMATTED COMMIT MESSAGE:
-refactor(core): simplify context handling for commit prompts
+refactor(core): simplify preprompt handling for commit prompts
 
-- [refactor] Remove process_context function (cli/modes/gitcommsg.py:69-124)
-- [refactor] Update all functions to accept raw context string (gitcommsg.py:create_system_prompt())
-- [refactor] Replace context_data usages with context (gitcommsg.py)
+- [refactor] Remove process_preprompt function (cli/modes/gitcommsg.py:69-124)
+- [refactor] Update all functions to accept raw preprompt string (gitcommsg.py:create_system_prompt())
+- [refactor] Replace preprompt_data usages with preprompt (gitcommsg.py)
 - [docs] Update library usage doc (docs/usage/library_usage.md:516,531-537)
 - [chore] Bump project version to 2.15.1 (pyproject.toml:3, uv.lock:137)
 
@@ -1025,17 +1025,17 @@ def gitcommsg_mode(client, args, logger=None):
         if active_logger:
             active_logger.log_diff("DEBUG", diff_content)
         
-        # Process context if provided
-        context = None
-        if args.message_context:
-            context = args.message_context
+        # Process preprompt if provided
+        preprompt = None
+        if args.preprompt:
+            preprompt = args.preprompt
             if active_logger:
-                active_logger.debug(f"Using raw context: {context}")
-                active_logger.log_content("DEBUG", "CONTEXT", context)
+                active_logger.debug(f"Using preprompt: {preprompt}")
+                active_logger.log_content("DEBUG", "PREPROMPT", preprompt)
         
         # Create system prompts for different stages
-        technical_system_prompt = create_technical_analysis_system_prompt(context)
-        commit_system_prompt = create_system_prompt(context)
+        technical_system_prompt = create_technical_analysis_system_prompt(preprompt)
+        commit_system_prompt = create_system_prompt(preprompt)
         
         # Log system prompts
         if active_logger:
@@ -1066,7 +1066,7 @@ def gitcommsg_mode(client, args, logger=None):
         if active_logger:
             active_logger.info(f"Analyses chunk size: {analyses_chunk_size}")
         
-        if args.recursive_chunk:
+        if args.rec_chunk:
             # Use chunking with recursive processing
             if active_logger:
                 active_logger.info(f"Using recursive chunking with max_recursion_depth: {max_recursion_depth}")
@@ -1074,7 +1074,7 @@ def gitcommsg_mode(client, args, logger=None):
             result = process_with_chunking(
                 client, 
                 diff_content, 
-                context, 
+                preprompt, 
                 chunk_size=args.chunk_size,
                 recursive=True,
                 logger=active_logger,
@@ -1087,6 +1087,7 @@ def gitcommsg_mode(client, args, logger=None):
             if active_logger:
                 active_logger.info("Processing without chunking")
             
+            # Pass preprompt to create_final_prompt
             prompt = create_final_prompt(diff_content)
             
             # Log final template

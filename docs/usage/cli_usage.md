@@ -384,7 +384,7 @@ ngpt --gitcommsg
 ngpt --gitcommsg -m "type:feat"
 
 # Process large diffs in chunks with recursive analysis
-ngpt --gitcommsg -r
+ngpt --gitcommsg --rec-chunk
 
 # Use a specific diff file instead of staged changes
 ngpt --gitcommsg --diff /path/to/changes.diff
@@ -395,7 +395,7 @@ ngpt --gitcommsg --log commit_log.txt
 
 #### Message Context Directives
 
-Use the `-m/--message-context` option to guide the AI with various directives:
+Use the `--preprompt` option to guide the AI with various directives:
 
 ```bash
 # Force a specific commit type prefix
@@ -420,20 +420,17 @@ ngpt --gitcommsg -m "type:feat focus on UI"
 For large diffs or pull requests, use recursive chunking to handle token limits and rate limits:
 
 ```bash
-# Enable recursive chunking
-ngpt --gitcommsg -r
+# Set custom chunk size
+ngpt --gitcommsg --rec-chunk --chunk-size 150
 
-# Customize chunk size
-ngpt --gitcommsg -r --chunk-size 150
+# Set custom analyses chunk size
+ngpt --gitcommsg --rec-chunk --analyses-chunk-size 150
 
-# Set analysis chunk size for processing intermediate results
-ngpt --gitcommsg -r --analyses-chunk-size 150
+# Set maximum message lines before condensing
+ngpt --gitcommsg --rec-chunk --max-msg-lines 25
 
-# Control maximum message length
-ngpt --gitcommsg -r --max-msg-lines 25
-
-# Adjust recursion depth for very large changes
-ngpt --gitcommsg -r --max-recursion-depth 5
+# Set recursion depth for very large diffs
+ngpt --gitcommsg --rec-chunk --max-recursion-depth 5
 ```
 
 #### Using Diff Files
@@ -776,13 +773,13 @@ The list of options that can be set with `--cli-config` includes:
 - `web-search` - Enable web search capability
 
 ##### Options for Git commit message mode:
-- `recursive-chunk` - Process large diffs in chunks with recursive analysis
+- `preprompt` - Context to guide AI generation
+- `rec-chunk` - Process large diffs in chunks with recursive analysis
 - `diff` - Path to diff file to use instead of staged changes
 - `chunk-size` - Number of lines per chunk when chunking is enabled
 - `analyses-chunk-size` - Number of lines per chunk for recursive analysis
 - `max-msg-lines` - Maximum number of lines in commit message before condensing
 - `max-recursion-depth` - Maximum recursion depth for message condensing
-- `message-context` - Context to guide AI generation
 
 #### Custom Configuration File
 

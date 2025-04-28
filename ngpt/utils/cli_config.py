@@ -20,8 +20,7 @@ CLI_CONFIG_OPTIONS = {
     "config-index": {"type": "int", "default": 0, "context": ["all"], "exclusive": ["provider"]},
     "web-search": {"type": "bool", "default": False, "context": ["all"]},
     # GitCommit message options
-    "message-context": {"type": "str", "default": None, "context": ["gitcommsg"]},
-    "recursive-chunk": {"type": "bool", "default": False, "context": ["gitcommsg"]},
+    "rec-chunk": {"type": "bool", "default": False, "context": ["gitcommsg"]},
     "diff": {"type": "str", "default": None, "context": ["gitcommsg"]},
     "chunk-size": {"type": "int", "default": 200, "context": ["gitcommsg"]},
     "analyses-chunk-size": {"type": "int", "default": 200, "context": ["gitcommsg"]},
