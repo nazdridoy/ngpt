@@ -70,7 +70,7 @@ def text_mode(client, args, logger=None):
     stop_spinner_event = None
     if args.stream_prettify and live_display:
         stop_spinner_event = threading.Event()
-        stop_spinner_func = setup_spinner(stop_spinner_event)
+        stop_spinner_func = setup_spinner(stop_spinner_event, color=COLORS['cyan'])
     
     # Create a wrapper for the stream callback that will stop the spinner on first content
     original_callback = stream_callback

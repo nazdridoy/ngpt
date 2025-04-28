@@ -31,7 +31,7 @@ def shell_mode(client, args, logger=None):
     spinner_thread = threading.Thread(
         target=spinner, 
         args=("Generating command...",), 
-        kwargs={"stop_event": stop_spinner}
+        kwargs={"stop_event": stop_spinner, "color": COLORS['cyan']}
     )
     spinner_thread.daemon = True
     spinner_thread.start()

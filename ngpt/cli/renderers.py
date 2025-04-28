@@ -272,7 +272,7 @@ def prettify_streaming_markdown(renderer='rich', is_interactive=False, header_te
             live.refresh()
             
         # Define a function to set up and start the spinner
-        def setup_spinner(stop_event, message="Waiting for AI response..."):
+        def setup_spinner(stop_event, message="Waiting for AI response...", color=COLORS['cyan']):
             nonlocal stop_spinner_event, spinner_thread
             from .ui import spinner
             import threading
@@ -284,7 +284,7 @@ def prettify_streaming_markdown(renderer='rich', is_interactive=False, header_te
             spinner_thread = threading.Thread(
                 target=spinner,
                 args=(message,),
-                kwargs={"stop_event": stop_event}
+                kwargs={"stop_event": stop_event, "color": color}
             )
             spinner_thread.daemon = True
             spinner_thread.start()

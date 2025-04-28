@@ -1,6 +1,7 @@
 import sys
 import time
 import shutil
+from .formatters import COLORS
 
 # Optional imports for enhanced UI
 try:
@@ -167,18 +168,23 @@ def spinner(message, duration=5, spinner_chars="⣾⣽⣻⢿⡿⣟⣯⣷", color
     """
     char_duration = 0.2
 
+    # Apply color to message if provided
+    colored_message = message
+    if color:
+        colored_message = f"{color}{message}{COLORS['reset']}"
+
     if stop_event:
         i = 0
         while not stop_event.is_set():
             char = spinner_chars[i % len(spinner_chars)]
-            print(f"\r{message} {char}", end="", flush=True)
+            print(f"\r{colored_message} {char}", end="", flush=True)
             i += 1
             time.sleep(char_duration)
     else:
         total_chars = int(duration / char_duration)
         for i in range(total_chars):
             char = spinner_chars[i % len(spinner_chars)]
-            print(f"\r{message} {char}", end="", flush=True)
+            print(f"\r{colored_message} {char}", end="", flush=True)
             time.sleep(char_duration)
 
     # Clear the line when done
