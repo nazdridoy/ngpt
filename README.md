@@ -1,6 +1,6 @@
 # nGPT
 
-🤖 nGPT: A Swiss army knife for LLMs: powerful CLI, interactive chatbot, and flexible library all in one package. Seamlessly work with OpenAI, Ollama, Groq, Claude, or any OpenAI-compatible API to generate code, craft git commits, rewrite text, and execute shell commands. Fast, lightweight, and designed for both casual users and developers.
+🤖 nGPT: A Swiss army knife for LLMs: powerful CLI, interactive chatbot, and flexible library all in one package. Seamlessly work with OpenAI, Ollama, Groq, Claude, Gemini, or any OpenAI-compatible API to generate code, craft git commits, rewrite text, and execute shell commands. Fast, lightweight, and designed for both casual users and developers.
 
 [![PyPI version](https://img.shields.io/pypi/v/ngpt.svg)](https://pypi.org/project/ngpt/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -140,7 +140,7 @@ For more examples and detailed usage, visit the [CLI Usage Guide](https://nazdri
 
 - ✅ **Versatile**: Use as a CLI tool, Python library, or CLI framework for building custom tools
 - 🪶 **Lightweight**: Minimal dependencies with everything you need included
-- 🔄 **API Flexibility**: Works with OpenAI, Ollama, Groq, Claude, and any compatible endpoint
+- 🔄 **API Flexibility**: Works with OpenAI, Ollama, Groq, Claude, Gemini, and any compatible endpoint
 - 💬 **Interactive Chat**: Continuous conversation with memory in modern UI
 - 📊 **Streaming Responses**: Real-time output for better user experience
 - 🔍 **Web Search**: Integrated with compatible API endpoints

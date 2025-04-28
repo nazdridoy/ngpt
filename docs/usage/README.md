@@ -1,6 +1,6 @@
 # Usage Guide
 
-This section contains comprehensive documentation on how to use nGPT, a Swiss army knife for LLMs that combines a powerful CLI, interactive chatbot, and flexible library in one package. Learn how to seamlessly work with OpenAI, Ollama, Groq, Claude, or any OpenAI-compatible API to generate code, craft git commits, rewrite text, and execute shell commands.
+This section contains comprehensive documentation on how to use nGPT, a Swiss army knife for LLMs that combines a powerful CLI, interactive chatbot, and flexible library in one package. Learn how to seamlessly work with OpenAI, Ollama, Groq, Claude, Gemini, or any OpenAI-compatible API to generate code, craft git commits, rewrite text, and execute shell commands.
 
 ## Table of Contents
 

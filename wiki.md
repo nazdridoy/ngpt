@@ -26,7 +26,7 @@ nGPT, a Swiss army knife for LLMs: a powerful CLI, interactive chatbot, and flex
 
 ## About nGPT
 
-nGPT allows you to seamlessly work with OpenAI, Ollama, Groq, Claude, or any OpenAI-compatible API to:
+nGPT allows you to seamlessly work with OpenAI, Ollama, Groq, Claude, Gemini, or any OpenAI-compatible API to:
 - Generate code
 - Craft git commit messages
 - Rewrite and improve text
