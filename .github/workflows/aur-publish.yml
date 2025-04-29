@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'  # Trigger on version tags
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Package version (leave empty to use current pyproject.toml version)'
+        required: false
+        default: ''
 
 jobs:
   publish-aur:
@@ -14,14 +20,31 @@ jobs:
         with:
           fetch-depth: 0  # Required for accurate versioning
 
-      - name: Update version in PKGBUILD
+      - name: Extract version
+        id: extract_version
         run: |
-          # Extract version from tag (remove 'v' prefix)
-          VERSION=${GITHUB_REF#refs/tags/v}
+          # Check if manually triggered with version input
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ github.event.inputs.version }}" ]]; then
+            # Use manually specified version
+            VERSION="${{ github.event.inputs.version }}"
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            # Extract version from pyproject.toml when manually triggered without version
+            VERSION=$(grep -m 1 'version = ' pyproject.toml | cut -d '"' -f 2)
+          else
+            # Extract version from tag (remove 'v' prefix)
+            VERSION=${GITHUB_REF#refs/tags/v}
+          fi
+          
           echo "Package version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
           
           # Update version in PKGBUILD
           sed -i "s/^pkgver=.*/pkgver=$VERSION/" PKGBUILD
+
+      - name: Setup dependencies for package testing
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3 python3-pip python3-setuptools python3-wheel
 
       - name: Publish AUR package
         uses: KSXGitHub/github-actions-deploy-aur@v4.1.1
@@ -34,7 +57,7 @@ jobs:
           commit_username: ${{ secrets.AUR_USERNAME }}
           commit_email: ${{ secrets.AUR_EMAIL }}
           ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
-          commit_message: "Update to version ${{ github.ref_name }}"
+          commit_message: "${{ github.event_name == 'workflow_dispatch' && 'Manual update to version' || 'Update to version' }} ${{ steps.extract_version.outputs.version }}"
           ssh_keyscan_types: rsa,ecdsa,ed25519
           updpkgsums: true  # Let the action update checksums automatically
           test: true  # Verify the PKGBUILD can be built 
