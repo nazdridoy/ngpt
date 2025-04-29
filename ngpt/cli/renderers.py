@@ -239,13 +239,12 @@ def prettify_streaming_markdown(renderer='rich', is_interactive=False, header_te
         else:
             md_obj = Markdown("")
         
-        # Initialize the Live display with vertical overflow handling
+        # Initialize the Live display
         live = Live(
             md_obj, 
             console=console, 
             refresh_per_second=10, 
-            auto_refresh=False,
-            vertical_overflow="visible"  # Attempt to make overflow visible
+            auto_refresh=False
         )
         
         # Track if this is the first content update
