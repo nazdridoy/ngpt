@@ -76,6 +76,20 @@ Or, if you prefer using pipx for isolated application installations:
 pipx install ngpt
 ```
 
+### Arch Linux AUR
+
+nGPT is available in the Arch User Repository (AUR). If you're using Arch Linux or an Arch-based distribution (like Manjaro, EndeavourOS, etc.), you can install nGPT from the AUR using your preferred AUR helper:
+
+```bash
+# Using paru
+paru -S ngpt
+
+# Or using yay
+yay -S ngpt
+```
+
+This will install nGPT and all required dependencies managed by the Arch packaging system.
+
 ### Windows
 
 On Windows, you can install nGPT using pip or uv:
@@ -172,6 +186,11 @@ pip install --upgrade ngpt
 
 # Using uv
 uv pip install --upgrade ngpt
+
+# Using AUR (Arch Linux)
+paru -Syu ngpt
+# Or
+yay -Syu ngpt
 ```
 
 ## Glow for Enhanced Markdown (Optional)
