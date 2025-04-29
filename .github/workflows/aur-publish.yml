@@ -56,9 +56,8 @@ jobs:
           ssh_keyscan_types: rsa,ecdsa,ed25519
           updpkgsums: true  # Let the action update checksums automatically
           test: false  # Disable testing since the environment doesn't have necessary tools
-          force_push: true  # Add this to ensure clean updates
+          force_push: false  # Add this to ensure clean updates
           allow_empty_commits: false
-          clean: true  # Clean up any unwanted files
           post_process: |
             # Remove any tar.gz files
             rm -f *.tar.gz
