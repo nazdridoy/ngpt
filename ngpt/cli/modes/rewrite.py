@@ -1,6 +1,7 @@
 import sys
 import platform
 import threading
+import time
 from ..formatters import COLORS
 from ..renderers import prettify_markdown, prettify_streaming_markdown
 from ..ui import get_multiline_input, spinner
@@ -75,7 +76,6 @@ def get_terminal_input():
         # Windows-specific solution
         try:
             import msvcrt
-            print("Press Y/N...", end="")
             sys.stdout.flush()
             # Wait for a keypress
             char = msvcrt.getch().decode('utf-8').lower()
@@ -181,7 +181,7 @@ def rewrite_mode(client, args, logger=None):
             # Stop the spinner
             stop_spinner_func()
             # Ensure spinner message is cleared with an extra blank line
-            sys.stdout.write("\r" + " " * 100 + "\r")
+            sys.stdout.write("\r" + " " * 100 + "\r\n")
             sys.stdout.flush()
         
         # Call the original callback to update the display
@@ -211,6 +211,8 @@ def rewrite_mode(client, args, logger=None):
     # Stop live display if using stream-prettify
     if args.stream_prettify and live_display:
         live_display.stop()
+        # Add a small delay to ensure terminal stability
+        time.sleep(0.2)
         
     # Log the AI response if logging is enabled
     if logger and response:
@@ -227,7 +229,9 @@ def rewrite_mode(client, args, logger=None):
     if not args.no_stream and sys.stdout.isatty():
         try:
             # Make sure to flush output before asking for input
-            print("\nCopy to clipboard? (y/n) ", end="")
+            # Make the prompt more visible with colors and formatting
+            clipboard_prompt = f"{COLORS['cyan']}{COLORS['bold']}Copy to clipboard? (y/n){COLORS['reset']} "
+            print(clipboard_prompt, end="")
             sys.stdout.flush()
             
             # Cross-platform terminal input
@@ -237,7 +241,7 @@ def rewrite_mode(client, args, logger=None):
                 try:
                     import pyperclip
                     pyperclip.copy(response)
-                    print("Copied to clipboard.")
+                    print(f"{COLORS['green']}Copied to clipboard.{COLORS['reset']}")
                 except ImportError:
                     print(f"{COLORS['yellow']}pyperclip not installed. Try: pip install \"ngpt[clipboard]\" {COLORS['reset']}")
             

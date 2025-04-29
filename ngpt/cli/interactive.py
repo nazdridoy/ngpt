@@ -3,6 +3,7 @@ import shutil
 import traceback
 import threading
 import sys
+import time
 from .formatters import COLORS
 from .renderers import prettify_markdown, prettify_streaming_markdown
 
@@ -288,6 +289,9 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
             
             # Print separator between exchanges
             print_separator()
+            
+            # Add a small delay to ensure terminal stability
+            time.sleep(0.1)
             
     except KeyboardInterrupt:
         print(f"\n\n{COLORS['yellow']}Chat session interrupted by user.{COLORS['reset']}")
