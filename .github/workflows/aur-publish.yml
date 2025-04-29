@@ -55,4 +55,4 @@ jobs:
           commit_message: "${{ github.event_name == 'workflow_dispatch' && 'Manual update to version' || 'Update to version' }} ${{ steps.extract_version.outputs.version }}"
           ssh_keyscan_types: rsa,ecdsa,ed25519
           updpkgsums: true  # Let the action update checksums automatically
-          test: true  # Verify the PKGBUILD can be built
+          test: false  # Disable testing since the environment doesn't have necessary tools
