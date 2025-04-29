@@ -402,119 +402,157 @@ For detailed information about building CLI tools with nGPT, see the [CLI Framew
 
 ### Command Line Options
 
-You can configure nGPT using the following options:
+```console
+❯ ngpt -h
+usage: ngpt [-h] [-v] [--language LANGUAGE] [--config [CONFIG]] [--config-index CONFIG_INDEX] [--provider PROVIDER]
+            [--remove] [--show-config] [--all] [--list-models] [--list-renderers] [--cli-config [COMMAND ...]]
+            [--api-key API_KEY] [--base-url BASE_URL] [--model MODEL] [--web-search] [--temperature TEMPERATURE]
+            [--top_p TOP_P] [--max_tokens MAX_TOKENS] [--log [FILE]] [--preprompt PREPROMPT] [--no-stream] [--prettify]
+            [--stream-prettify] [--renderer {auto,rich,glow}] [--rec-chunk] [--diff [FILE]] [--chunk-size CHUNK_SIZE]
+            [--analyses-chunk-size ANALYSES_CHUNK_SIZE] [--max-msg-lines MAX_MSG_LINES]
+            [--max-recursion-depth MAX_RECURSION_DEPTH] [-i | -s | -c | -t | -p | -r | -g]
+            [prompt]
 
-#### Mode Options (Mutually Exclusive)
+nGPT - Interact with AI language models via OpenAI-compatible APIs
 
-| Option | Description |
-|--------|-------------|
-| `-i, --interactive` | Start an interactive chat session with conversation memory and special commands |
-| `-s, --shell` | Generate and execute shell commands appropriate for your operating system |
-| `-c, --code` | Generate clean code without markdown formatting or explanations |
-| `-t, --text` | Open interactive multiline editor for complex prompts with syntax highlighting |
-| `-p, --pipe` | Read from stdin and use content with prompt. Use {} in prompt as placeholder for stdin content |
-| `-r, --rewrite` | Rewrite text to improve quality while preserving original tone and meaning |
-| `-g, --gitcommsg` | Generate AI-powered git commit messages from staged changes or diff files |
+positional arguments::
 
-#### Global Options
+[PROMPT]                            The prompt to send
 
-| Option | Description |
-|--------|-------------|
-| `--api-key KEY` | API key for the service |
-| `--base-url URL` | Base URL for the API |
-| `--model MODEL` | Model to use |
-| `--web-search` | Enable web search capability (if your API endpoint supports it) |
-| `--temperature VALUE` | Set temperature (controls randomness, default: 0.7) |
-| `--top_p VALUE` | Set top_p (controls diversity, default: 1.0) |
-| `--max_tokens NUMBER` | Set maximum response length in tokens |
-| `--preprompt TEXT` | Set custom system prompt to control AI behavior |
-| `--language LANG` | Programming language to generate code in (for code mode, default: python) |
-| `--no-stream` | Return the whole response without streaming |
-| `--prettify` | Render markdown responses and code with syntax highlighting and formatting |
-| `--stream-prettify` | Enable streaming with markdown rendering (automatically uses Rich renderer) |
-| `--renderer {auto,rich,glow}` | Select which markdown renderer to use with --prettify (default: auto) |
-| `--log [FILE]` | Set filepath to log conversation to, or create a temporary log file if no path provided |
+options::
 
-#### Configuration Options
+-h, --help                          show this help message and exit
+-v, --version                       Show version information and exit
+--language LANGUAGE                 Programming language to generate code in (for code mode)
 
-| Option | Description |
-|--------|-------------|
-| `--config [PATH]` | Path to a custom config file or, if no value provided, enter interactive configuration mode |
-| `--config-index INDEX` | Index of the configuration to use or edit (default: 0) |
-| `--provider NAME` | Provider name to identify the configuration to use |
-| `--remove` | Remove the configuration at the specified index (requires --config and --config-index or --provider) |
-| `--show-config` | Show the current configuration(s) and exit |
-| `--all` | Show details for all configurations (requires --show-config) |
-| `--list-models` | List all available models for the current configuration and exit |
-| `--list-renderers` | Show available markdown renderers for use with --prettify |
-| `--cli-config [COMMAND]` | Manage CLI configuration (set, get, unset, list, help) |
-| `-v, --version` | Show version information and exit |
+Configuration Options::
+
+--config [CONFIG]                   Path to a custom config file or, if no value provided, enter interactive
+                                    configuration mode to create a new config
+--config-index CONFIG_INDEX         Index of the configuration to use or edit (default: 0)
+--provider PROVIDER                 Provider name to identify the configuration to use
+--remove                            Remove the configuration at the specified index (requires --config and
+                                    --config-index or --provider)
+--show-config                       Show the current configuration(s) and exit
+--all                               Show details for all configurations (requires --show-config)
+--list-models                       List all available models for the current configuration and exit
+--list-renderers                    Show available markdown renderers for use with --prettify
+--cli-config [COMMAND ...]          Manage CLI configuration (set, get, unset, list, help)
+
+Global Options::
+
+--api-key API_KEY                   API key for the service
+--base-url BASE_URL                 Base URL for the API
+--model MODEL                       Model to use
+--web-search                        Enable web search capability (Note: Your API endpoint must support this
+                                    feature)
+--temperature TEMPERATURE           Set temperature (controls randomness, default: 0.7)
+--top_p TOP_P                       Set top_p (controls diversity, default: 1.0)
+--max_tokens MAX_TOKENS             Set max response length in tokens
+--log [FILE]                        Set filepath to log conversation to, or create a temporary log file if no path
+                                    provided
+--preprompt PREPROMPT               Set custom system prompt to control AI behavior
+--no-stream                         Return the whole response without streaming
+--prettify                          Render markdown responses and code with syntax highlighting and formatting
+--stream-prettify                   Enable streaming with markdown rendering (automatically uses Rich renderer)
+--renderer {auto,rich,glow}         Select which markdown renderer to use with --prettify (auto, rich, or glow)
+
+Git Commit Message Options::
+
+--rec-chunk                         Process large diffs in chunks with recursive analysis if needed
+--diff [FILE]                       Use diff from specified file instead of staged changes. If used without a path,
+                                    uses the path from CLI config.
+--chunk-size CHUNK_SIZE             Number of lines per chunk when chunking is enabled (default: 200)
+--analyses-chunk-size ANALYSES_CHUNK_SIZE
+                                    Number of lines per chunk when recursively chunking analyses (default: 200)
+--max-msg-lines MAX_MSG_LINES       Maximum number of lines in commit message before condensing (default: 20)
+--max-recursion-depth MAX_RECURSION_DEPTH
+                                    Maximum recursion depth for commit message condensing (default: 3)
+
+Modes (mutually exclusive)::
+
+-i, --interactive                   Start an interactive chat session
+-s, --shell                         Generate and execute shell commands
+-c, --code                          Generate code
+-t, --text                          Enter multi-line text input (submit with Ctrl+D)
+-p, --pipe                          Read from stdin and use content with prompt. Use {} in prompt as placeholder
+                                    for stdin content
+-r, --rewrite                       Rewrite text from stdin to be more natural while preserving tone and meaning
+-g, --gitcommsg                     Generate AI-powered git commit messages from staged changes or diff file
+```
 
 For a complete reference of all available options, see the [CLI Usage Guide](https://nazdridoy.github.io/ngpt/usage/cli_usage.html).
 
 ### CLI Configuration
 
-NGPT offers a CLI configuration system that allows you to set default values for command-line options:
+NGPT offers a CLI configuration system that allows you to set default values for command-line options. This is especially useful when you:
 
-```bash
-# Set default options
-ngpt --cli-config set language typescript
-ngpt --cli-config set temperature 0.9
-ngpt --cli-config set prettify true
+- Repeatedly use the same provider or model
+- Have preferred settings for specific tasks
+- Want to create different workflows based on context
 
-# View current settings
-ngpt --cli-config get
+For example, setting your preferred language for code generation or temperature value means you won't have to specify these parameters each time:
 
-# Get a specific setting
-ngpt --cli-config get language
+```console
 
-# Remove a setting
-ngpt --cli-config unset prettify
+❯ ngpt --cli-config help
 
-# List all available options
-ngpt --cli-config list
+CLI Configuration Help:
+  Command syntax:
+    ngpt --cli-config help                - Show this help message
+    ngpt --cli-config set OPTION VALUE    - Set a default value for OPTION
+    ngpt --cli-config get OPTION          - Get the current value of OPTION
+    ngpt --cli-config get                 - Show all CLI configuration settings
+    ngpt --cli-config unset OPTION        - Remove OPTION from configuration
+    ngpt --cli-config list                - List all available options
 
-# Show help information
-ngpt --cli-config help
+  Available options:
+    General options (all modes):
+      config-index - int (default: 0) [exclusive with: provider]
+      log - str 
+      max_tokens - int 
+      no-stream - bool (default: False) [exclusive with: prettify, stream-prettify]
+      preprompt - str 
+      prettify - bool (default: False) [exclusive with: no-stream, stream-prettify]
+      provider - str  [exclusive with: config-index]
+      renderer - str (default: auto)
+      stream-prettify - bool (default: False) [exclusive with: no-stream, prettify]
+      temperature - float (default: 0.7)
+      top_p - float (default: 1.0)
+      web-search - bool (default: False)
+
+    Options for Code generation mode:
+      language - str (default: python)
+
+    Options for Git commit message mode:
+      analyses-chunk-size - int (default: 200)
+      chunk-size - int (default: 200)
+      diff - str 
+      max-msg-lines - int (default: 20)
+      max-recursion-depth - int (default: 3)
+      rec-chunk - bool (default: False)
+
+  Example usage:
+    ngpt --cli-config set language java        - Set default language to java for code generation
+    ngpt --cli-config set provider Gemini      - Set Gemini as your default provider
+    ngpt --cli-config set temperature 0.9      - Set default temperature to 0.9
+    ngpt --cli-config set no-stream true       - Disable streaming by default
+    ngpt --cli-config set recursive-chunk true - Enable recursive chunking for git commit messages
+    ngpt --cli-config set diff /path/to/file.diff - Set default diff file for git commit messages
+    ngpt --cli-config get temperature          - Check the current temperature setting
+    ngpt --cli-config get                      - Show all current CLI settings
+    ngpt --cli-config unset language           - Remove language setting
+
+  Notes:
+    - CLI configuration is stored in:
+      • Linux: ~/.config/ngpt/ngpt-cli.conf
+      • macOS: ~/Library/Application Support/ngpt/ngpt-cli.conf
+      • Windows: %APPDATA%\ngpt\ngpt-cli.conf
+    - Settings are applied based on context (e.g., language only applies to code generation mode)
+    - Command-line arguments always override CLI configuration
+    - Some options are mutually exclusive and will not be applied together
+
 ```
-
-Key features of CLI configuration:
-- **Context-Aware**: Settings are applied based on the current command mode (e.g., `language` only applies in code generation mode `-c`).
-- **Priority**: When determining option values, NGPT uses the following priority order (highest to lowest):
-  1. Command-line arguments
-  2. Environment variables
-  3. CLI configuration (ngpt-cli.conf)
-  4. Main configuration file (ngpt.conf)
-  5. Default values
-- **Mutual Exclusivity**: For options like `no-stream`, `prettify`, and `stream-prettify`, setting one to `True` automatically sets the others to `False` in the configuration file, ensuring consistency.
-- **Smart Selection**: The `provider` setting is used to select which configuration profile to use, offering a persistent way to select your preferred API.
-
-Available options include:
-- General options (all modes): `provider`, `temperature`, `top_p`, `max_tokens`, `preprompt`, `renderer`, `config-index`, `web-search`
-- Mode-specific options: `language` (code mode only), `log` (interactive and text modes)
-- Mutually exclusive options: `no-stream`, `prettify`, `stream-prettify`
-
-#### Practical Examples
-
-```bash
-# Set Gemini as your default provider
-ngpt --cli-config set provider Gemini
-# Now you can run commands without specifying --provider
-ngpt "Explain quantum computing"
-
-# Configure code generation for TypeScript
-ngpt --cli-config set language typescript
-# Now in code mode, TypeScript will be used by default
-ngpt -c "Write a function to sort an array"
-
-# Set a higher temperature for more creative responses
-ngpt --cli-config set temperature 0.9
-```
-
-The CLI configuration is stored in:
-- Linux: `~/.config/ngpt/ngpt-cli.conf`
-- macOS: `~/Library/Application Support/ngpt/ngpt-cli.conf`
-- Windows: `%APPDATA%\ngpt\ngpt-cli.conf`
 
 For more details, see the [CLI Configuration Guide](https://nazdridoy.github.io/ngpt/usage/cli_config.html).
 
