@@ -59,3 +59,8 @@ jobs:
           force_push: true  # Add this to ensure clean updates
           allow_empty_commits: false
           clean: true  # Clean up any unwanted files
+          post_process: |
+            # Remove any tar.gz files
+            rm -f *.tar.gz
+            # List files to verify
+            ls -la
