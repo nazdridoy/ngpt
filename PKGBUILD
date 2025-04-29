@@ -13,12 +13,12 @@ sha256sums=('SKIP')  # Automatically updated by CI on release
 
 build() {
   cd "$pkgname-$pkgver"
-  python3 -m build --wheel --no-isolation
+  python -m build --wheel --no-isolation
 }
 
 package() {
   cd "$pkgname-$pkgver"
-  python3 -m installer --destdir="$pkgdir" dist/*.whl
+  python -m installer --destdir="$pkgdir" dist/*.whl
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
   install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
 }

@@ -41,11 +41,6 @@ jobs:
           # Update version in PKGBUILD
           sed -i "s/^pkgver=.*/pkgver=$VERSION/" PKGBUILD
 
-      - name: Setup dependencies for package testing
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y python3 python3-pip python3-setuptools python3-wheel
-
       - name: Publish AUR package
         uses: KSXGitHub/github-actions-deploy-aur@v4.1.1
         with:
@@ -60,4 +55,4 @@ jobs:
           commit_message: "${{ github.event_name == 'workflow_dispatch' && 'Manual update to version' || 'Update to version' }} ${{ steps.extract_version.outputs.version }}"
           ssh_keyscan_types: rsa,ecdsa,ed25519
           updpkgsums: true  # Let the action update checksums automatically
-          test: true  # Verify the PKGBUILD can be built 
+          test: true  # Verify the PKGBUILD can be built
