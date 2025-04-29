@@ -1,0 +1,40 @@
+name: Publish AUR Package
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags
+
+jobs:
+  publish-aur:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Required for accurate versioning
+
+      - name: Update version in PKGBUILD
+        run: |
+          # Extract version from tag (remove 'v' prefix)
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "Package version: $VERSION"
+          
+          # Update version in PKGBUILD
+          sed -i "s/^pkgver=.*/pkgver=$VERSION/" PKGBUILD
+
+      - name: Publish AUR package
+        uses: KSXGitHub/github-actions-deploy-aur@v4.1.1
+        with:
+          pkgname: ngpt
+          pkgbuild: ./PKGBUILD
+          assets: |
+            LICENSE
+            README.md
+          commit_username: ${{ secrets.AUR_USERNAME }}
+          commit_email: ${{ secrets.AUR_EMAIL }}
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          commit_message: "Update to version ${{ github.ref_name }}"
+          ssh_keyscan_types: rsa,ecdsa,ed25519
+          updpkgsums: true  # Let the action update checksums automatically
+          test: true  # Verify the PKGBUILD can be built 
