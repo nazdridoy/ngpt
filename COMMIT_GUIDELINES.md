@@ -114,3 +114,4 @@ Also fixed that other bug people were complaining about.
 - [Conventional Commits](https://www.conventionalcommits.org/)
 - [How to Write a Git Commit Message](https://chris.beams.io/posts/git-commit/)
 - [A Note About Git Commit Messages](https://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html)
+- [GitHub Commit Labels](https://greasyfork.org/en/scripts/526153-github-commit-labels) - A userscript that adds colorful labels to conventional commits on GitHub

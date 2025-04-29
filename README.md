@@ -481,6 +481,8 @@ Modes (mutually exclusive)::
 -g, --gitcommsg                     Generate AI-powered git commit messages from staged changes or diff file
 ```
 
+> **Note**: For better visualization of conventional commit messages on GitHub, you can use the [GitHub Commit Labels](https://greasyfork.org/en/scripts/526153-github-commit-labels) userscript, which adds colorful labels to your commits.
+
 For a complete reference of all available options, see the [CLI Usage Guide](https://nazdridoy.github.io/ngpt/usage/cli_usage.html).
 
 ### CLI Configuration

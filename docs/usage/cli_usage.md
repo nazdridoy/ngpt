@@ -450,6 +450,8 @@ When a commit message is successfully generated, the tool attempts to copy it to
 
 For detailed documentation on git commit message generation, see the [Git Commit Message Guide](gitcommsg.md).
 
+> **Tip**: For better visualization of conventional commit messages on GitHub, you can use the [GitHub Commit Labels](https://greasyfork.org/en/scripts/526153-github-commit-labels) userscript, which adds colorful labels to your commits.
+
 ### Generating Code
 
 Generate clean code without markdown or explanations:

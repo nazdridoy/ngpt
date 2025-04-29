@@ -283,6 +283,8 @@ ngpt -g --diff changes.diff
 ngpt -g --log commit_debug.log
 ```
 
+> **Tip**: For better visualization of conventional commit messages on GitHub, you can use the [GitHub Commit Labels](https://greasyfork.org/en/scripts/526153-github-commit-labels) userscript, which adds colorful labels to your commits.
+
 ## Using CLI Config
 
 nGPT supports persistent CLI configuration for setting default values:
