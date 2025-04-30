@@ -172,18 +172,19 @@ def load_config(custom_path: Optional[str] = None, config_index: int = 0, provid
         elif len(matching_configs) > 1:
             print(f"Warning: Multiple configurations found for provider '{provider}'.")
             for i, idx in enumerate(matching_configs):
-                print(f"  [{i}] Index {idx}: {configs[idx].get('model', 'Unknown model')}")
+                print(f"  Choice [{i+1}] → Config #{idx}: {configs[idx].get('model', 'Unknown model')}")
             
             try:
-                choice = input("Choose a configuration (or press Enter for the first one): ")
-                if choice and choice.isdigit() and 0 <= int(choice) < len(matching_configs):
-                    config_index = matching_configs[int(choice)]
+                choice = input("Enter choice number (or press Enter for the first one): ")
+                if choice and choice.isdigit() and 1 <= int(choice) <= len(matching_configs):
+                    config_index = matching_configs[int(choice)-1]
+                    print(f"Selected configuration #{config_index}.")
                 else:
                     config_index = matching_configs[0]
-                    print(f"Using first matching configuration (index {config_index}).")
+                    print(f"Using first matching configuration (config #{config_index}).")
             except (ValueError, IndexError, KeyboardInterrupt):
                 config_index = matching_configs[0]
-                print(f"Using first matching configuration (index {config_index}).")
+                print(f"Using first matching configuration (config #{config_index}).")
         else:
             config_index = matching_configs[0]
     

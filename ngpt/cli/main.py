@@ -297,12 +297,12 @@ def main():
                 elif len(matching_configs) > 1:
                     print(f"Multiple configurations found for provider '{effective_provider}':")
                     for i, idx in enumerate(matching_configs):
-                        print(f"  [{i}] Index {idx}: {configs[idx].get('model', 'Unknown model')}")
+                        print(f"  Choice [{i+1}] → Config #{idx}: {configs[idx].get('model', 'Unknown model')}")
                     
                     try:
                         choice = input("Choose a configuration to remove (or press Enter to cancel): ")
-                        if choice and choice.isdigit() and 0 <= int(choice) < len(matching_configs):
-                            config_index = matching_configs[int(choice)]
+                        if choice and choice.isdigit() and 1 <= int(choice) <= len(matching_configs):
+                            config_index = matching_configs[int(choice)-1]
                         else:
                             print("Configuration removal cancelled.")
                             return
