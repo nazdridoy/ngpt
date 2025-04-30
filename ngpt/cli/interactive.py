@@ -218,7 +218,7 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
                     # Create a wrapper for the stream callback that handles spinner and live display
                     original_callback = stream_callback
                     
-                    def spinner_handling_callback(content):
+                    def spinner_handling_callback(content, **kwargs):
                         nonlocal first_content_received
                         
                         # On first content, stop the spinner and start the live display
@@ -239,7 +239,7 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
                         
                         # Call the original callback to update content
                         if original_callback:
-                            original_callback(content)
+                            original_callback(content, **kwargs)
                     
                     # Use our wrapper callback
                     stream_callback = spinner_handling_callback
@@ -269,7 +269,9 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
             
             # Stop live display if using stream-prettify
             if stream_prettify and live_display and first_content_received:
-                live_display.stop()
+                # Before stopping the live display, update with complete=True to show final formatted content
+                if stream_callback and response:
+                    stream_callback(response, complete=True)
             
             # Add AI response to conversation history
             if response:

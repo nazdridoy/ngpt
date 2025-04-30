@@ -74,7 +74,7 @@ def text_mode(client, args, logger=None):
     original_callback = stream_callback
     first_content_received = False
     
-    def spinner_handling_callback(content):
+    def spinner_handling_callback(content, **kwargs):
         nonlocal first_content_received
         
         # On first content, stop the spinner 
@@ -88,7 +88,7 @@ def text_mode(client, args, logger=None):
         
         # Call the original callback to update the display
         if original_callback:
-            original_callback(content)
+            original_callback(content, **kwargs)
     
     # Use our wrapper callback
     if args.stream_prettify and live_display:
@@ -106,7 +106,9 @@ def text_mode(client, args, logger=None):
     
     # Stop live display if using stream-prettify
     if args.stream_prettify and live_display:
-        live_display.stop()
+        # Before stopping the live display, update with complete=True to show final formatted content
+        if stream_callback and response:
+            stream_callback(response, complete=True)
         
     # Log the AI response if logging is enabled
     if logger and response:

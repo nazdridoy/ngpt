@@ -239,7 +239,14 @@ def prettify_streaming_markdown(renderer='rich', is_interactive=False, header_te
         else:
             md_obj = Markdown("")
         
-        # Initialize the Live display
+        # Get terminal dimensions for better display
+        term_width = shutil.get_terminal_size().columns
+        term_height = shutil.get_terminal_size().lines
+        
+        # Use 2/3 of terminal height for content display (min 10 lines, max 30 lines)
+        display_height = max(10, min(30, int(term_height * 2/3)))
+        
+        # Initialize the Live display (without height parameter)
         live = Live(
             md_obj, 
             console=console, 
@@ -252,9 +259,18 @@ def prettify_streaming_markdown(renderer='rich', is_interactive=False, header_te
         stop_spinner_event = None
         spinner_thread = None
         
+        # Store the full content for final display
+        full_content = ""
+        
         # Define an update function that will be called with new content
-        def update_content(content):
-            nonlocal md_obj, first_update
+        def update_content(content, **kwargs):
+            nonlocal md_obj, first_update, full_content, live, display_height
+            
+            # Store the full content for final display
+            full_content = content
+            
+            # Check if this is the final update (complete flag)
+            is_complete = kwargs.get('complete', False)
             
             # Start live display on first content
             if first_update:
@@ -266,16 +282,55 @@ def prettify_streaming_markdown(renderer='rich', is_interactive=False, header_te
             
             # Update content in live display
             if is_interactive and header_text:
-                # Update the panel content
-                md_obj.renderable = Markdown(content)
+                # Update the panel content - for streaming, only show the last portion that fits in display_height
+                if not is_complete:
+                    # Calculate approximate lines needed (rough estimation)
+                    content_lines = content.count('\n') + 1
+                    available_height = display_height - 4  # Account for panel borders and padding
+                    
+                    if content_lines > available_height:
+                        # If content is too big, show only the last part that fits
+                        lines = content.split('\n')
+                        truncated_content = '\n'.join(lines[-available_height:])
+                        md_obj.renderable = Markdown(truncated_content)
+                    else:
+                        md_obj.renderable = Markdown(content)
+                else:
+                    md_obj.renderable = Markdown(content)
+                
                 live.update(md_obj)
             else:
-                md_obj = Markdown(content)
+                # Same logic for non-interactive mode
+                if not is_complete:
+                    # Calculate approximate lines needed
+                    content_lines = content.count('\n') + 1
+                    available_height = display_height - 1  # Account for minimal overhead
+                    
+                    if content_lines > available_height:
+                        # If content is too big, show only the last part that fits
+                        lines = content.split('\n')
+                        truncated_content = '\n'.join(lines[-available_height:])
+                        md_obj = Markdown(truncated_content)
+                    else:
+                        md_obj = Markdown(content)
+                else:
+                    md_obj = Markdown(content)
+                    
                 live.update(md_obj)
                 
             # Ensure the display refreshes with new content
             live.refresh()
             
+            # If streaming is complete, stop the live display
+            if is_complete:
+                try:
+                    # Just stop the live display when complete - no need to redisplay content
+                    live.stop()
+                except Exception as e:
+                    # Fallback if something goes wrong
+                    sys.stderr.write(f"\nError stopping live display: {str(e)}\n")
+                    sys.stderr.flush()
+        
         # Define a function to set up and start the spinner
         def setup_spinner(stop_event, message="Waiting for AI response...", color=COLORS['cyan']):
             nonlocal stop_spinner_event, spinner_thread
@@ -297,6 +352,7 @@ def prettify_streaming_markdown(renderer='rich', is_interactive=False, header_te
             # Return a function that can be used to stop the spinner
             return lambda: stop_event.set() if stop_event else None
                 
+        # Return the necessary components for streaming to work
         return live, update_content, setup_spinner
     except Exception as e:
         print(f"{COLORS['yellow']}Error setting up Rich streaming display: {str(e)}{COLORS['reset']}")
