@@ -66,7 +66,10 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
     
     # Custom separator - use the same length for consistency
     def print_separator():
-        print(f"\n{separator}\n")
+        # Make sure there's exactly one newline before and after
+        # Use sys.stdout.write for direct control, avoiding any extra newlines
+        sys.stdout.write(f"\n{separator}\n")
+        sys.stdout.flush()
     
     # Initialize conversation history
     system_prompt = preprompt if preprompt else "You are a helpful assistant."
@@ -229,8 +232,9 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
                             if stop_spinner_func:
                                 stop_spinner_func()
                                 
-                            # Clear the spinner line completely
-                            sys.stdout.write("\r" + " " * 100 + "\r")
+                            # Clear the spinner line completely without leaving extra newlines
+                            # Use direct terminal control to ensure consistency
+                            sys.stdout.write("\r" + " " * shutil.get_terminal_size().columns + "\r")
                             sys.stdout.flush()
                             
                             # Now start the live display
@@ -264,7 +268,9 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
             # Ensure spinner is stopped if no content was received
             if stop_spinner_event and not first_content_received:
                 stop_spinner_event.set()
-                sys.stdout.write("\r" + " " * 100 + "\r")
+                # Clear the spinner line completely without leaving extra newlines
+                # Use direct terminal control to ensure consistency
+                sys.stdout.write("\r" + " " * shutil.get_terminal_size().columns + "\r")
                 sys.stdout.flush()
             
             # Stop live display if using stream-prettify

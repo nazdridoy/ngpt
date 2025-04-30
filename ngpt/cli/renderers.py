@@ -275,9 +275,8 @@ def prettify_streaming_markdown(renderer='rich', is_interactive=False, header_te
             # Start live display on first content
             if first_update:
                 first_update = False
-                # Clear the spinner line completely before starting the display
-                sys.stdout.write("\r" + " " * 100 + "\r")
-                sys.stdout.flush()
+                # Let the spinner's clean_exit handle the cleanup
+                # No additional cleanup needed here
                 live.start()
             
             # Update content in live display
@@ -344,7 +343,7 @@ def prettify_streaming_markdown(renderer='rich', is_interactive=False, header_te
             spinner_thread = threading.Thread(
                 target=spinner,
                 args=(message,),
-                kwargs={"stop_event": stop_event, "color": color}
+                kwargs={"stop_event": stop_event, "color": color, "clean_exit": True}
             )
             spinner_thread.daemon = True
             spinner_thread.start()

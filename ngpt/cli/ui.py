@@ -155,7 +155,7 @@ def get_multiline_input():
             print("\nInput cancelled by user. Exiting gracefully.")
             return None
 
-def spinner(message, duration=5, spinner_chars="⣾⣽⣻⢿⡿⣟⣯⣷", color=None, stop_event=None):
+def spinner(message, duration=5, spinner_chars="⣾⣽⣻⢿⡿⣟⣯⣷", color=None, stop_event=None, clean_exit=False):
     """Display a spinner animation with a message.
     
     Args:
@@ -165,6 +165,7 @@ def spinner(message, duration=5, spinner_chars="⣾⣽⣻⢿⡿⣟⣯⣷", color
         color: Optional color from COLORS dict to use for the message
         stop_event: Optional threading.Event to signal when to stop the spinner
                    If provided, duration is ignored and spinner runs until event is set
+        clean_exit: When True, cleans up more aggressively to prevent blank lines
     """
     char_duration = 0.2
 
@@ -173,19 +174,30 @@ def spinner(message, duration=5, spinner_chars="⣾⣽⣻⢿⡿⣟⣯⣷", color
     if color:
         colored_message = f"{color}{message}{COLORS['reset']}"
 
+    # Save cursor position - will be needed for clean exit
+    if clean_exit:
+        # Start by printing a \r to ensure we begin at the start of the line
+        sys.stdout.write("\r")
+        sys.stdout.flush()
+
     if stop_event:
         i = 0
         while not stop_event.is_set():
             char = spinner_chars[i % len(spinner_chars)]
-            print(f"\r{colored_message} {char}", end="", flush=True)
+            # Always use sys.stdout.write for consistent behavior
+            sys.stdout.write(f"\r{colored_message} {char}")
+            sys.stdout.flush()
             i += 1
             time.sleep(char_duration)
     else:
         total_chars = int(duration / char_duration)
         for i in range(total_chars):
             char = spinner_chars[i % len(spinner_chars)]
-            print(f"\r{colored_message} {char}", end="", flush=True)
+            sys.stdout.write(f"\r{colored_message} {char}")
+            sys.stdout.flush()
             time.sleep(char_duration)
 
-    # Clear the line when done
-    print("\r" + " " * (len(message) + 10) + "\r", end="", flush=True) 
+    # Clear the line when done - use terminal width to clear the entire line
+    terminal_width = shutil.get_terminal_size().columns
+    sys.stdout.write("\r" + " " * terminal_width + "\r")
+    sys.stdout.flush() 
