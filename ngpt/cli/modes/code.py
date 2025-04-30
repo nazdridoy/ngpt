@@ -62,7 +62,7 @@ def code_mode(client, args, logger=None):
         if has_markdown_renderer(args.renderer):
             should_stream = False
             use_regular_prettify = True
-            print(f"{COLORS['yellow']}Note: Streaming disabled to enable regular markdown rendering (--prettify).{COLORS['reset']}")
+            print(f"{COLORS['yellow']}Note: Using standard markdown rendering (--prettify). For streaming markdown rendering, use --stream-prettify instead.{COLORS['reset']}")
         else:
             # Renderer not available for prettify
             print(f"{COLORS['yellow']}Warning: Renderer '{args.renderer}' not available for --prettify.{COLORS['reset']}")

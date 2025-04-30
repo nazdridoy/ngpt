@@ -64,9 +64,9 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
     if logger:
         print(f"{COLORS['green']}Logging conversation to: {logger.get_log_path()}{COLORS['reset']}")
     
-    # Display the warning about disabled streaming for prettify only once at the beginning
+    # Display a note about markdown rendering only once at the beginning
     if prettify and not no_stream and not stream_prettify:
-        print(f"{COLORS['yellow']}Note: Streaming disabled to enable markdown rendering.{COLORS['reset']}")
+        print(f"{COLORS['yellow']}Note: Using standard markdown rendering (--prettify). For streaming markdown rendering, use --stream-prettify instead.{COLORS['reset']}")
     
     # Custom separator - use the same length for consistency
     def print_separator():

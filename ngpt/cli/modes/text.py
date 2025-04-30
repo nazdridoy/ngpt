@@ -58,7 +58,7 @@ def text_mode(client, args, logger=None):
     
     # If regular prettify is enabled with streaming, inform the user
     if args.prettify and not args.no_stream:
-        print(f"{COLORS['yellow']}Note: Streaming disabled to enable markdown rendering.{COLORS['reset']}")
+        print(f"{COLORS['yellow']}Note: Using standard markdown rendering (--prettify). For streaming markdown rendering, use --stream-prettify instead.{COLORS['reset']}")
     
     # Show a static message if live_display is not available
     if args.stream_prettify and not live_display:
