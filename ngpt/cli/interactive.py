@@ -64,6 +64,10 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
     if logger:
         print(f"{COLORS['green']}Logging conversation to: {logger.get_log_path()}{COLORS['reset']}")
     
+    # Display the warning about disabled streaming for prettify only once at the beginning
+    if prettify and not no_stream and not stream_prettify:
+        print(f"{COLORS['yellow']}Note: Streaming disabled to enable markdown rendering.{COLORS['reset']}")
+    
     # Custom separator - use the same length for consistency
     def print_separator():
         # Make sure there's exactly one newline before and after
@@ -185,19 +189,26 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
             if logger:
                 logger.log("user", user_input)
             
-            # Print assistant indicator with formatting
-            if not no_stream and not stream_prettify:
-                print(f"\n{ngpt_header()}: {COLORS['reset']}", end="", flush=True)
-            elif not stream_prettify:
-                print(f"\n{ngpt_header()}: {COLORS['reset']}", flush=True)
+            # Print assistant indicator with formatting - but only if we're not going to show a rich formatted box
+            # With Rich prettify, no header should be printed as the Rich panel already includes it
+            should_print_header = True
+
+            # Determine if we should print a header based on formatting options
+            if prettify and renderer != 'glow':
+                # Don't print header for Rich prettify
+                should_print_header = False
+
+            # Print the header if needed
+            if should_print_header:
+                if not no_stream and not stream_prettify:
+                    print(f"\n{ngpt_header()}: {COLORS['reset']}", end="", flush=True)
+                elif not stream_prettify:
+                    print(f"\n{ngpt_header()}: {COLORS['reset']}", flush=True)
             
-            # If prettify is enabled with regular streaming
+            # Determine streaming behavior
             if prettify and not no_stream and not stream_prettify:
-                print(f"\n{COLORS['yellow']}Note: Streaming disabled to enable markdown rendering.{COLORS['reset']}")
-                print(f"\n{ngpt_header()}: {COLORS['reset']}", flush=True)
                 should_stream = False
             else:
-                # Regular behavior with stream-prettify taking precedence
                 should_stream = not no_stream
             
             # Setup for stream-prettify
@@ -208,9 +219,15 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
             first_content_received = False
             
             if stream_prettify and should_stream:
-                # Get the correct header for interactive mode
-                header = ngpt_header()
-                live_display, stream_callback, setup_spinner = prettify_streaming_markdown(renderer, is_interactive=True, header_text=header)
+                # Don't pass the header_text for rich renderer as it already creates its own header,
+                # but pass it for other renderers like glow
+                if renderer == 'rich' or renderer == 'auto':
+                    live_display, stream_callback, setup_spinner = prettify_streaming_markdown(renderer, is_interactive=True)
+                else:
+                    # Get the correct header for interactive mode for non-rich renderers
+                    header = ngpt_header()
+                    live_display, stream_callback, setup_spinner = prettify_streaming_markdown(renderer, is_interactive=True, header_text=header)
+                
                 if not live_display:
                     # Fallback to normal prettify if live display setup failed
                     prettify = True
@@ -287,6 +304,7 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
                 # Print response if not streamed (either due to no_stream or prettify)
                 if no_stream or prettify:
                     if prettify:
+                        # For pretty formatting with rich, don't print any header text as the rich renderer already includes it
                         prettify_markdown(response, renderer)
                     else:
                         print(response)
