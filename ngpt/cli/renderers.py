@@ -168,8 +168,31 @@ def prettify_markdown(text, renderer='auto'):
         # Use rich
         try:
             console = Console()
+            
+            # Create a panel around the markdown for consistency with stream_prettify
+            from rich.panel import Panel
+            import rich.box
+            from rich.text import Text
+            
+            # Get terminal dimensions
+            term_width = shutil.get_terminal_size().columns
+            
+            # Create panel with similar styling to stream_prettify
+            clean_header = "🤖 nGPT"
+            panel_title = Text(clean_header, style="cyan bold")
+            
             md = Markdown(text)
-            console.print(md)
+            panel = Panel(
+                md,
+                title=panel_title,
+                title_align="left",
+                border_style="cyan",
+                padding=(1, 1),
+                width=console.width - 4,  # Make panel slightly narrower than console
+                box=rich.box.ROUNDED
+            )
+            
+            console.print(panel)
             return True
         except Exception as e:
             print(f"{COLORS['yellow']}Error using rich for markdown: {str(e)}{COLORS['reset']}")
@@ -237,7 +260,20 @@ def prettify_streaming_markdown(renderer='rich', is_interactive=False, header_te
                 box=rich.box.ROUNDED
             )
         else:
-            md_obj = Markdown("")
+            # Always use a panel - even in non-interactive mode
+            clean_header = "🤖 nGPT"
+            panel_title = Text(clean_header, style="cyan bold")
+            
+            padding = (1, 1)  # Less horizontal padding (left, right)
+            md_obj = Panel(
+                Markdown(""),
+                title=panel_title,
+                title_align="left",
+                border_style="cyan",
+                padding=padding,
+                width=console.width - 4,  # Make panel slightly narrower than console
+                box=rich.box.ROUNDED
+            )
         
         # Get terminal dimensions for better display
         term_width = shutil.get_terminal_size().columns
@@ -303,17 +339,17 @@ def prettify_streaming_markdown(renderer='rich', is_interactive=False, header_te
                 if not is_complete:
                     # Calculate approximate lines needed
                     content_lines = content.count('\n') + 1
-                    available_height = display_height - 1  # Account for minimal overhead
+                    available_height = display_height - 4  # Account for panel borders and padding
                     
                     if content_lines > available_height:
                         # If content is too big, show only the last part that fits
                         lines = content.split('\n')
                         truncated_content = '\n'.join(lines[-available_height:])
-                        md_obj = Markdown(truncated_content)
+                        md_obj.renderable = Markdown(truncated_content)
                     else:
-                        md_obj = Markdown(content)
+                        md_obj.renderable = Markdown(content)
                 else:
-                    md_obj = Markdown(content)
+                    md_obj.renderable = Markdown(content)
                     
                 live.update(md_obj)
                 
