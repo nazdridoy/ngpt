@@ -18,7 +18,7 @@ from .. import __version__
 from .formatters import COLORS
 from .renderers import show_available_renderers
 from .config_manager import check_config
-from .interactive import interactive_chat_session
+from .modes.interactive import interactive_chat_session
 from .modes.chat import chat_mode
 from .modes.code import code_mode
 from .modes.shell import shell_mode

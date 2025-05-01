@@ -431,7 +431,7 @@ wheels = [
 
 [[package]]
 name = "ngpt"
-version = "3.4.3"
+version = "3.4.4"
 source = { editable = "." }
 dependencies = [
     { name = "duckduckgo-search", version = "7.2.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },

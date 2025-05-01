@@ -4,9 +4,9 @@ import traceback
 import threading
 import sys
 import time
-from .formatters import COLORS
-from .renderers import prettify_markdown, prettify_streaming_markdown
-from ..utils import enhance_prompt_with_web_search
+from ..formatters import COLORS
+from ..renderers import prettify_markdown, prettify_streaming_markdown
+from ...utils import enhance_prompt_with_web_search
 
 # Optional imports for enhanced UI
 try:
