@@ -10,6 +10,10 @@ on:
         description: 'Package version (leave empty to use current pyproject.toml version)'
         required: false
         default: ''
+      pkgrel:
+        description: 'Package release number (leave empty to keep current pkgrel)'
+        required: false
+        default: ''
 
 jobs:
   publish-aur:
@@ -40,6 +44,13 @@ jobs:
           
           # Update version in PKGBUILD
           sed -i "s/^pkgver=.*/pkgver=$VERSION/" PKGBUILD
+          
+          # Update pkgrel if provided
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ github.event.inputs.pkgrel }}" ]]; then
+            PKGREL="${{ github.event.inputs.pkgrel }}"
+            echo "Updating package release to: $PKGREL"
+            sed -i "s/^pkgrel=.*/pkgrel=$PKGREL/" PKGBUILD
+          fi
 
       - name: Publish AUR package
         uses: KSXGitHub/github-actions-deploy-aur@v4.1.1
@@ -52,7 +63,7 @@ jobs:
           commit_username: ${{ secrets.AUR_USERNAME }}
           commit_email: ${{ secrets.AUR_EMAIL }}
           ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
-          commit_message: "${{ github.event_name == 'workflow_dispatch' && 'Manual update to version' || 'Update to version' }} ${{ steps.extract_version.outputs.version }}"
+          commit_message: "${{ github.event_name == 'workflow_dispatch' && 'Manual update to version' || 'Update to version' }} ${{ steps.extract_version.outputs.version }}${{ github.event.inputs.pkgrel && format(' with pkgrel={0}', github.event.inputs.pkgrel) || '' }}"
           ssh_keyscan_types: rsa,ecdsa,ed25519
           updpkgsums: true  # Let the action update checksums automatically
           test: false  # Disable testing since the environment doesn't have necessary tools
