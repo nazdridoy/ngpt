@@ -2,6 +2,7 @@
 layout: default
 title: Installation Guide
 nav_order: 3
+permalink: /installation/
 ---
 
 # Installation Guide

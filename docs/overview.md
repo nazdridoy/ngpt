@@ -2,6 +2,7 @@
 layout: default
 title: nGPT Overview
 nav_order: 2
+permalink: /overview/
 ---
 
 # nGPT Overview

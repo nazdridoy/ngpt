@@ -3,6 +3,7 @@ layout: default
 title: Advanced Examples
 parent: Examples
 nav_order: 2
+permalink: /examples/advanced/
 ---
 
 # Advanced Examples

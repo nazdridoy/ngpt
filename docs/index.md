@@ -2,6 +2,7 @@
 layout: default
 title: nGPT Documentation
 nav_order: 1
+permalink: /
 ---
 
 # nGPT Documentation

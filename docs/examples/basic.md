@@ -3,6 +3,7 @@ layout: default
 title: Basic Examples
 parent: Examples
 nav_order: 1
+permalink: /examples/basic/
 ---
 
 # Basic Examples

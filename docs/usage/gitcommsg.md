@@ -3,6 +3,7 @@ layout: default
 title: Git Commit Message Generation
 parent: Usage
 nav_order: 3
+permalink: /usage/gitcommsg/
 ---
 
 # Git Commit Message Generation

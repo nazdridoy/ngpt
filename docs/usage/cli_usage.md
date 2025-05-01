@@ -3,6 +3,7 @@ layout: default
 title: CLI Usage Guide
 parent: Usage
 nav_order: 1
+permalink: /usage/cli_usage/
 ---
 
 # CLI Usage Guide

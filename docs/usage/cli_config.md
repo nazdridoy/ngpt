@@ -3,6 +3,7 @@ layout: default
 title: CLI Configuration Guide
 parent: Usage
 nav_order: 2
+permalink: /usage/cli_config/
 ---
 
 # CLI Configuration Guide

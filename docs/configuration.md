@@ -2,6 +2,7 @@
 layout: default
 title: Configuration Guide
 nav_order: 6
+permalink: /configuration/
 ---
 
 # Configuration Guide

@@ -2,6 +2,7 @@
 layout: default
 title: Contributing to NGPT
 nav_order: 7
+permalink: /contributing/
 ---
 
 # Contributing to NGPT
