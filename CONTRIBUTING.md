@@ -45,8 +45,7 @@ Thank you for your interest in contributing to NGPT! This document provides guid
     - `cli_config.py` - CLI-specific option configuration management
     - `log.py` - Logging setup and utilities
 - `docs/` - Documentation files
-  - `api/` - API reference documentation
-  - `examples/` - Example code and usage
+  - `examples/` - Example usage
   - `usage/` - Usage guides and tutorials
 - `.github/` - GitHub workflows and templates
 - `pyproject.toml` - Project configuration and dependencies
@@ -78,14 +77,22 @@ Before submitting a pull request, please make sure that:
 5. Push to your fork: `git push origin feature/your-feature-name`
 6. Open a Pull Request against the main repository
 
-## Testing
+## Testing Your Changes
 
 Before submitting your changes, please test:
 
-- Basic functionality
-- Any new features you've added
-- Any components you've modified
-- Ensure all tests pass if there's a test suite
+1. Basic CLI functionality
+2. Any new features you've added
+3. Any components you've modified
+4. Test on different platforms if possible (Windows, Linux, macOS)
+5. Try various prompts and inputs to ensure robustness
+
+Test your changes with:
+```bash
+# After installing with -e flag
+python -m ngpt --version
+python -m ngpt "Test prompt" 
+```
 
 ## Issue Reporting
 
@@ -109,6 +116,34 @@ Feature requests are welcome! To submit a feature request:
 ## Questions and Discussions
 
 For questions about the project that aren't bugs or feature requests, please use GitHub Discussions instead of opening an issue. This helps keep the issue tracker focused on bugs and features.
+
+## Common Tasks
+
+### Adding a New Mode
+
+If you're adding a new mode to nGPT, you should:
+
+1. Create a new file in `ngpt/cli/modes/` for your mode implementation
+2. Add your mode to the mode selection logic in `ngpt/cli/args.py`
+3. Update help documentation to include your mode
+4. Add tests for your new mode
+5. Update documentation in `docs/usage/` to describe your mode
+
+### Improving Renderers
+
+For improvements to the output rendering:
+
+1. Modify the renderer code in `ngpt/cli/renderers.py`
+2. Ensure backward compatibility if possible
+3. Test with various types of output (code, markdown, tables, etc.)
+
+### Updating Documentation
+
+When updating documentation:
+
+1. Ensure your changes are reflected in both the code docstrings and in the Markdown documentation
+2. Update examples if necessary
+3. Test that documentation renders correctly
 
 ## License
 

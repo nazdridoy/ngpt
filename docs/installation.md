@@ -102,6 +102,25 @@ pip install ngpt
 uv pip install ngpt
 ```
 
+### Android (Termux)
+
+nGPT can be used on Android devices through Termux:
+
+1. Install Termux from [F-Droid](https://f-droid.org/packages/com.termux/) (recommended) or Play Store
+2. Open Termux and run:
+
+```bash
+pkg update && pkg upgrade
+pkg install python
+pip install ngpt
+```
+
+You may need to install additional dependencies:
+
+```bash
+pkg install libffi openssl
+```
+
 ### Installation in a Virtual Environment
 
 It's often a good practice to install packages in a virtual environment:
@@ -198,26 +217,23 @@ yay -Syu ngpt
 For an enhanced markdown rendering experience, you can install the Glow terminal markdown viewer:
 
 ### macOS
-
 ```bash
 brew install glow
 ```
 
 ### Linux
-
 ```bash
-# Debian/Ubuntu
-sudo apt-get install glow
-
 # Arch Linux
-yay -S glow
+pacman -S glow
+
+# Ubuntu/Debian
+sudo apt install glow
 
 # Using Go
 go install github.com/charmbracelet/glow@latest
 ```
 
 ### Windows
-
 ```bash
 # Using Scoop
 scoop install glow
@@ -226,69 +242,20 @@ scoop install glow
 choco install glow
 ```
 
-nGPT will automatically detect and use Glow if it's installed on your system, but it's not required as the built-in Rich renderer provides excellent markdown formatting.
-
-## API Keys
-
-After installation, you'll need to configure your API key. See the [Configuration Guide](configuration.md) for details.
-
-## Troubleshooting
-
-### Common Installation Issues
-
-#### Package not found
-
-If you encounter "Package not found" errors, make sure your package manager is up to date:
-
+Once installed, you can use it with nGPT:
 ```bash
-# For pip
-pip install --upgrade pip
-
-# For uv
-curl -sSf https://astral.sh/uv/install.sh | sh
+ngpt --prettify --renderer=glow "Explain markdown tables"
 ```
 
-#### Permission Errors
+## Next Steps
 
-If you see permission errors when installing:
+After installing nGPT, you should:
 
+1. [Configure your API keys](configuration.md)
+2. Explore the [CLI Usage Guide](usage/cli_usage.md)
+3. Try some [Basic Examples](examples/basic.md)
+
+For help at any time, use:
 ```bash
-# Using pip
-# On Linux/macOS
-pip install --user ngpt
-
-# Or use a virtual environment (recommended)
-python -m venv ngpt-env
-source ngpt-env/bin/activate
-pip install ngpt
-
-# Using uv (avoids many permission issues)
-uv pip install --user ngpt
-# Or with virtual environment
-uv venv ngpt-env
-source ngpt-env/bin/activate
-uv pip install ngpt
-```
-
-#### Rich or Prompt Toolkit Issues
-
-If you experience issues with the Rich library or Prompt Toolkit:
-
-```bash
-# Using pip
-pip uninstall rich prompt_toolkit pyperclip
-pip install rich prompt_toolkit pyperclip
-pip install ngpt
-
-# Using uv
-uv pip uninstall rich prompt_toolkit pyperclip
-uv pip install rich prompt_toolkit pyperclip
-uv pip install ngpt
-```
-
-### Getting Help
-
-If you continue to experience installation issues:
-
-1. Check the [GitHub Issues](https://github.com/nazdridoy/ngpt/issues) to see if others have encountered the same problem
-2. Open a new issue if your problem hasn't been reported 
+ngpt --help
+``` 

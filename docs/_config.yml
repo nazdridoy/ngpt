@@ -1,7 +1,11 @@
+remote_theme: just-the-docs/just-the-docs
 title: nGPT Documentation
-description: Swiss army knife for LLMs - powerful CLI, interactive chatbot, and flexible Python library
+description: Documentation for nGPT, a Swiss army knife CLI for LLMs
+color_scheme: dark
+aux_links:
+  "nGPT on GitHub":
+    - "https://github.com/nazdridoy/ngpt"
 baseurl: /ngpt
-remote_theme: pages-themes/hacker
 plugins:
   - jekyll-remote-theme
 show_downloads: false 

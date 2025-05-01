@@ -1,410 +1,270 @@
 # Git Commit Message Generation
 
-The `-g` or `--gitcommsg` mode in NGPT helps you generate high-quality, conventional commit messages using AI to analyze your git diffs.
+nGPT offers a powerful feature for automatically generating conventional, detailed commit messages from git diffs. This guide explains how to use and customize this functionality.
+
+## Overview
+
+The git commit message generation feature (`-g` or `--gitcommsg` flag) analyzes your staged changes (or a provided diff file) and generates a comprehensive commit message following the [Conventional Commits](https://www.conventionalcommits.org/) format.
+
+This helps create professional, standardized commit messages with minimal effort, which improves repository history readability and integrates well with automated tools like semantic versioning.
 
 ## Basic Usage
 
+To generate a commit message from your currently staged changes:
+
 ```bash
-# Generate commit message from staged changes
 ngpt -g
-
-# Generate commit message with context/directives
-ngpt -g --preprompt "type:feat"
-
-# Process large diffs in chunks with recursive analysis
-ngpt --gitcommsg --rec-chunk
-
-# Use a diff file instead of staged changes
-ngpt -g --diff /path/to/changes.diff
-
-# Enable logging for debugging
-ngpt -g --log commit_log.txt
 ```
 
-## Command Line Options
-
-| Option | Description |
-|--------|-------------|
-| `--preprompt` | Context to guide AI (file types, commit type directive, focus) |
-| `--rec-chunk` | Process large diffs in chunks with recursive analysis if needed |
-| `--diff [FILE]` | Use diff from specified file instead of staged changes. If used without a value, uses the path from CLI config |
-| `--log [FILE]` | Enable detailed logging (to specified file or auto-generated temp file) |
-| `--chunk-size NUM` | Set number of lines per chunk (default: 200) |
-| `--analyses-chunk-size NUM` | Set number of lines per chunk when recursively analyzing (default: 200) |
-| `--max-msg-lines NUM` | Maximum number of lines in commit message before condensing (default: 20) |
-| `--max-recursion-depth NUM` | Maximum recursion depth for message condensing (default: 3) |
-
-## Context Directives
-
-The `--preprompt` option is powerful and supports several directive types:
-
-### Commit Type Directive
-
-Force a specific commit type prefix:
+or
 
 ```bash
-# Force "feat:" prefix
-ngpt -g --preprompt "type:feat"
-
-# Force "fix:" prefix 
-ngpt --gitcommsg --preprompt "type:fix"
-
-# Force "docs:" prefix
-ngpt -g --preprompt "type:docs"
+ngpt --gitcommsg
 ```
 
-### File Type Filtering
-
-Focus only on specific file types:
-
-```bash
-# Focus only on JavaScript changes
-ngpt -g --preprompt "javascript"
-
-# Focus only on CSS files 
-ngpt --gitcommsg --preprompt "css"
-
-# Focus only on Python files
-ngpt -g --preprompt "python"
-```
-
-The file type filter applies a strict filter to only include changes to files of that type or related to that technology in the analysis and commit message. Other file changes will be excluded from the message.
-
-### Focus/Exclusion Directives
-
-Control what to include or exclude:
-
-```bash
-# Focus only on authentication-related changes
-ngpt -g --preprompt "focus on auth"
-
-# Ignore formatting changes
-ngpt --gitcommsg --preprompt "ignore formatting"
-
-# Exclude test files from the summary
-ngpt -g --preprompt "exclude tests"
-```
-
-Focus directives instruct the tool to exclusively analyze changes related to a specific feature or component, while exclusion directives tell it to completely ignore certain aspects like formatting changes or test files.
-
-### Combined Directives
-
-You can combine multiple directives:
-
-```bash
-# Force "feat:" prefix and focus only on UI changes
-ngpt -g --preprompt "type:feat focus on UI"
-
-# Force "fix:" prefix and ignore formatting changes
-ngpt --gitcommsg --preprompt "type:fix ignore formatting"
-```
-
-## Chunking Mechanism
-
-When processing large diffs with `--rec-chunk`, the chunking mechanism helps manage rate limits and token limits:
-
-1. Diffs are split into chunks (default 200 lines) and processed separately
-2. The partial analyses are then combined into a final commit message
-3. If the combined analysis is still too large, it's recursively processed again
-4. The AI will condense the message if it exceeds `--max-msg-lines` (default: 20)
-
-This is particularly useful for large pull requests or commits with many changes.
-
-### Advanced Chunking Control
-
-For very large diffs or complex codebases, you can fine-tune the chunking process:
-
-```bash
-# Set a custom chunk size
-ngpt -g --rec-chunk --chunk-size 150
-
-# Set a different analysis chunk size (for processing intermediate results)
-ngpt -g --rec-chunk --chunk-size 200 --analyses-chunk-size 150
-
-# Control message length limits
-ngpt --gitcommsg --rec-chunk --max-msg-lines 25
-
-# Increase the recursion depth for extremely large diffs
-ngpt -g --rec-chunk --max-recursion-depth 5
-```
-
-## CLI Configuration
-
-You can set default values for gitcommsg options using the CLI configuration system:
-
-```bash
-# Enable recursive chunking by default
-ngpt --cli-config set rec-chunk true
-
-# Set a default diff file path (used with --diff flag)
-ngpt --cli-config set diff /path/to/your/changes.diff
-
-# Set a custom chunk size
-ngpt --cli-config set chunk-size 150
-
-# Set custom analysis chunk size
-ngpt --cli-config set analyses-chunk-size 150  
-
-# Set maximum lines in commit message
-ngpt --cli-config set max-msg-lines 25
-
-# Set maximum recursion depth
-ngpt --cli-config set max-recursion-depth 5
-
-# Set a context directive to always apply
-ngpt --cli-config set preprompt "type:feat"
-```
-
-### Available CLI Configuration Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `rec-chunk` | bool | false | Process large diffs in chunks with recursive analysis |
-| `diff` | string | null | Path to diff file to use instead of staged changes |
-| `chunk-size` | int | 200 | Number of lines per chunk when chunking is enabled |
-| `analyses-chunk-size` | int | 200 | Number of lines per chunk when recursively chunking analyses |
-| `max-msg-lines` | int | 20 | Maximum number of lines in commit message before condensing |
-| `max-recursion-depth` | int | 3 | Maximum recursion depth for recursive chunking and message condensing |
-| `preprompt` | string | null | Context to guide AI generation |
-
-### Option Details
-
-#### rec-chunk
-
-When enabled, this option automatically processes large diffs in chunks and then combines the results:
-
-```bash
-# Enable recursive chunking by default
-ngpt --cli-config set rec-chunk true
-```
-
-This is particularly useful for large commits or codebases, as it helps:
-- Avoid token limits with large diffs
-- Handle rate limiting better by breaking requests into smaller pieces
-- Process very large changes that would otherwise fail
-
-#### chunk-size and analyses-chunk-size
-
-Controls how many lines are processed in each chunk:
-
-```bash
-# Set a custom chunk size for diff processing
-ngpt --cli-config set chunk-size 150
-
-# Set a custom chunk size for analysis processing
-ngpt --cli-config set analyses-chunk-size 150
-```
-
-- `chunk-size`: Controls the size of raw diff chunks (smaller chunks for very large diffs)
-- `analyses-chunk-size`: Controls the size of analysis chunks during recursive processing
-
-Smaller chunks (100-150 lines) work better for very large diffs or models with stricter token limits, while larger chunks (300-500 lines) provide more context but may hit token limits.
-
-#### max-msg-lines and max-recursion-depth
-
-Controls the commit message condensing process:
-
-```bash
-# Allow longer commit messages
-ngpt --cli-config set max-msg-lines 25
-
-# Increase max recursion depth for extremely large diffs
-ngpt --cli-config set max-recursion-depth 5
-```
-
-- `max-msg-lines`: Maximum number of lines in the final commit message before automatic condensing
-- `max-recursion-depth`: Maximum number of recursive analysis or condensing rounds allowed
-
-Higher recursion depth values allow processing larger diffs but may increase processing time.
-
-#### preprompt
-
-Provides contextual guidance for the AI when generating commit messages:
-
-```bash
-# Always focus on a specific aspect
-ngpt --cli-config set preprompt "focus on API changes"
-
-# Always use a specific commit type
-ngpt --cli-config set preprompt "type:feat"
-
-# Combined directives
-ngpt --cli-config set preprompt "type:fix exclude tests"
-```
-
-This is useful when you consistently work on the same type of changes and want to standardize your commit messages.
-
-### Using the Diff File Option
-
-When you've set a default diff file using the CLI config:
-
-```bash
-# Set a default diff file
-ngpt --cli-config set diff /path/to/changes.diff
-```
-
-The diff file from CLI config is only used when you specifically request it with the `--diff` flag without providing a path. You have three ways to control which diff is used:
-
-1. **Use git staged changes** (ignore the CLI config diff):
-   ```bash
-   ngpt -g
-   ```
-   This will always use git staged changes regardless of your CLI config.
-
-2. **Use the CLI config diff file**:
-   ```bash
-   ngpt -g --diff
-   ```
-   This explicitly tells ngpt to use the diff file specified in your CLI config.
-
-3. **Use a specific diff file** (override CLI config):
-   ```bash
-   ngpt -g --diff /path/to/another.diff
-   ```
-   This overrides both git staged changes and your CLI config to use the specified file.
-
-This approach gives you flexibility with a default diff file while maintaining explicit control over when it's used.
-
-## Commit Message Format
-
-The generated commit messages follow the conventional commit format:
-
-```
-type[(scope)]: <concise summary> (max 50 chars)
-
-- [type] <specific change 1> (filename:function/method/line)
-- [type] <specific change 2> (filename:function/method/line)
-- [type] <additional changes...>
-```
-
-Where the types include:
-- `feat`: New user-facing features
-- `fix`: Bug fixes or error corrections
-- `refactor`: Code restructuring (no behavior change)
-- `style`: Formatting/whitespace changes only
-- `docs`: Documentation only
-- `test`: Test-related changes
-- `perf`: Performance improvements
-- `build`: Build system changes
-- `ci`: CI/CD pipeline changes
-- `chore`: Routine maintenance tasks
-- `revert`: Reverting previous changes
-- `add`: New files without user-facing features
-- `remove`: Removing files/code
-- `update`: Changes to existing functionality
-- `security`: Security-related changes
-- `config`: Configuration changes
-- `ui`: User interface changes
-- `api`: API-related changes
-
-## How It Works
-
-The git commit message generation process follows these steps:
-
-1. Retrieves diff content (from staged changes or specified diff file)
-2. If recursive chunking is enabled:
-   - Splits the diff into smaller chunks (based on --chunk-size)
-   - Analyzes each chunk separately
-   - Combines the analyses into an intermediate result
-   - Further analyzes the combined result to generate a final commit message
-3. If not chunking, sends the entire diff to the AI for analysis
-4. Post-processes the response to ensure it follows the conventional commit format
-5. For large messages, condenses the output if it exceeds --max-msg-lines
-6. Attempts to copy the result to the clipboard for easy pasting
-
-## Technical Analysis Process
-
-The commit message generation involves a sophisticated technical analysis of your code changes:
-
-1. The tool analyzes the raw diff with a specialized technical analysis system prompt that instructs the AI to:
-   - Create a detailed technical summary of all changes
-   - Be 100% factual and only mention code explicitly shown in the diff
-   - Identify exact function names, method names, class names, and line numbers
-   - Use format 'filename:function_name()' or 'filename:line_number' for references
-   - Include all significant changes with proper technical details
-   - Focus on technical specifics, avoiding general statements
-
-2. The analysis produces structured output with:
-   - List of affected files with full paths
-   - Detailed technical changes with specific code locations
-   - Brief technical description of what the changes accomplish
-
-3. This technical analysis is then used to generate the conventional commit message with the appropriate type prefixes and detailed references.
-
-4. For large changes with recursive chunking, each chunk gets its own technical analysis before being combined into a unified understanding.
-
-This process ensures that commit messages are accurate, detailed, and follow best practices with proper file and function references.
+This will:
+1. Extract the diff from your staged changes
+2. Analyze the changes to understand what was modified
+3. Generate an appropriate commit message with type, scope, subject, and description
+4. Display the message ready for use in your git commit
 
 ## Example Output
 
+Here's an example of the generated output:
+
 ```
-feat(auth): Add OAuth2 authentication flow
+feat(auth): implement OAuth2 authentication flow
 
-- [feat] Implement OAuth2 provider in auth/oauth.py:get_oauth_client()
-- [feat] Add token validation in auth/utils.py:validate_token()
-- [test] Add integration tests for OAuth flow in tests/auth/test_oauth.py
-- [docs] Update authentication docs in README.md
+Add OAuth2 authentication support with the following changes:
+- Create new AuthService class to handle token management
+- Implement login/logout functionality in UserController
+- Add configuration options for OAuth providers
+- Update user model to store OAuth tokens
+- Add unit tests for authentication flow
+
+This change allows users to sign in using third-party OAuth providers
+while maintaining the existing email/password authentication method.
 ```
 
-The generated commit messages include:
-1. Type prefix (feat, fix, docs, etc.)
-2. Optional scope in parentheses
-3. Brief summary
-4. Detailed bullet points with file and function references
+## Full Command Options
 
-## GitHub Visualization
+```
+ngpt --gitcommsg [OPTIONS]
+```
 
-The conventional commit messages generated by `--gitcommsg` work great with GitHub, but you can enhance the visualization further with the **GitHub Commit Labels** userscript.
+Available options:
 
-This userscript automatically adds beautiful colored labels for conventional commit types, making your commit history more readable and visually appealing.
+| Option | Description |
+|--------|-------------|
+| `--rec-chunk` | Process large diffs in chunks with recursive analysis |
+| `--diff [FILE]` | Use diff from specified file instead of staged changes |
+| `--chunk-size N` | Number of lines per chunk when chunking is enabled (default: 200) |
+| `--analyses-chunk-size N` | Number of lines per chunk when recursively chunking analyses (default: 200) |
+| `--max-msg-lines N` | Maximum number of lines in commit message before condensing (default: 20) |
+| `--max-recursion-depth N` | Maximum recursion depth for commit message condensing (default: 3) |
+| `--preprompt TEXT` | Provide context or directives for message generation |
+| `--log [FILE]` | Log the analysis process for debugging |
 
-### Installation and Features
+## Working with Large Diffs
 
-1. Install a userscript manager like Tampermonkey for your browser
-2. Install the [GitHub Commit Labels](https://greasyfork.org/en/scripts/526153-github-commit-labels) userscript
+For large changes, the basic approach might not capture all details. Use the recursive chunking feature:
 
-Key features:
-- Adds colored labels to conventional commit messages
-- Supports all standard commit types (feat, fix, docs, etc.)
-- Works with GitHub's light, dark, and dark dimmed themes
-- Adds helpful tooltips showing detailed descriptions
-- Highlights breaking changes using `type!:` or `type(scope)!:`
+```bash
+ngpt -g --rec-chunk
+```
 
-The userscript automatically detects the conventional commit format produced by `ngpt --gitcommsg`, enhancing the readability of your commit history on GitHub.
+This splits the diff into manageable chunks, analyzes each separately, and then recursively synthesizes a cohesive commit message.
 
-## Logging
+You can adjust chunk sizes for large diffs:
 
-To debug issues or review the AI's analysis process, use the `--log` option:
+```bash
+ngpt -g --rec-chunk --chunk-size 300 --analyses-chunk-size 250
+```
+
+This helps balance detail and coherence when processing extensive changes.
+
+## Using a Diff File
+
+Instead of analyzing staged changes, you can use a pre-saved diff file:
+
+```bash
+# Generate a diff file
+git diff > my-changes.diff
+
+# Use the diff file to generate a commit message
+ngpt -g --diff my-changes.diff
+```
+
+You can also set a default diff file in your CLI configuration:
+
+```bash
+ngpt --cli-config set diff /path/to/default.diff
+```
+
+This is useful for:
+- Analyzing changes without staging them
+- Working with historical diffs
+- Sharing change analysis across machines
+- Creating template-based workflows
+
+## Guiding Message Generation
+
+You can use the `--preprompt` option to provide context or directives for the message generation:
+
+```bash
+# Indicate it's a feature implementation
+ngpt -g --preprompt "type:feat"
+
+# Specify the scope and intent
+ngpt -g --preprompt "type:fix scope:authentication This fixes the broken login flow"
+
+# Provide project context
+ngpt -g --preprompt "This is part of the user management system refactoring"
+```
+
+## Limiting Message Length
+
+By default, nGPT limits commit messages to a reasonable length. You can customize this:
+
+```bash
+# Limit to 10 lines
+ngpt -g --max-msg-lines 10
+
+# Allow longer messages
+ngpt -g --max-msg-lines 30
+```
+
+For very large changes, nGPT might need to use recursive condensing to create a concise message. You can adjust this:
+
+```bash
+ngpt -g --max-recursion-depth 4
+```
+
+## Logging the Analysis Process
+
+For complex diffs, it can be helpful to see the analysis process:
 
 ```bash
 # Log to a specific file
-ngpt -g --log commit_log.txt
+ngpt -g --log commit_analysis.log
 
 # Create a temporary log file automatically
 ngpt -g --log
 ```
 
-The log will include:
-- Complete diff content
-- Analysis chunks
-- System prompts
-- API requests and responses
-- Error messages (if any)
+This is valuable when:
+- The generated message doesn't seem to capture the changes properly
+- You want to understand the analysis process
+- You're debugging issues with message generation
 
-## Requirements
+## Integration with Git Workflow
 
-- Git must be installed and available in your PATH
-- You must be in a git repository
-- For commit message generation, you need staged changes (`git add`)
+You can integrate nGPT with your git workflow in several ways:
 
-## Error Handling
+### Using as Git Prepare-Commit-Msg Hook
 
-The tool handles various error conditions:
-- No staged changes (prompts you to stage changes with `git add`)
-- Invalid diff file (displays error and exits)
-- API rate limits (implements automatic retries with exponential backoff)
-- Token limit errors (suggests using the chunking mechanism)
+Create a git hook in `.git/hooks/prepare-commit-msg`:
 
-## Automatic Clipboard Copy
+```bash
+#!/bin/bash
+# Skip if commit message is already provided
+if [ -z "$(cat $1 | grep -v '^#')" ]; then
+  # Generate commit message with nGPT and write to commit message file
+  ngpt -g --no-stream | tee $1
+fi
+```
 
-When a commit message is successfully generated, the tool attempts to copy it to your clipboard for easy pasting into your git commit command. 
+Make it executable:
+```bash
+chmod +x .git/hooks/prepare-commit-msg
+```
+
+### Creating an Alias
+
+Add a git alias in your `.gitconfig`:
+
+```
+[alias]
+  ai-commit = "!ngpt -g | git commit -F -"
+```
+
+Now you can use:
+```bash
+git add .
+git ai-commit
+```
+
+### Using with Conventional Commit Tools
+
+nGPT works well with tools like Commitizen. You can generate a message with nGPT and then use it as a template in Commitizen.
+
+## Best Practices
+
+- **Stage Carefully**: Only stage the changes you want included in a single logical commit
+- **Review Before Committing**: Always review the generated message before using it
+- **Use Recursive Chunking**: For large changes, enable recursive chunking for better analysis
+- **Provide Context**: Use `--preprompt` to give hints about the type or scope of your changes
+- **Customize for Your Project**: Consider creating project-specific aliases or scripts
+
+## Troubleshooting
+
+### Message Quality Issues
+
+If the generated messages don't accurately reflect your changes:
+
+1. Try with `--rec-chunk` for better analysis of large diffs
+2. Provide more context with `--preprompt`
+3. Break very large changes into smaller, logical commits
+4. Use `--log` to understand the analysis process
+
+### Performance Issues
+
+For large repositories or diffs:
+
+1. Use a more focused diff (e.g., specific files)
+2. Adjust chunk sizes to balance speed and detail
+3. Consider using a more powerful LLM model by switching providers
+
+### Formatting Issues
+
+If commit message formatting doesn't match your project's style:
+
+1. Provide an example format in the preprompt
+2. Post-process the output with additional tools
+3. Create a custom processing script for project-specific needs
+
+## Examples
+
+### Basic Feature Implementation
+
+```bash
+# Stage changes
+git add src/components/Login.jsx src/services/auth.js
+
+# Generate commit message
+ngpt -g --preprompt "type:feat"
+```
+
+### Complex Bug Fix with Recursive Chunking
+
+```bash
+# Stage all related changes
+git add .
+
+# Generate detailed analysis
+ngpt -g --rec-chunk --preprompt "type:fix scope:performance" --log perf_fix.log
+```
+
+### Documentation Update
+
+```bash
+# Stage documentation changes
+git add docs/ README.md
+
+# Generate focused commit message
+ngpt -g --preprompt "type:docs This updates the API documentation"
+```
+
+### GitHub Commit Labels Integration
+
+For better visualization of conventional commit messages on GitHub, you can use the [GitHub Commit Labels](https://greasyfork.org/en/scripts/526153-github-commit-labels) userscript, which adds colorful labels to your commits based on the conventional commit type. 

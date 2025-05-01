@@ -1,284 +1,258 @@
-# CLI Configuration
+# CLI Configuration Guide
 
-NGPT offers a CLI configuration system that allows you to set default values for command-line options. This means you don't have to specify the same options repeatedly for common tasks.
+nGPT offers a CLI configuration system that allows you to set persistent default values for command-line options. This guide explains how to use and manage CLI configurations.
 
-## Configuration Priority
+## Overview
 
-When running NGPT, options are applied in the following order of priority (highest to lowest):
+The CLI configuration system is separate from your API configuration (which stores API keys, base URLs, and models). Instead, it stores your preferred default values for CLI parameters like `temperature`, `language`, or `renderer`.
 
-1. Command-line arguments (e.g., `--model gpt-4`, `--provider Gemini`)
-2. Environment variables (e.g., `OPENAI_API_KEY`)
-3. CLI configuration file (`ngpt-cli.conf`, managed via `--cli-config`)
-4. Main configuration file (`ngpt.conf` or custom config file, selected via index or provider name)
-5. Default values hardcoded in the application
+This is especially useful when you:
 
-## Managing CLI Configuration
+- Repeatedly use the same parameter values
+- Have preferred settings for specific tasks
+- Want to create different workflows based on context
 
-You can manage your CLI configuration using the `--cli-config` command:
+## Configuration File Location
+
+The CLI configuration is stored in a platform-specific location:
+
+- **Linux**: `~/.config/ngpt/ngpt-cli.conf` or `$XDG_CONFIG_HOME/ngpt/ngpt-cli.conf`
+- **macOS**: `~/Library/Application Support/ngpt/ngpt-cli.conf`
+- **Windows**: `%APPDATA%\ngpt\ngpt-cli.conf`
+
+## Basic Commands
+
+The CLI configuration is managed through the `--cli-config` command:
 
 ```bash
-# Set a default value
-ngpt --cli-config set OPTION VALUE
-
-# Get a current value
-ngpt --cli-config get OPTION
-
-# Show all current settings
-ngpt --cli-config get
-
-# Remove a setting
-ngpt --cli-config unset OPTION
-
-# List all available options
-ngpt --cli-config list
-
-# Show help information
-ngpt --cli-config
-# or
-ngpt --cli-config help
+ngpt --cli-config COMMAND [ARGS...]
 ```
 
-## Available Options
+Where `COMMAND` is one of:
+- `help` - Show help message
+- `set` - Set a configuration value
+- `get` - Get a configuration value
+- `unset` - Remove a configuration value
+- `list` - List available configurable options
 
-The available configuration options are organized by context:
+## Setting Configuration Values
 
-### General Options (All Modes)
+To set a default value for a parameter:
 
-These options apply to all modes:
+```bash
+ngpt --cli-config set OPTION VALUE
+```
 
-- `provider` - Provider name to identify the configuration to use
-- `temperature` - Controls randomness in the response (default: 0.7)
-- `top_p` - Controls diversity via nucleus sampling (default: 1.0)
-- `max_tokens` - Maximum number of tokens to generate
-- `preprompt` - Custom system prompt to control AI behavior
-- `renderer` - Markdown renderer to use (auto, rich, or glow)
-- `config-index` - Index of the configuration to use (default: 0)
-- `web-search` - Enable web search capability (default: false)
+For example:
 
-These options are mutually exclusive:
-- `no-stream` - Return the whole response without streaming
-- `prettify` - Render markdown responses and code with syntax highlighting
-- `stream-prettify` - Enable streaming with markdown rendering
+```bash
+# Set default temperature to 0.9
+ngpt --cli-config set temperature 0.9
 
-*Note on Exclusivity:* When you use `--cli-config set` to set one of `no-stream`, `prettify`, or `stream-prettify` to `true`, the other two options in this group will automatically be set to `false` in your `ngpt-cli.conf` file.
+# Set default language for code generation to JavaScript
+ngpt --cli-config set language javascript
 
-### Mode-Specific Options
+# Set default provider to Gemini
+ngpt --cli-config set provider Gemini
+
+# Enable web search by default
+ngpt --cli-config set web-search true
+
+# Set default renderer for prettify
+ngpt --cli-config set renderer glow
+```
+
+Boolean values can be set using `true` or `false`:
+
+```bash
+# Enable streaming markdown rendering by default
+ngpt --cli-config set stream-prettify true
+
+# Disable streaming by default
+ngpt --cli-config set no-stream true
+```
+
+## Getting Configuration Values
+
+To view the current value of a specific setting:
+
+```bash
+ngpt --cli-config get OPTION
+```
+
+For example:
+
+```bash
+# Check current temperature setting
+ngpt --cli-config get temperature
+```
+
+To view all current settings:
+
+```bash
+ngpt --cli-config get
+```
+
+This will display all your configured CLI defaults.
+
+## Removing Configuration Values
+
+To remove a setting and revert to the built-in default:
+
+```bash
+ngpt --cli-config unset OPTION
+```
+
+For example:
+
+```bash
+# Remove custom temperature setting
+ngpt --cli-config unset temperature
+```
+
+## Listing Available Options
+
+To see all configurable options:
+
+```bash
+ngpt --cli-config list
+```
+
+This displays the available options, their types, default values, and any conflicts with other options.
+
+## Configuration Context and Exclusivity
 
 Some options only apply in specific modes:
 
-#### Code Mode Options
-- `language` - Programming language for code generation (only for code mode)
+- `language` only applies to code generation mode
+- `rec-chunk` only applies to git commit message mode
 
-#### Logging Options
-- `log` - Filepath to log conversation (for interactive and text modes)
+Some options are mutually exclusive:
 
-#### Git Commit Message Mode Options
-- `preprompt` - Context to guide AI generation (e.g., file types, commit type directive)
-- `rec-chunk` - Process large diffs in chunks with recursive analysis if needed (default: false)
-- `diff` - Path to diff file to use instead of staged git changes
-- `chunk-size` - Number of lines per chunk when chunking is enabled (default: 200)
-- `analyses-chunk-size` - Number of lines per chunk when recursively chunking analyses (default: 200)
-- `max-msg-lines` - Maximum number of lines in commit message before condensing (default: 20)
-- `max-recursion-depth` - Maximum recursion depth for recursive chunking and message condensing (default: 3)
+- `no-stream`, `prettify`, and `stream-prettify` cannot be used together
+- `provider` and `config-index` cannot be used together
 
-### Git Commit Message Options Details
+The CLI configuration system enforces these rules to prevent incompatible combinations.
 
-These options control the behavior of the `--gitcommsg` mode, which helps generate conventional commit messages from git diffs.
+## Available Options
 
-#### preprompt
-This option provides contextual information to guide the AI when generating commit messages. It accepts various directives:
+### General Options (All Modes)
 
-```bash
-# Set a default preprompt for commit message generation
-ngpt --cli-config set preprompt "type:feat focus on UI"
-```
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `config-index` | int | 0 | Index of the configuration to use |
+| `provider` | string | - | Provider name to use (alternative to config-index) |
+| `temperature` | float | 0.7 | Controls randomness (0.0-2.0) |
+| `top_p` | float | 1.0 | Controls diversity (0.0-1.0) |
+| `max_tokens` | int | - | Maximum response length in tokens |
+| `preprompt` | string | - | Custom system prompt |
+| `log` | string | - | Log file path |
+| `web-search` | bool | false | Enable web search capability |
+| `no-stream` | bool | false | Disable streaming |
+| `prettify` | bool | false | Enable markdown rendering |
+| `stream-prettify` | bool | false | Enable real-time markdown rendering |
+| `renderer` | string | auto | Markdown renderer to use (auto, rich, or glow) |
 
-The preprompt can include:
-- **Commit type directives**: `type:feat`, `type:fix`, `type:docs`, etc.
-- **File type filtering**: `javascript`, `python`, `css`, etc.
-- **Focus directives**: `focus on auth`, `focus on UI`, etc.
-- **Exclusion directives**: `ignore formatting`, `exclude tests`, etc.
+### Mode-Specific Options
 
-#### rec-chunk
-When set to `true`, this enables recursive chunking for processing large diffs, which is helpful for large commits:
+#### Code Generation Mode
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `language` | string | python | Programming language for code generation |
 
-```bash
-# Enable recursive chunking by default
-ngpt --cli-config set rec-chunk true
-```
-
-With recursive chunking enabled, the system will:
-1. Split large diffs into chunks
-2. Process each chunk separately
-3. Further break down large intermediate results if needed
-4. Combine everything into a final commit message
-
-#### diff
-This specifies a default path to a diff file. When using the `--gitcommsg` command with `--diff` (without specifying a file), it will use this configured path:
-
-```bash
-# Set a default diff file path
-ngpt --cli-config set diff /path/to/changes.diff
-```
-
-**Important Note**: The diff file from CLI config is only used when you explicitly provide the `--diff` flag without a specific path. If you don't include the `--diff` flag, the system will always use git staged changes regardless of this setting.
-
-#### chunk-size and analyses-chunk-size
-Controls how many lines are processed in each chunk when chunking is enabled:
-
-```bash
-# Set a custom chunk size for diff processing
-ngpt --cli-config set chunk-size 150
-
-# Set a custom chunk size for analysis processing
-ngpt --cli-config set analyses-chunk-size 150
-```
-
-- `chunk-size`: Controls the size of raw diff chunks (smaller chunks for very large diffs)
-- `analyses-chunk-size`: Controls the size of analysis chunks during recursive processing
-
-Smaller chunks (100-150 lines) work better for very large diffs or models with stricter token limits, while larger chunks (300-500 lines) provide more context but may hit token limits.
-
-#### max-msg-lines and max-recursion-depth
-Controls the commit message condensing process:
-
-```bash
-# Allow longer commit messages
-ngpt --cli-config set max-msg-lines 25
-
-# Increase max recursion depth for extremely large diffs
-ngpt --cli-config set max-recursion-depth 5
-```
-
-- `max-msg-lines`: Maximum number of lines in the final commit message before automatic condensing
-- `max-recursion-depth`: Maximum number of recursive analysis or condensing rounds allowed
-
-Higher recursion depth values allow processing larger diffs but may increase processing time.
-
-### Context-Aware Application
-
-Each option configured via `--cli-config` is only applied if it's relevant to the current execution mode and if it wasn't already specified as a command-line argument.
-
-## Smart Profile Selection
-
-One of the most powerful features of CLI configuration is the ability to set your preferred model provider, which will then be automatically selected when running any command:
-
-```bash
-# Set your preferred provider
-ngpt --cli-config set provider Gemini
-
-# Now all commands will use the Gemini provider by default
-ngpt "Tell me about quantum computing"
-# This uses the Gemini provider without having to specify --provider Gemini
-```
-
-This works because NGPT checks the CLI configuration for `provider` (or `config-index`) before loading the main configuration profile, and then uses that value when selecting which profile to load.
-
-## Programmatic Access to CLI Configuration
-
-You can also access and modify the CLI configuration programmatically in your applications:
-
-```python
-from ngpt.utils.cli_config import (
-    load_cli_config,
-    set_cli_config_option,
-    get_cli_config_option,
-    unset_cli_config_option,
-    apply_cli_config
-)
-
-# Load the CLI configuration
-cli_config = load_cli_config()
-print(f"Current CLI config: {cli_config}")
-
-# Set a configuration option
-success, message = set_cli_config_option('temperature', '0.8')
-print(message)  # "Option 'temperature' set to '0.8'"
-
-# Get a configuration option
-success, value = get_cli_config_option('temperature')
-print(f"Temperature value: {value}")  # "Temperature value: 0.8"
-
-# Unset a configuration option
-success, message = unset_cli_config_option('temperature')
-print(message)  # "Option 'temperature' removed from configuration"
-
-# Apply CLI configuration to arguments
-args = parser.parse_args()
-args = apply_cli_config(args, mode="interactive")
-```
-
+#### Git Commit Message Mode
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `rec-chunk` | bool | false | Process large diffs in chunks recursively |
+| `diff` | string | - | Path to diff file |
+| `chunk-size` | int | 200 | Lines per chunk when chunking is enabled |
+| `analyses-chunk-size` | int | 200 | Lines per chunk when recursively chunking analyses |
+| `max-msg-lines` | int | 20 | Maximum lines in commit message before condensing |
+| `max-recursion-depth` | int | 3 | Maximum recursion depth for commit message condensing |
 
 ## Examples
 
-### Setting Default Options
+### Setting Up a Development Environment
 
 ```bash
-# Set default language to TypeScript for code generation
-ngpt --cli-config set language typescript
+# Set Python as default language
+ngpt --cli-config set language python
 
-# Always use a higher temperature for more creative responses
-ngpt --cli-config set temperature 0.9
-
-# Always enable pretty markdown rendering
+# Enable pretty markdown rendering by default
 ngpt --cli-config set prettify true
 
-# Set default provider to use
-ngpt --cli-config set provider Gemini
-
-# Enable recursive chunking for git commit messages by default
-ngpt --cli-config set rec-chunk true
-
-# Set a default diff file path for git commit messages
-ngpt --cli-config set diff /path/to/changes.diff
-
-# Set custom chunk sizes for git commit message processing
-ngpt --cli-config set chunk-size 150
-ngpt --cli-config set analyses-chunk-size 150
-
-# Control commit message formatting
-ngpt --cli-config set max-msg-lines 25
-ngpt --cli-config set max-recursion-depth 5
+# Set temperature for more deterministic responses
+ngpt --cli-config set temperature 0.3
 ```
 
-### Using CLI Configuration
-
-After setting CLI configuration options, you can run commands without specifying those options:
+### Setting Up a Creative Writing Environment
 
 ```bash
-# Before configuration:
-ngpt -c --language typescript "write a sorting function"
+# Increase temperature for more creative responses
+ngpt --cli-config set temperature 1.2
 
-# After setting language=typescript in CLI config:
-ngpt -c "write a sorting function"
-# The TypeScript language will be used automatically
+# Reduce top_p for more focused but varied outputs
+ngpt --cli-config set top_p 0.9
+
+# Enable web search for more informed responses
+ngpt --cli-config set web-search true
 ```
 
-### Context-Aware Application
+### Setting Up for Git Workflow
 
-Each option is only applied in the appropriate context:
+```bash
+# Enable recursive chunking for large diffs
+ngpt --cli-config set rec-chunk true
 
-- The `language` option only affects code generation mode (`-c`)
-- The `log` option only affects interactive and text modes (`-i`, `-t`)
-- The git commit message options only affect the gitcommsg mode (`--gitcommsg`)
+# Increase chunk size for more context
+ngpt --cli-config set chunk-size 300
 
-## CLI Configuration File
+# Limit commit message lines
+ngpt --cli-config set max-msg-lines 15
+```
 
-The CLI configuration is stored in a JSON file at:
+## Priority Order
 
-- Linux: `~/.config/ngpt/ngpt-cli.conf`
-- macOS: `~/Library/Application Support/ngpt/ngpt-cli.conf`
-- Windows: `%APPDATA%\ngpt\ngpt-cli.conf`
+CLI configuration values are applied with this priority (highest to lowest):
 
-The file contains a simple JSON object with option-value pairs. You can edit this file directly if needed, but using the `--cli-config` command is the recommended approach.
+1. Command-line arguments (directly passed to ngpt)
+2. CLI configuration settings (from ngpt-cli.conf)
+3. Built-in defaults
 
-## Implementation Details
+This means you can always override your configured defaults by specifying options directly on the command line.
 
-The CLI configuration system is designed to efficiently handle both main profile selection and specific option settings:
+## Notes and Tips
 
-1. Command line arguments are explicitly provided by the user and take highest priority.
-2. CLI configuration is loaded early in the execution process to influence which profile is selected.
-3. Mutual exclusivity is enforced when setting options via `--cli-config set`.
-4. Option values are only applied to the current command if they are relevant to its mode. 
+- Settings are applied based on context (e.g., language only applies to code generation mode)
+- Boolean options can be set to `true` or `false` (both case-insensitive)
+- Sensitive data like API keys should NOT be stored in CLI configuration; use the main configuration system instead
+- The configuration file is a simple JSON file that can be manually edited if necessary
+- Changes to configuration take effect immediately in new commands
 
-For more information about the CLI configuration API, see the [CLI Framework Documentation](./cli_framework.md).
+## Troubleshooting
+
+### Configuration Not Applied
+
+If your configuration is not being applied:
+
+1. Verify the setting exists with `ngpt --cli-config list`
+2. Check the current value with `ngpt --cli-config get OPTION`
+3. Ensure you're not overriding it with a command-line argument
+4. Check for exclusive options that might conflict
+
+### Resetting All Configuration
+
+To reset all CLI configuration to defaults:
+
+1. Delete the configuration file:
+   ```bash
+   # Linux/macOS
+   rm ~/.config/ngpt/ngpt-cli.conf
+   
+   # Windows (PowerShell)
+   Remove-Item $env:APPDATA\ngpt\ngpt-cli.conf
+   ```
+2. Or unset each option individually:
+   ```bash
+   ngpt --cli-config get | grep -v "Available options" | cut -d':' -f1 | xargs -I{} ngpt --cli-config unset {}
+   ``` 

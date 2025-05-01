@@ -70,17 +70,21 @@ def chat_mode(client, args, logger=None):
             print(f"{COLORS['yellow']}Warning: Failed to enhance prompt with web search: {str(e)}{COLORS['reset']}")
             # Continue with the original prompt if web search fails
         
-    # Create messages array with preprompt if available
-    messages = None
-    if args.preprompt:
-        # Log the system message if logging is enabled
-        if logger:
-            logger.log("system", args.preprompt)
-            
-        messages = [
-            {"role": "system", "content": args.preprompt},
-            {"role": "user", "content": prompt}
-        ]
+    # Create messages array with system prompt
+    default_system_prompt = "You are a helpful assistant."
+    if args.prettify or args.stream_prettify:
+        default_system_prompt += " You can use markdown formatting in your responses where appropriate."
+    
+    system_prompt = args.preprompt if args.preprompt else default_system_prompt
+    
+    # Log the system message if logging is enabled
+    if logger:
+        logger.log("system", system_prompt)
+        
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": prompt}
+    ]
     
     # Set default streaming behavior based on --no-stream and --prettify arguments
     should_stream = not args.no_stream and not args.prettify

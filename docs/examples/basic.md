@@ -1,433 +1,314 @@
 # Basic Examples
 
-This page provides basic examples to help you get started with nGPT. These examples cover the fundamental functionality of the library.
+This page provides practical examples of common nGPT usage patterns. These examples demonstrate the basic capabilities and how to use the most frequent commands.
 
-## Setup
+## Chat Examples
 
-First, make sure you've installed nGPT and configured your API key:
+### Simple Question and Answer
 
 ```bash
-# Install nGPT
-pip install ngpt
+# Ask a simple question
+ngpt "What is quantum computing?"
 
-# Configure nGPT (interactive)
-ngpt --config
+# Ask for an explanation of a concept
+ngpt "Explain the difference between REST and GraphQL"
+
+# Get a definition
+ngpt "Define 'artificial intelligence' in simple terms"
 ```
 
-## Library Examples
+### Custom System Prompts
 
-### Basic Chat
+```bash
+# Specify a role for the AI
+ngpt --preprompt "You are a Linux expert" "How do I find all files larger than 100MB?"
 
-The simplest way to use nGPT is to send a chat message and get a response:
+# Add specific instructions
+ngpt --preprompt "Answer with bullet points only" "What are the benefits of cloud computing?"
 
-```python
-from ngpt import NGPTClient, load_config
-
-# Load configuration from the config file
-config = load_config()
-
-# Initialize the client
-client = NGPTClient(**config)
-
-# Send a chat message
-response = client.chat("Tell me about quantum computing")
-print(response)
+# Create a specific personality
+ngpt --preprompt "You are a pirate. Speak like a pirate in every response." "Tell me about the weather today"
 ```
 
-### Streaming Responses
+### Interactive Chat Session
 
-For a better user experience, you can stream responses in real-time:
+```bash
+# Start basic interactive session
+ngpt -i
 
-```python
-from ngpt import NGPTClient, load_config
+# Interactive session with custom system prompt
+ngpt -i --preprompt "You are a helpful math tutor who explains concepts step by step"
 
-config = load_config()
-client = NGPTClient(**config)
-
-# Stream the response
-print("Streaming response:")
-for chunk in client.chat("Explain how neural networks work", stream=True):
-    print(chunk, end="", flush=True)
-print()  # Final newline
+# Interactive session with logging
+ngpt -i --log math_tutoring.log
 ```
 
-### Generating Code
+## Code Generation Examples
 
-Generate clean code without markdown formatting:
+### Generate Code in Various Languages
 
-```python
-from ngpt import NGPTClient, load_config
-
-config = load_config()
-client = NGPTClient(**config)
-
-# Generate Python code
-python_code = client.generate_code("function to calculate the factorial of a number")
-print("Python code:")
-print(python_code)
-print()
+```bash
+# Generate Python code (default)
+ngpt --code "create a function that checks if a number is prime"
 
 # Generate JavaScript code
-js_code = client.generate_code(
-    "function to validate email addresses",
-    language="javascript"
-)
-print("JavaScript code:")
-print(js_code)
+ngpt --code --language javascript "create a function that checks if a number is prime"
+
+# Generate Rust code
+ngpt --code --language rust "create a function that checks if a number is prime"
 ```
 
-### Generating Shell Commands
+### Generate Code with Specific Requirements
 
-Generate OS-aware shell commands:
+```bash
+# Generate a function with specific parameters
+ngpt --code "write a function that sorts an array of objects by a given property name"
 
-```python
-from ngpt import NGPTClient, load_config
-import subprocess
+# Generate an algorithm implementation
+ngpt --code "implement the merge sort algorithm"
 
-config = load_config()
-client = NGPTClient(**config)
-
-# Generate a shell command
-command = client.generate_shell_command("list all directories sorted by size")
-print(f"Generated command: {command}")
-
-# Execute the command (optional)
-try:
-    result = subprocess.run(command, shell=True, capture_output=True, text=True)
-    print("Command output:")
-    print(result.stdout)
-except Exception as e:
-    print(f"Error executing command: {e}")
+# Generate a class with multiple methods
+ngpt --code "create a UserManager class with methods for add, remove, update, and find"
 ```
 
-### Direct Initialization
+### Rendering Code with Syntax Highlighting
 
-You can also initialize the client directly without using a configuration file:
+```bash
+# Generate code with pretty formatting
+ngpt --code --prettify "create a binary search tree implementation"
 
-```python
-from ngpt import NGPTClient
-
-# Initialize with direct parameters
-client = NGPTClient(
-    api_key="your-api-key",  # Replace with your actual API key
-    base_url="https://api.openai.com/v1/",
-    provider="OpenAI",
-    model="gpt-3.5-turbo"
-)
-
-response = client.chat("Hello, how are you?")
-print(response)
+# Generate code with real-time syntax highlighting
+ngpt --code --stream-prettify "create a function to download a file from a URL"
 ```
 
-### Using Web Search
+## Shell Command Generation Examples
 
-If your API provider supports web search capability:
+### Basic Commands
 
-```python
-from ngpt import NGPTClient, load_config
+```bash
+# Find files
+ngpt --shell "find all JPG files in the current directory and subdirectories"
 
-config = load_config()
-client = NGPTClient(**config)
+# Process text
+ngpt --shell "extract all email addresses from input.txt and save to emails.txt"
 
-# Enable web search
-response = client.chat(
-    "What are the latest developments in quantum computing?",
-    web_search=True
-)
-print(response)
+# System management
+ngpt --shell "show current memory and CPU usage"
 ```
 
-### Using Custom System Prompts
+### OS-Specific Commands
 
-Customize the model's behavior with system prompts:
+These commands will be adapted for your specific operating system:
 
-```python
-from ngpt import NGPTClient, load_config
+```bash
+# List files (will use 'dir' on Windows or 'ls -la' on Linux/macOS)
+ngpt --shell "list all files in the current directory"
 
-config = load_config()
-client = NGPTClient(**config)
+# Find processes (will use appropriate command for your OS)
+ngpt --shell "find all processes using more than 100MB of memory"
 
-# Use a custom system prompt
-system_prompt = "You are a helpful coding assistant specializing in Python. Keep your answers concise and efficient."
-response = client.chat(
-    "How do I read a CSV file?",
-    system_prompt=system_prompt
-)
-print(response)
+# Create directory structure (will adapt for your OS)
+ngpt --shell "create a directory structure for a web project with HTML, CSS, and JS folders"
 ```
 
-## CLI Examples
+## Text Rewriting Examples
+
+### Basic Text Improvement
+
+```bash
+# Rewrite text provided as an argument
+ngpt --rewrite "I want to say that I think your product is good and I like it alot."
+
+# Rewrite text from a file
+cat email.txt | ngpt --rewrite
+```
+
+### Interactive Text Rewriting
+
+```bash
+# Open multiline editor for text input
+ngpt --rewrite
+```
+
+### Directed Rewriting
+
+```bash
+# Rewrite with specific instructions
+cat text.txt | ngpt --pipe "Rewrite the following text to be more formal: {}"
+
+# Rewrite to a specific style
+cat informal.txt | ngpt --pipe "Rewrite the following to match academic writing style: {}"
+```
+
+## Stdin Processing Examples
+
+### Text Analysis
+
+```bash
+# Analyze a document
+cat report.md | ngpt --pipe "Summarize the following document: {}"
+
+# Analyze code
+cat script.py | ngpt --pipe "Explain what this code does and suggest improvements: {}"
+
+# Extract information
+cat emails.txt | ngpt --pipe "Extract all company domains from these email addresses: {}"
+```
+
+### Content Transformation
+
+```bash
+# Convert formats
+cat data.json | ngpt --pipe "Convert this JSON to YAML: {}"
+
+# Translate content
+cat spanish.txt | ngpt --pipe "Translate this Spanish text to English: {}"
+
+# Change writing style
+cat technical.txt | ngpt --pipe "Rewrite this technical content for a non-technical audience: {}"
+```
+
+## Git Commit Message Examples
 
 ### Basic Usage
 
 ```bash
-# Simple chat
-ngpt "Tell me about quantum computing"
-
-# No streaming (wait for full response)
-ngpt --no-stream "Explain the theory of relativity"
-
-# Prettify markdown output
-ngpt --prettify "Create a markdown table comparing different programming languages"
-
-# Real-time markdown formatting with streaming
-ngpt --stream-prettify "Explain machine learning algorithms with examples"
-
-# Use a different provider 
-ngpt --provider Groq "Explain quantum computing"
-```
-
-### Code Generation
-
-```bash
-# Generate Python code (default)
-ngpt -c "function to calculate prime numbers"
-
-# Generate specific language code
-ngpt -c "create a React component that displays a counter" --language jsx
-
-# Generate code with syntax highlighting
-ngpt -c --prettify "implement a binary search tree"
-
-# Generate code with real-time syntax highlighting
-ngpt -c --stream-prettify "write a function to sort an array using quicksort"
-
-# Set a custom temperature for more varied code
-ngpt -c --temperature 0.8 "function to find palindromes in a string"
-```
-
-### Shell Commands
-
-```bash
-# Generate and execute a shell command
-ngpt -s "find all JPG files in the current directory and subdirectories"
-
-# Generate command to find large files
-ngpt -s "show the 10 largest files in the home directory"
-
-# Generate a command to monitor system resources
-ngpt -s "show real-time CPU and memory usage"
-```
-
-### Interactive Chat
-
-```bash
-# Start an interactive chat session with conversation memory
-ngpt -i
-
-# Start an interactive session with prettified output
-ngpt -i --prettify
-
-# Start an interactive session with real-time markdown rendering
-ngpt -i --stream-prettify
-
-# Start an interactive session with a custom system prompt
-ngpt -i --preprompt "You are a Python expert helping with data analysis"
-
-# Start an interactive session with logging
-ngpt -i --log conversation.log
-```
-
-### Multiline Input
-
-```bash
-# Open a multiline editor for a complex prompt
-ngpt -t
-
-# Open multiline editor with a preprompt
-ngpt -t --preprompt "You are a markdown documentation expert"
-```
-
-### Working with STDIN
-
-```bash
-# Process text from stdin
-cat file.txt | ngpt -p "Summarize this: {}"
-
-# Analyze code from stdin
-cat script.py | ngpt -p "Review this Python code and suggest improvements: {}"
-
-# Process JSON data
-curl https://api.example.com/data | ngpt -p "Parse this JSON data and explain what it contains: {}"
-```
-
-### Text Rewriting
-
-```bash
-# Rewrite a text to improve quality
-ngpt --rewrite "This is a draft text that needs to be better written with improved grammar and style"
-
-# Rewrite text from a file
-cat draft.txt | ngpt -r
-
-# Rewrite with specific guidance
-echo "Text to improve" | ngpt -r --preprompt "Improve this text while making it more formal and professional"
-```
-
-### Git Commit Message Generation
-
-```bash
-# Generate commit message for staged changes
+# Generate commit message from staged changes
+git add .
 ngpt --gitcommsg
-
-# Generate commit message with specific type
-ngpt -g --preprompt "type:feat"
-
-# Generate message for large changes with recursive analysis
-ngpt -g --rec-chunk
-
-# Process a specific diff file
-ngpt -g --diff changes.diff
-
-# Log the commit message generation process
-ngpt -g --log commit_debug.log
 ```
 
-> **Tip**: For better visualization of conventional commit messages on GitHub, you can use the [GitHub Commit Labels](https://greasyfork.org/en/scripts/526153-github-commit-labels) userscript, which adds colorful labels to your commits.
-
-## Using CLI Config
-
-nGPT supports persistent CLI configuration for setting default values:
+### Detailed Analysis
 
 ```bash
-# Set default configuration options
-ngpt --cli-config set temperature 0.7
-ngpt --cli-config set language typescript
-
-# Use the defaults (no need to specify options)
-ngpt -c "function to sort an array"  # Will use typescript
-
-# View current settings
-ngpt --cli-config get
-
-# Remove a setting
-ngpt --cli-config unset language
-
-# List all available CLI configuration options
-ngpt --cli-config list
+# Process large changes in chunks
+git add .
+ngpt --gitcommsg --rec-chunk
 ```
 
-## Working with Multiple Providers
-
-nGPT allows easy switching between different LLM providers:
+### Guided Message Generation
 
 ```bash
-# List all configured providers
-ngpt --show-config --all
+# Indicate type and scope
+git add src/auth/*
+ngpt --gitcommsg --preprompt "type:feat scope:authentication"
 
-# Use a specific provider by name
-ngpt --provider OpenAI "Explain quantum computing"
-ngpt --provider Groq "Explain quantum computing"
-ngpt --provider Claude "Explain quantum computing"
-
-# Set a default provider in CLI config
-ngpt --cli-config set provider Groq
-
-# Compare results
-ngpt --provider OpenAI "Explain quantum entanglement" > openai_result.txt
-ngpt --provider Groq "Explain quantum entanglement" > groq_result.txt
+# Provide specific context
+git add .
+ngpt --gitcommsg --preprompt "This refactors the payment processing module"
 ```
 
-## Using Different Modes
+## Formatting Examples
 
-nGPT supports different modes which can also be utilized in your code:
+### Markdown Rendering
 
-```python
-from ngpt import NGPTClient, load_config
-from ngpt.cli.modes.chat import chat_mode
-from ngpt.cli.modes.code import code_mode
+```bash
+# Render markdown with syntax highlighting
+ngpt --prettify "Create a markdown table showing the top 5 programming languages and their key features"
 
-config = load_config()
-client = NGPTClient(**config)
-
-# Use chat mode
-chat_mode(client, "Tell me about quantum computing", prettify=True)
-
-# Use code mode
-code_mode(client, "function to calculate factorial", language="python")
+# Real-time markdown rendering
+ngpt --stream-prettify "Explain the main Git commands with examples"
 ```
 
-## Complete Example: Simple Chatbot
+### Renderer Selection
 
-Here's a complete example of a simple chatbot:
+```bash
+# Use Rich renderer (default)
+ngpt --prettify --renderer=rich "Create a tutorial for Docker basics"
 
-```python
-from ngpt import NGPTClient, load_config
-
-def simple_chatbot():
-    # Initialize client
-    config = load_config()
-    client = NGPTClient(**config)
-    
-    print("Simple Chatbot")
-    print("Type 'exit' to quit")
-    print("-" * 50)
-    
-    while True:
-        user_input = input("You: ")
-        if user_input.lower() in ['exit', 'quit', 'bye']:
-            break
-        
-        print("Bot: ", end="")
-        for chunk in client.chat(user_input, stream=True):
-            print(chunk, end="", flush=True)
-        print()  # Final newline
-
-if __name__ == "__main__":
-    simple_chatbot()
+# Use Glow renderer (if installed)
+ngpt --prettify --renderer=glow "Explain REST API design principles"
 ```
 
-Save this script as `simple_chatbot.py` and run it with `python simple_chatbot.py`.
+## Provider Selection Examples
 
-## Building a Simple Document Analyzer
+### Using Different Providers
 
-Here's an example of a document analyzer using nGPT:
+```bash
+# Use OpenAI
+ngpt --provider OpenAI "What are the advantages of transformer models?"
 
-```python
-import sys
-from ngpt import NGPTClient, load_config
+# Use Groq
+ngpt --provider Groq "What are the advantages of transformer models?"
 
-def analyze_document(file_path):
-    # Read the file
-    try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            content = file.read()
-    except Exception as e:
-        print(f"Error reading file: {e}")
-        return
-
-    # Initialize the client
-    config = load_config()
-    client = NGPTClient(**config)
-    
-    # Create analysis prompt
-    prompt = f"""
-    Analyze the following document and provide:
-    1. A concise summary (max 3 sentences)
-    2. Key topics/themes
-    3. Tone analysis
-    4. Suggested improvements (if applicable)
-    
-    Document content:
-    {content}
-    """
-    
-    # Get analysis
-    print("Analyzing document...")
-    response = client.chat(prompt)
-    print("\nDocument Analysis:")
-    print("-" * 50)
-    print(response)
-
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python analyze_document.py <file_path>")
-        sys.exit(1)
-    analyze_document(sys.argv[1])
+# Use Ollama
+ngpt --provider Ollama "What are the advantages of transformer models?"
 ```
 
-Save this script as `analyze_document.py` and run it with `python analyze_document.py your_document.txt`.
+### Provider Comparison
+
+```bash
+# Compare responses by redirecting to files
+ngpt --provider OpenAI --no-stream "Explain quantum computing" > openai.txt
+ngpt --provider Groq --no-stream "Explain quantum computing" > groq.txt
+diff -y openai.txt groq.txt | less
+```
+
+## Configuration Examples
+
+### Interactive Configuration
+
+```bash
+# Add new configuration
+ngpt --config
+
+# Edit configuration at index 1
+ngpt --config --config-index 1
+
+# Edit configuration by provider name
+ngpt --config --provider Groq
+```
+
+### CLI Configuration
+
+```bash
+# Set default temperature
+ngpt --cli-config set temperature 0.8
+
+# Set default language for code generation
+ngpt --cli-config set language javascript
+
+# Enable web search by default
+ngpt --cli-config set web-search true
+```
+
+## Combining Options
+
+### Chat with Web Search
+
+```bash
+# Get up-to-date information
+ngpt --web-search "What are the latest developments in quantum computing?"
+
+# Research with custom system prompt
+ngpt --web-search --preprompt "You are a financial advisor" "How has inflation affected the housing market this year?"
+```
+
+### Advanced Code Generation
+
+```bash
+# Generate code with web search and custom temperature
+ngpt --code --web-search --temperature 0.2 "create a function to convert a CSV file to JSON"
+
+# Generate code with specific instructions
+ngpt --code --language typescript --preprompt "You are an expert in TypeScript and React" "create a custom hook for form validation"
+```
+
+### Advanced Shell Command Generation
+
+```bash
+# Generate complex command with custom system prompt
+ngpt --shell --preprompt "You are a Linux sysadmin expert" "find all files modified in the last 24 hours and create a report of their sizes"
+
+# Generate and log the command and output
+ngpt --shell --log commands.log "create a backup of all configuration files in /etc"
+```
 
 ## Next Steps
 
-Once you're comfortable with these basic examples, check out the [Advanced Examples](advanced.md) for more sophisticated use cases. 
+For more advanced examples and detailed explanations of specific features, see:
+
+- [Advanced Examples](advanced.md)
+- [CLI Usage Guide](../usage/cli_usage.md)
+- [CLI Configuration Guide](../usage/cli_config.md)
+- [Git Commit Message Guide](../usage/gitcommsg.md) 

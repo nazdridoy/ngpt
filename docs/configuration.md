@@ -31,6 +31,30 @@ nGPT uses a flexible configuration system that supports multiple profiles for di
    # Enter model: gemini-2.0-flash
    ```
 
+### Setting Up Ollama
+1. Install Ollama from [ollama.ai](https://ollama.ai/)
+2. Run Ollama locally (it should be running on http://localhost:11434)
+3. Configure nGPT to use Ollama:
+   ```bash
+   ngpt --config
+   # Enter provider: Ollama-Local
+   # Enter API key: (leave blank or press Enter)
+   # Enter base URL: http://localhost:11434/v1/
+   # Enter model: llama3 (or another model you've pulled in Ollama)
+   ```
+
+### Setting Up Groq
+1. Create an account at [Groq](https://console.groq.com/)
+2. Navigate to API Keys and create a new key
+3. Configure nGPT with your Groq key:
+   ```bash
+   ngpt --config
+   # Enter provider: Groq
+   # Enter API key: your-groq-api-key
+   # Enter base URL: https://api.groq.com/openai/v1/
+   # Enter model: llama3-70b-8192 (or another Groq model)
+   ```
+
 ## Configuration File Location
 
 nGPT stores its configuration in a JSON file located at:
@@ -72,29 +96,6 @@ The configuration file uses a JSON list format that allows you to store multiple
 - **base_url**: The base URL for the API endpoint
 - **provider**: A human-readable name for the provider (used for display purposes)
 - **model**: The default model to use with this configuration
-
-## Managing Configurations Programmatically
-
-You can manipulate configurations programmatically using the configuration module:
-
-```python
-from ngpt.utils.config import load_config, get_config_path, get_config_dir
-
-# Get the directory where configs are stored
-config_dir = get_config_dir()
-
-# Get the path to the config file
-config_path = get_config_path()
-
-# Load a specific configuration (default is index 0)
-config = load_config(config_index=0)
-
-# Or load by provider name
-config = load_config(provider="OpenAI")
-
-# Use the configuration
-print(f"Using {config['provider']} with model {config['model']}")
-```
 
 ## Configuration Priority
 
@@ -140,16 +141,16 @@ You can also set configuration options directly via command-line arguments:
 
 - `--api-key <key>`: Specify the API key directly.
 - `--base-url <url>`: Specify the API endpoint URL.
-- `--model <name>`: Specify the AI model name.
+- `--model <n>`: Specify the AI model name.
 - `--config <path>`: Use a specific configuration file.
 - `--config-index <index>`: Select a configuration profile by its index (0-based).
-- `--provider <name>`: Select a configuration profile by its provider name.
+- `--provider <n>`: Select a configuration profile by its provider name.
 - `--show-config [--all]`: Display the current (or all) configuration(s).
 - `--list-models`: List models available for the selected configuration.
 - `--list-renderers`: Show available markdown renderers for use with --prettify.
 - `--config`: Enter interactive mode to add/edit/remove configurations.
-  - Use with `--config-index <index>` or `--provider <name>` to edit.
-  - Use with `--remove` and `--config-index <index>` or `--provider <name>` to remove.
+  - Use with `--config-index <index>` or `--provider <n>` to edit.
+  - Use with `--remove` and `--config-index <index>` or `--provider <n>` to remove.
 
 ### Mode Flags (mutually exclusive)
 
@@ -166,7 +167,7 @@ You can also set configuration options directly via command-line arguments:
 
 - `--no-stream`: Disable streaming output.
 - `--prettify`: Enable formatted markdown/code output (disables streaming).
-  - `--renderer <name>`: Choose the renderer (`auto`, `rich`, `glow`).
+  - `--renderer <n>`: Choose the renderer (`auto`, `rich`, `glow`).
 - `--stream-prettify`: Enable real-time formatted output while streaming (uses Rich).
 
 ### Generation Control Flags
@@ -254,137 +255,72 @@ ngpt --show-config
 ngpt --show-config --all
 ```
 
+## Listing Available Models
+
+To see a list of available models for your active configuration:
+
+```bash
+# List models for active configuration
+ngpt --list-models
+
+# List models for configuration at index 1
+ngpt --list-models --config-index 1
+
+# List models for a specific provider
+ngpt --list-models --provider OpenAI
+```
+
 ## CLI Configuration
 
-nGPT provides a CLI configuration system that allows you to set default values for command-line options, so you don't need to specify the same options repeatedly.
+nGPT also supports a CLI configuration system for setting default parameter values. See the [CLI Configuration Guide](usage/cli_config.md) for details.
 
-### Configuration File Location
+## Troubleshooting
 
-The CLI configuration is stored in a separate JSON file at:
+### Common Configuration Issues
 
-- **Linux**: `~/.config/ngpt/ngpt-cli.conf`
-- **macOS**: `~/Library/Application Support/ngpt/ngpt-cli.conf`
-- **Windows**: `%APPDATA%\ngpt\ngpt-cli.conf`
-
-### Managing CLI Settings
-
-You can manage CLI configuration with the `--cli-config` command:
-
+**API Key Issues**
 ```bash
-# Set a default value
-ngpt --cli-config set OPTION VALUE
+# Check if your API key is configured
+ngpt --show-config
 
-# Get current value(s)
-ngpt --cli-config get [OPTION]
+# Verify a connection to the API endpoint
+curl -s -o /dev/null -w "%{http_code}" https://api.openai.com/v1/chat/completions
 
-# Remove an option
-ngpt --cli-config unset OPTION
-
-# List available options
-ngpt --cli-config list
-
-# Show help for CLI config
-ngpt --cli-config help
+# Set a new API key temporarily
+ngpt --api-key "your-key-here" "Test prompt"
 ```
 
-### Available CLI Configuration Options
-
-The following options can be configured persistently:
-
-- General options (available in all modes):
-  - `provider`: Select configuration profile by provider name
-  - `temperature`: Set temperature for generations
-  - `top_p`: Set top_p value for generations
-  - `max_tokens`: Set maximum tokens for response
-  - `log`: Set default log file path
-  - `preprompt`: Set default preprompt guidance
-  - `no-stream`: Disable streaming by default
-  - `prettify`: Enable formatted output by default
-  - `stream-prettify`: Enable streaming with formatting
-  - `renderer`: Set default markdown renderer
-  - `config-index`: Set default configuration index
-  - `web-search`: Enable web search capability by default
-
-- Code generation mode options:
-  - `language`: Set default programming language
-
-- Git commit message mode options:
-  - `preprompt`: Set default preprompt guidance
-  - `rec-chunk`: Enable recursive chunking by default
-  - `diff`: Set default diff file path
-  - `chunk-size`: Set default chunk size
-  - `analyses-chunk-size`: Set default analyses chunk size
-  - `max-msg-lines`: Set default maximum message lines
-  - `max-recursion-depth`: Set default maximum recursion depth
-
-### Example CLI Configuration Usage
-
+**Model Availability Issues**
 ```bash
-# Set default language to JavaScript for code generation
-ngpt --cli-config set language javascript
+# Check which models are available
+ngpt --list-models
 
-# Set default temperature
-ngpt --cli-config set temperature 0.9
-
-# Enable streaming with prettify by default
-ngpt --cli-config set stream-prettify true
-
-# Set default provider
-ngpt --cli-config set provider Groq
-
-# Enable recursive chunking for git commit messages
-ngpt --cli-config set rec-chunk true
-
-# Check current temperature setting
-ngpt --cli-config get temperature
-
-# Show all current CLI settings
-ngpt --cli-config get
-
-# Remove language setting
-ngpt --cli-config unset language
+# Try a different model
+ngpt --model gpt-3.5-turbo "Test prompt"
 ```
 
-## Examples
-
-### Using Multiple Providers
-
-The multiple configuration support allows you to easily switch between different providers:
-
+**Base URL Issues**
 ```bash
-# Use OpenAI (config at index 0)
-ngpt --config-index 0 "Tell me about quantum computing"
+# Check if your base URL is correct
+ngpt --show-config
 
-# Use Groq (config at index 1)
-ngpt --config-index 1 "Tell me about quantum computing"
-
-# Use local Ollama (config at index 2)
-ngpt --config-index 2 "Tell me about quantum computing"
-
-# Or use provider names instead of indices (more intuitive)
-ngpt --provider OpenAI "Tell me about quantum computing"
-ngpt --provider Groq "Tell me about quantum computing"
-ngpt --provider Ollama-Local "Tell me about quantum computing"
+# Try an alternative base URL
+ngpt --base-url "https://alternative-endpoint.com/v1/" "Test prompt"
 ```
 
-### Programmatically Loading Configurations
+### Securing Your Configuration
 
-In your Python code, you can load and use different configurations:
+Your API keys are stored in the configuration file. To ensure they remain secure:
 
-```python
-from ngpt import NGPTClient, load_config
+1. Ensure the configuration file has appropriate permissions: `chmod 600 ~/.config/ngpt/ngpt.conf`
+2. For shared environments, consider using environment variables instead
+3. Don't share your configuration file or API keys with others
+4. If you suspect your key has been compromised, regenerate it from your API provider's console
 
-# Load OpenAI configuration by index
-openai_config = load_config(config_index=0)
-openai_client = NGPTClient(**openai_config)
+## Next Steps
 
-# Load Groq configuration by provider name
-groq_config = load_config(provider="Groq")
-groq_client = NGPTClient(**groq_config)
+After configuring nGPT, explore:
 
-# Use the clients
-openai_response = openai_client.chat("Hello from OpenAI")
-groq_response = groq_client.chat("Hello from Groq")
-```
-
-For more details on using the library, see the [Library Usage](usage/library_usage.md) guide. 
+- [CLI Usage Guide](usage/cli_usage.md) for general usage information
+- [CLI Configuration Guide](usage/cli_config.md) for setting up default CLI options
+- [Basic Examples](examples/basic.md) for common usage patterns 

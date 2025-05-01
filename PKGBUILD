@@ -2,7 +2,7 @@
 pkgname=ngpt
 pkgver=0.0.0  # Automatically updated by CI on release
 pkgrel=1
-pkgdesc="Swiss army knife for LLMs: powerful CLI, interactive chatbot, and flexible Python library. Works with OpenAI, Ollama, Groq, Claude, Gemini, and any OpenAI-compatible API."
+pkgdesc="Swiss army knife for LLMs: powerful CLI and interactive chatbot in one package. Seamlessly work with OpenAI, Ollama, Groq, Claude, Gemini, or any OpenAI-compatible API to generate code, craft git commits, rewrite text, and execute shell commands."
 arch=('any')
 url="https://github.com/nazdridoy/ngpt"
 license=('MIT')

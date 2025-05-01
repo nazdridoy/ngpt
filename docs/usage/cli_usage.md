@@ -2,20 +2,6 @@
 
 This guide provides comprehensive documentation on how to use nGPT as a command-line interface (CLI) tool.
 
-## Installation
-
-First, ensure you have nGPT installed:
-
-```bash
-pip install ngpt
-```
-
-For all features including rich markdown rendering and interactive mode:
-
-```bash
-pip install "ngpt[full]"
-```
-
 ## Basic Usage
 
 The most basic way to use nGPT from the command line is to provide a prompt:
@@ -58,10 +44,10 @@ Below is a comprehensive list of all available command-line options, organized b
 |--------|-------------|
 | `--api-key <key>` | API key for the service (overrides stored configuration) |
 | `--base-url <url>` | Base URL for the API endpoint (overrides stored configuration) |
-| `--model <name>` | Model to use for this request (overrides stored configuration) |
+| `--model <n>` | Model to use for this request (overrides stored configuration) |
 | `--config <path>` | Path to a custom configuration file or, when used without a value, enters interactive configuration mode |
 | `--config-index <index>` | Index of the configuration to use (default: 0) |
-| `--provider <name>` | Provider name to identify the configuration to use (alternative to --config-index) |
+| `--provider <n>` | Provider name to identify the configuration to use (alternative to --config-index) |
 | `--show-config` | Show current configuration details and exit |
 | `--all` | Used with `--show-config` to display all configurations instead of just the active one |
 | `--list-models` | List all available models for the selected configuration (can be combined with --config-index) |
@@ -75,7 +61,7 @@ Below is a comprehensive list of all available command-line options, organized b
 | `--no-stream` | Return the whole response without streaming (useful for scripts) |
 | `--prettify` | Render markdown responses and code with syntax highlighting (disables streaming) |
 | `--stream-prettify` | Enable real-time markdown rendering with syntax highlighting while streaming (uses Rich) |
-| `--renderer <name>` | Select which markdown renderer to use with --prettify (auto, rich, or glow) |
+| `--renderer <n>` | Select which markdown renderer to use with --prettify (auto, rich, or glow) |
 | `--list-renderers` | Show available markdown renderers for use with --prettify |
 
 ### Generation Control
@@ -97,7 +83,7 @@ Below is a comprehensive list of all available command-line options, organized b
 | `-v, --version` | Show version information and exit |
 | `-h, --help` | Show help message and exit |
 
-## Feature Details
+## Mode Details
 
 ### Basic Chat
 
@@ -199,824 +185,352 @@ Custom prompts can be used to:
 Generate and execute shell commands appropriate for your operating system:
 
 ```bash
-ngpt -s "find all PDF files in the current directory"
+ngpt --shell "find all jpg files in this directory and resize them to 800x600"
 ```
 
-nGPT will generate an appropriate command based on your operating system, display it, and ask for confirmation before executing it.
+In shell command mode, nGPT:
+1. Generates the appropriate command for your OS
+2. Displays the command
+3. Asks for confirmation before executing it
+4. Shows the command output
 
-#### OS-Awareness
+This is especially useful for complex commands that you can't remember the syntax for, or for OS-specific commands that work differently on different platforms.
 
-The shell command generation is OS-aware and will generate appropriate commands for:
-- Windows (cmd.exe or PowerShell)
-- macOS (bash/zsh)
-- Linux (bash/zsh)
+### Code Generation
 
-For example:
-```bash
-# On Windows might generate
-ngpt -s "list all files" 
-# Generates: dir
-
-# On Linux/macOS might generate
-ngpt -s "list all files"
-# Generates: ls -la
-```
-
-#### Command Confirmation
-
-For safety, nGPT always asks for confirmation before executing commands:
-
-1. The generated command is displayed
-2. You're prompted to confirm (y/N) [Default NO]
-3. Only after confirmation is the command executed
-
-#### Bypassing Confirmation (Advanced)
-
-For automation in scripts, you can bypass the confirmation prompt by piping "y" to the command:
-```bash
-echo "y" | ngpt -s "list files in /tmp directory"
-```
-
-**Note:** Use this with caution as it will execute whatever command is generated without review.
-
-#### Command Examples
+Generate clean code without markdown formatting or explanations:
 
 ```bash
-# Find large files
-ngpt -s "find files larger than 100MB"
-
-# System maintenance
-ngpt -s "clean up temporary files"
-
-# Network diagnostics
-ngpt -s "check if port 8080 is open"
+ngpt --code "create a function that calculates prime numbers up to n"
 ```
 
-### Stdin Mode
-
-nGPT can read input directly from stdin (standard input) using the `-p` or `--pipe` flag. This allows you to pipe the output of other commands into nGPT for processing.
+By default, this generates Python code. To specify a different language:
 
 ```bash
-# Basic stdin usage
-echo "Who are you?" | ngpt -p "answer {}"
+ngpt --code --language javascript "create a function that calculates prime numbers up to n"
 ```
 
-The content from stdin replaces the `{}` placeholder in your prompt. This is useful for:
+You can combine code generation with pretty formatting:
 
-- **Summarizing command output:**
-  ```bash
-  ls -la | ngpt -p "Explain what these files do based on their names: {}"
-  ```
+```bash
+ngpt --code --prettify "create a sorting algorithm"
+```
 
-- **Analyzing log files:**
-  ```bash
-  cat error.log | ngpt -p "What's causing these errors? {}"
-  ```
+Or with real-time syntax highlighting:
 
-- **Summarizing documents:**
-  ```bash
-  cat README.md | ngpt -p "Summarize this documentation: {}"
-  ```
-
-- **Translating text:**
-  ```bash
-  cat french_text.txt | ngpt -p "Translate this French text to English: {}"
-  ```
-
-The `{}` placeholder will be replaced with stdin content. If the placeholder is not found in your prompt, stdin content will be appended to the end of your prompt with a warning.
+```bash
+ngpt --code --stream-prettify "create a binary search tree implementation"
+```
 
 ### Text Rewriting
 
-Use the `-r` or `--rewrite` flag to enhance text quality while preserving the original tone and meaning:
+Improve the quality of text while preserving tone and meaning:
 
 ```bash
+# Rewrite text from a command-line argument
+ngpt --rewrite "This is text that I want to make better without changing its main points."
+
 # Rewrite text from stdin
-cat draft.txt | ngpt -r
+cat text.txt | ngpt --rewrite
 
-# Rewrite text directly from command line
-ngpt -r "Text to improve and polish"
-
-# Open interactive editor for text entry
-ngpt -r
+# Use multiline editor to enter and rewrite text
+ngpt --rewrite
 ```
 
-The rewrite mode is designed to improve:
-- Grammar and spelling
-- Sentence structure
-- Clarity and conciseness
-- Natural flow
-
-While preserving:
-- Original meaning and information content
-- Author's tone (formal/casual/technical/friendly/serious) 
-- Perspective and point of view
-- Style of expression when intentional
-- Technical terminology, jargon, and domain-specific language
-- Facts, data points, quotes, and references
-
-It also maintains formatting elements like:
-- Paragraph breaks and section structures
-- Lists, bullet points, and numbering
-- Code blocks with exact code preservation
-- Markdown formatting (bold, italic, headers)
-- URLs, email addresses, file paths, and variables
-
-Rewrite mode works especially well for:
-- Email drafts
-- Documentation
-- Blog posts
-- Academic writing
-- Resume bullet points
-
-#### Understanding Output
-
-Unlike regular chat mode, rewrite mode returns only the improved text without additional commentary, making it easy to use in scripts and pipelines.
-
-#### Setting Custom Instructions
-
-You can use the `--preprompt` option to guide the rewriting process:
-
-```bash
-# Make the tone more professional
-cat email.txt | ngpt -r --preprompt "Make this more professional and concise"
-
-# Add SEO optimization
-cat blog.md | ngpt -r --preprompt "Optimize this for SEO while maintaining readability"
-```
-
-#### Advanced Rewrite Options
-
-The rewrite mode uses a specialized system prompt that carefully preserves original content while improving its quality. The default system prompt instructs the AI to:
-
-- Fix grammar, spelling, and punctuation errors
-- Improve sentence structure and flow
-- Enhance clarity and readability
-- Make language more concise and precise
-- Replace awkward phrasings with more natural alternatives
-- Break up overlong sentences
-- Convert passive voice to active when appropriate
-- Remove redundancies and filler words
-
-It also adapts to different content types:
-- Technical content: Prioritizes precision and clarity
-- Casual text: Maintains conversational flow
-- Formal writing: Preserves professionalism
-- Emotional content: Maintains emotional resonance
-
-When using custom instructions with `--preprompt`, these supplement rather than replace the underlying rewrite directives.
+The rewrite mode is perfect for:
+- Improving email drafts
+- Polishing documentation
+- Enhancing readability of technical content
+- Fixing grammar and style issues
 
 ### Git Commit Message Generation
 
-The `-g` or `--gitcommsg` flag allows you to generate conventional, high-quality commit messages based on your git staged changes or diff files:
+Generate conventional, detailed commit messages from git diffs:
 
 ```bash
-# Generate commit message from staged changes
-ngpt -g
-
-# Generate commit message with a specific commit type
-ngpt -g -m "type:feat"
+# Generate from staged changes
+ngpt --gitcommsg
 
 # Process large diffs in chunks with recursive analysis
-ngpt -g --rec-chunk
+ngpt --gitcommsg --rec-chunk
 
-# Use a specific diff file instead of staged changes
-ngpt -g --diff /path/to/changes.diff
+# Use a diff file instead of staged changes
+ngpt --gitcommsg --diff path/to/diff_file
 
-# Enable logging for debugging
-ngpt -g --log commit_log.txt
+# With custom context
+ngpt --gitcommsg --preprompt "type:feat"
 ```
 
-#### Message Context Directives
+The generated commit messages follow the [Conventional Commits](https://www.conventionalcommits.org/) format with:
+- Type (feat, fix, docs, etc.)
+- Scope (optional)
+- Subject line
+- Detailed description
+- Breaking changes (if any)
 
-Use the `--preprompt` option to guide the AI with various directives:
-
-```bash
-# Force a specific commit type prefix
-ngpt -g -m "type:feat"
-ngpt -g -m "type:fix"
-
-# Focus only on specific file types
-ngpt -g -m "javascript"
-ngpt -g -m "python"
-
-# Focus on or exclude specific aspects
-ngpt -g -m "focus on auth"
-ngpt -g -m "ignore formatting"
-ngpt -g -m "exclude tests"
-
-# Combine multiple directives
-ngpt -g -m "type:feat focus on UI"
-```
-
-#### Processing Large Diffs
-
-For large diffs or pull requests, use recursive chunking to handle token limits and rate limits:
-
-```bash
-# Set custom chunk size
-ngpt -g --rec-chunk --chunk-size 150
-
-# Set custom analyses chunk size
-ngpt -g --rec-chunk --analyses-chunk-size 150
-
-# Set maximum message lines before condensing
-ngpt -g --rec-chunk --max-msg-lines 25
-
-# Set recursion depth for very large diffs
-ngpt -g --rec-chunk --max-recursion-depth 5
-```
-
-#### Using Diff Files
-
-Instead of using staged changes, you can provide a diff file:
-
-```bash
-# Use a specific diff file
-ngpt -g --diff /path/to/changes.diff
-
-# Use a default diff file from CLI configuration
-ngpt -g --diff
-```
-
-#### Automatic Clipboard Copy
-
-When a commit message is successfully generated, the tool attempts to copy it to your clipboard for easy pasting into your git commit command.
-
-#### Requirements
-
-- Git must be installed and available in your PATH
-- You must be in a git repository
-- For automatic commit message generation, you need staged changes (`git add`)
-
-For detailed documentation on git commit message generation, see the [Git Commit Message Guide](gitcommsg.md).
-
-> **Tip**: For better visualization of conventional commit messages on GitHub, you can use the [GitHub Commit Labels](https://greasyfork.org/en/scripts/526153-github-commit-labels) userscript, which adds colorful labels to your commits.
-
-### Generating Code
-
-Generate clean code without markdown or explanations:
-
-```bash
-ngpt -c "function that calculates the Fibonacci sequence"
-```
-
-This returns only the code, without any surrounding markdown formatting or explanations.
-
-#### Language Selection
-
-You can specify the programming language using the `--language` option:
-
-```bash
-# Generate code in JavaScript
-ngpt -c --language javascript "function to sort an array of numbers"
-
-# Generate code in Java
-ngpt -c --language java "class representing a simple bank account"
-
-# Generate code in TypeScript
-ngpt -c --language typescript "async function to fetch data from an API"
-
-# Generate code in Go
-ngpt -c --language go "function to read a file"
-
-# Generate code in Rust
-ngpt -c --language rust "struct and implementation for a linked list"
-```
-
-The default language is Python if not specified.
-
-#### Saving Generated Code
-
-You can pipe the output directly to a file:
-
-```bash
-# Save generated Python code to a file
-ngpt -c "function to calculate prime numbers" > primes.py
-
-# Save generated JavaScript code
-ngpt -c --language javascript "function to validate email" > validate.js
-```
-
-#### Combining with Other Options
-
-Code generation can be combined with other options:
-
-```bash
-# Generate code with syntax highlighting
-ngpt -c --prettify "implement quicksort algorithm"
-
-# Generate code with real-time syntax highlighting
-ngpt -c --stream-prettify "create a binary search tree class"
-
-# Generate code with web search capability
-ngpt -c --web-search "implement the latest React hooks pattern"
-
-# Generate code with custom system prompt
-ngpt -c --preprompt "Focus on writing clean, well-documented code with clear comments" "implement dijkstra's algorithm"
-
-# Set temperature for more creative coding solutions
-ngpt -c --temperature 0.8 "generate different ways to solve the fibonacci sequence"
-```
+This helps maintain consistent, informative commit history in your projects.
 
 ### Multiline Text Input
 
-Open an interactive editor for entering complex, multiline prompts:
+For complex prompts, use the multiline text editor:
 
 ```bash
-ngpt -t
+ngpt --text
 ```
 
-This opens an editor where you can:
-- Write and edit multiline text with proper indentation
-- Paste long or ill-formatted text
-- Press Ctrl+D or F10 to submit the text
-- Press Esc to cancel
+This opens an interactive editor with:
+- Syntax highlighting
+- Line numbers
+- Copy/paste support
+- Simple editing commands
+- Submission with Ctrl+D
+
+### Processing Stdin
+
+Process piped content by using the `{}` placeholder in your prompt:
+
+```bash
+# Summarize a document
+cat README.md | ngpt --pipe "Summarize this document in bullet points: {}"
+
+# Analyze code
+cat script.py | ngpt --pipe "Explain what this code does and suggest improvements: {}"
+
+# Review text
+cat essay.txt | ngpt --pipe "Provide feedback on this essay: {}"
+```
+
+This is powerful for integrating nGPT into shell scripts and automation workflows.
+
+## Formatting Options
+
+### No Streaming
+
+By default, responses are streamed in real-time. To receive the complete response at once:
+
+```bash
+ngpt --no-stream "Explain quantum computing"
+```
+
+This is useful for:
+- Scripts that process the complete output
+- Redirecting output to files
+- Situations where you prefer to see the full response at once
 
 ### Markdown Rendering
 
-Display markdown responses with beautiful formatting and syntax highlighting:
+Enable beautiful markdown formatting and syntax highlighting:
 
 ```bash
-ngpt --prettify "Explain markdown syntax with examples"
+# Regular markdown rendering (disables streaming)
+ngpt --prettify "Create a markdown table showing top 5 programming languages"
+
+# Real-time markdown rendering (streams with live formatting)
+ngpt --stream-prettify "Explain Big O notation with code examples"
 ```
 
-#### Renderer Options
-
-nGPT supports multiple renderers for displaying formatted markdown:
-
-1. **Rich** (Python library): 
-   - Works in most terminals
-   - Supports syntax highlighting
-   - Animated streaming with `--stream-prettify`
-   
-2. **Glow** (terminal-based):
-   - More advanced markdown rendering
-   - Better table support
-   - Must be installed separately (https://github.com/charmbracelet/glow)
-
-3. **Auto** (default):
-   - Automatically selects the best available renderer
-   - Falls back to plain text if no renderers are available
+You can select different renderers:
 
 ```bash
-# Use Rich renderer
-ngpt --prettify --renderer=rich "Create a markdown table comparing programming languages"
+# Use Rich renderer (default)
+ngpt --prettify --renderer=rich "Create a markdown tutorial"
 
-# Use Glow renderer
-ngpt --prettify --renderer=glow "Write documentation with code examples"
+# Use Glow renderer (if installed)
+ngpt --prettify --renderer=glow "Explain markdown syntax"
 
-# Use automatic selection (default is Rich if available)
-ngpt --prettify --renderer=auto "Explain blockchain with code examples"
+# Let ngpt select the best available (auto)
+ngpt --prettify --renderer=auto "Create a technical document outline"
 ```
 
-#### Real-time Markdown Streaming
+## Configuration Management
 
-For a more dynamic experience, you can watch as formatted markdown and syntax highlighting are applied in real-time while the response is streaming:
+### Interactive Configuration
 
-```bash
-ngpt --stream-prettify "Explain quantum computing with code examples"
-```
-
-This provides both the benefits of streaming (seeing the response as it's generated) and formatting (proper markdown rendering and syntax highlighting).
-
-```bash
-# Differences between --prettify and --stream-prettify
-ngpt --prettify "Explain algorithms"         # Shows fully formatted result at the end
-ngpt --stream-prettify "Explain algorithms"  # Shows formatted result as it arrives
-```
-Notes on `--stream-prettify`:
-- Requires Rich to be installed (`pip install "ngpt[full]"` or `pip install rich`)
-- Only works with the Rich renderer (even if you specify another renderer)
-- Works in both regular and interactive modes
-- Creates a more dynamic and responsive UI experience
-
-#### Checking Available Renderers
-
-To see which renderers are available on your system:
-
-```bash
-ngpt --list-renderers
-```
-
-This will display information about which renderers are installed and which one will be used as the default.
-
-### Environment Variables
-
-nGPT respects several environment variables that can be used to configure its behavior without modifying the configuration file or using command-line arguments:
-
-```bash
-# API credentials
-export OPENAI_API_KEY="your-api-key"
-export OPENAI_BASE_URL="https://api.alternative.com/v1/"
-export OPENAI_MODEL="gpt-4"
-
-```
-
-#### Environment Variable Precedence
-
-Environment variables take precedence over configuration file values but are overridden by command-line arguments:
-
-1. Command-line arguments (highest priority)
-2. Environment variables
-3. CLI configuration (ngpt-cli.conf)
-4. Main configuration file (ngpt.conf)
-5. Default values (lowest priority)
-
-For automation and scripting, environment variables are often the most convenient way to set credentials.
-
-### Using Web Search
-
-Enable web search capability (if your API endpoint supports it):
-
-```bash
-ngpt --web-search "What are the latest developments in quantum computing?"
-```
-
-This allows the AI to access current information from the web when generating a response. This is particularly useful for:
-
-- Getting up-to-date information on current events
-- Answering questions about recent developments
-- Finding the latest documentation or reference material
-- Fact-checking information against online sources
-
-Note that web search capability depends on your API provider supporting this feature.
-
-```bash
-# Combine web search with other options
-ngpt --web-search --prettify "Create a summary of today's top news"
-
-# Use web search in interactive mode
-ngpt -i --web-search
-
-# Use web search for code generation
-ngpt -c --web-search "implement the latest JavaScript fetch API pattern"
-```
-
-## Configuration Options
-
-### Command Line Configuration
-
-The `--cli-config` option provides a way to set persistent default values for command-line options:
-
-```bash
-# Set default values
-ngpt --cli-config set temperature 0.8
-ngpt --cli-config set renderer rich
-ngpt --cli-config set language javascript
-
-# View current settings
-ngpt --cli-config get
-
-# Get a specific setting
-ngpt --cli-config get temperature
-
-# Remove a setting
-ngpt --cli-config unset language
-
-# List all available options that can be configured
-ngpt --cli-config list
-
-# Show help information about CLI configuration
-ngpt --cli-config help
-```
-
-Key features:
-- Stored settings apply automatically to future commands
-- Context-sensitive options (e.g., language only applies in code generation mode)
-- Settings follow priority order: command-line > environment variables > CLI config > main config > defaults
-
-### Configuration Management
-
-#### Viewing Configuration
-
-View your current active configuration:
-
-```bash
-# Show active configuration details
-ngpt --show-config
-
-# Show all stored configurations
-ngpt --show-config --all
-```
-
-#### Selecting Configurations
-
-Select a specific stored configuration by index or provider name:
-
-```bash
-# Use configuration at index 1
-ngpt --config-index 1 "Your prompt here"
-
-# Use configuration with provider name "Gemini"
-ngpt --provider Gemini "Your prompt here"
-```
-
-#### Direct Configuration Override
-
-Specify API credentials directly for a single command (overrides stored configuration):
-
-```bash
-ngpt --api-key "your-key" --base-url "https://api.example.com/v1/" --model "model-name" "Your prompt here"
-```
-
-#### Interactive Configuration
-
-The `--config` option without arguments enters interactive configuration mode:
+Enter interactive configuration mode to set up API keys and endpoints:
 
 ```bash
 # Add a new configuration
 ngpt --config
 
-# Edit an existing configuration at index 1
+# Edit configuration at index 1
 ngpt --config --config-index 1
 
-# Edit an existing configuration by provider name
-ngpt --config --provider Gemini
+# Edit configuration by provider name
+ngpt --config --provider OpenAI
 
-# Remove a configuration at index 2
+# Remove configuration
 ngpt --config --remove --config-index 2
-
-# Remove a configuration by provider name
-ngpt --config --remove --provider Gemini
 ```
 
-In interactive mode:
-- When editing an existing configuration, press Enter to keep the current values
-- When creating a new configuration, press Enter to use default values
-- For security, your API key is not displayed when editing configurations
-- When removing a configuration, you'll be asked to confirm before deletion
+### Show Configuration
 
-#### Available CLI Configuration Options
-
-The list of options that can be set with `--cli-config` includes:
-
-##### General options (all modes):
-- `api-key` - API key for the service
-- `base-url` - Base URL for the API
-- `config-index` - Index of the configuration to use
-- `language` - Programming language for code generation
-- `max_tokens` - Maximum tokens in response
-- `model` - Model to use
-- `no-stream` - Disable streaming responses
-- `preprompt` - Custom system prompt
-- `prettify` - Enable markdown rendering
-- `provider` - Provider name to identify configuration
-- `renderer` - Markdown renderer to use
-- `stream-prettify` - Enable streaming with markdown rendering
-- `temperature` - Temperature setting (0.0-2.0)
-- `top_p` - Top-p parameter (0.0-1.0)
-- `web-search` - Enable web search capability
-
-##### Options for Git commit message mode:
-- `preprompt` - Context to guide AI generation
-- `rec-chunk` - Process large diffs in chunks with recursive analysis
-- `diff` - Path to diff file to use instead of staged changes
-- `chunk-size` - Number of lines per chunk when chunking is enabled
-- `analyses-chunk-size` - Number of lines per chunk for recursive analysis
-- `max-msg-lines` - Maximum number of lines in commit message before condensing
-- `max-recursion-depth` - Maximum recursion depth for message condensing
-
-#### Custom Configuration File
-
-Use a configuration file at a non-standard location:
+View your current configuration:
 
 ```bash
-ngpt --config /path/to/custom-config.json "Your prompt here"
+# Show active configuration
+ngpt --show-config
+
+# Show all configurations
+ngpt --show-config --all
 ```
 
-### Model Management
+### List Available Models
 
-List all available models for the current configuration:
+List models available for your configuration:
 
 ```bash
 # List models for active configuration
 ngpt --list-models
 
-# List models for a specific configuration by index
+# List models for configuration at index 1
 ngpt --list-models --config-index 1
 
-# List models for a specific configuration by provider name
-ngpt --list-models --provider Gemini
+# List models for a specific provider
+ngpt --list-models --provider OpenAI
 ```
 
-This is useful for:
-- Discovering what models are available from your provider
-- Confirming API connectivity
-- Checking model names before setting them in your configuration
+### CLI Configuration
 
-### Version Information
-
-Display the version of nGPT and related environment details:
+Set persistent defaults for command-line options:
 
 ```bash
-ngpt -v
-# or
-ngpt --version
+# Show help
+ngpt --cli-config help
+
+# Set default value
+ngpt --cli-config set temperature 0.8
+
+# Get current value
+ngpt --cli-config get temperature
+
+# Show all CLI settings
+ngpt --cli-config get
+
+# Remove setting
+ngpt --cli-config unset temperature
 ```
+
+For more details, see the [CLI Configuration Guide](cli_config.md).
 
 ## Advanced Usage
 
 ### Combining Options
 
-You can combine various options:
+Many options can be combined for powerful workflows:
 
 ```bash
-# Generate code with web search capability
-ngpt -c --web-search "function to get current weather using an API"
+# Generate code with web search and custom system prompt
+ngpt --code --web-search --preprompt "You are an expert Python developer" "create a function to download and process JSON data from an API"
 
-# Use a specific model and no streaming
-ngpt --model gpt-4o-mini --no-stream "Explain quantum entanglement"
+# Interactive chat with logging and custom temperature
+ngpt -i --log chat.log --temperature 0.9
 
-# Interactive session with custom prompt and logging
-ngpt -i --preprompt "You are a data science tutor" --log datasci_tutoring.txt
+# Shell command with no streaming
+ngpt --shell --no-stream "find all large files and create a report"
 
-# Generate code with syntax highlighting
-ngpt -c --prettify "create a sorting algorithm"
-
-# Generate code with real-time syntax highlighting
-ngpt -c --stream-prettify "implement a binary search tree in JavaScript"
-
-# Render markdown with web search for up-to-date information
-ngpt --prettify --web-search "Create a markdown table of recent SpaceX launches"
-
-# Interactive session with markdown rendering
-ngpt -i --prettify --renderer=rich
-
-# Interactive session with real-time markdown rendering
-ngpt -i --stream-prettify
+# Git commit message with pretty formatting
+ngpt --gitcommsg --prettify
 ```
 
-### Using a Custom Configuration File
+### Provider Selection
 
-Specify a custom configuration file location:
+Switch between different AI providers:
 
 ```bash
-ngpt --config /path/to/custom-config.json "Your prompt here"
+# Use OpenAI
+ngpt --provider OpenAI "Explain quantum computing"
+
+# Use Groq
+ngpt --provider Groq "Explain quantum computing"
+
+# Use Ollama
+ngpt --provider Ollama "Explain quantum computing"
 ```
 
-### Setting Temperature
-
-Control the randomness of responses:
+You can compare responses by saving to files:
 
 ```bash
-# More deterministic responses
-ngpt --temperature 0.2 "Write a poem about autumn"
-
-# More creative responses
-ngpt --temperature 0.9 "Write a poem about autumn"
+ngpt --provider OpenAI --no-stream "Explain quantum computing" > openai.txt
+ngpt --provider Groq --no-stream "Explain quantum computing" > groq.txt
+ngpt --provider Ollama --no-stream "Explain quantum computing" > ollama.txt
+diff -y openai.txt groq.txt | less
 ```
 
-### Setting Top-p (Nucleus Sampling)
+### Piping and Redirection
 
-Control the diversity of responses by adjusting the nucleus sampling parameter:
+nGPT works well with Unix pipes and redirection:
 
 ```bash
-# More focused on likely responses
-ngpt --top_p 0.5 "Give me ideas for a birthday party"
+# Save output to file
+ngpt "Write a short story about AI" > story.txt
 
-# Include more diverse possibilities
-ngpt --top_p 1.0 "Give me ideas for a birthday party"
+# Process file content
+cat data.csv | ngpt -p "Analyze this CSV data and provide insights: {}" > analysis.txt
+
+# Chain commands
+ngpt --code "function to parse CSV" | grep -v "#" > parse_csv.py
 ```
 
-### Limiting Response Length
+### Web Search Integration
 
-Set the maximum response length in tokens:
+Enhance prompts with information from the web:
 
 ```bash
-# Get a concise response
-ngpt --max_tokens 100 "Explain quantum computing"
-
-# Allow for a longer, more detailed response
-ngpt --max_tokens 500 "Write a comprehensive guide to machine learning"
+ngpt --web-search "What are the latest developments in quantum computing?"
 ```
 
-## Examples by Task
-
-### Creative Writing
-
-```bash
-# Generate a short story
-ngpt "Write a 300-word sci-fi story about time travel"
-
-# Write poetry
-ngpt "Write a haiku about mountains"
-```
-
-### Writing & Editing
-
-```bash
-# Improve email drafts
-cat draft_email.txt | ngpt -r
-
-# Enhance documentation clarity
-cat documentation.md | ngpt -r
-
-# Improve resume bullet points
-ngpt -r "Responsible for managing team of 5 developers and ensuring project deadlines were met"
-
-# Edit academic writing for clarity
-cat thesis_chapter.txt | ngpt -r
-
-# Polish blog posts
-cat blog_draft.md | ngpt -r
-```
-
-### Programming Help
-
-```bash
-# Get programming help
-ngpt "How do I read a file line by line in Python?"
-
-# Generate code
-ngpt -c "create a function that validates email addresses using regex"
-```
-
-### Research and Learning
-
-```bash
-# Learn about a topic
-ngpt "Explain quantum computing for beginners"
-
-# Get current information (with web search)
-ngpt --web-search "What are the latest advancements in AI?"
-
-# Learn with a specialized tutor using custom prompt
-ngpt --preprompt "You are an expert physicist explaining concepts to a beginner. Use analogies and simple language." "Explain quantum entanglement"
-```
-
-### Productivity
-
-```bash
-# Generate a shell command
-ngpt -s "find large files over 100MB and list them by size"
-
-# Create a structured document
-ngpt -t
-# (Enter multiline text for generating a complex document)
-
-# Log an important session for reference
-ngpt -i --log project_planning.log --preprompt "You are a project management expert helping plan a software project"
-```
+Note: Web search requires that your API endpoint supports this capability.
 
 ## Troubleshooting
 
-### API Connection Issues
+### Common Issues
 
-If you're having trouble connecting to the API:
-
+**API Key Issues**
 ```bash
-# Check your current configuration
+# Check if API key is set
 ngpt --show-config
 
-# Try specifying the base URL directly
-ngpt --base-url "https://api.example.com/v1/" "Test connection"
+# Set API key temporarily
+ngpt --api-key "your-key-here" "Test prompt"
+
+# Enter interactive configuration to update key
+ngpt --config
 ```
-### Authorization Problems
 
-If you're experiencing authentication issues:
-
+**Connection Problems**
 ```bash
-# Update your API key
-ngpt --config --config-index 0
-# Enter your new API key when prompted
+# Check connection to API endpoint
+curl -s -o /dev/null -w "%{http_code}" https://api.openai.com/v1/chat/completions
 
-# Or specify API key directly (not recommended for sensitive keys)
-ngpt --api-key "your-new-api-key" "Test prompt"
+# Use a different base URL
+ngpt --base-url "https://alternative-endpoint.com/v1/" "Test prompt"
 ```
 
-### Command Not Found
+**Performance Issues**
+```bash
+# Use a smaller, faster model
+ngpt --model gpt-3.5-turbo "Quick question"
 
-If the `ngpt` command is not found after installation:
+# Limit max tokens for faster responses
+ngpt --max_tokens 100 "Give me a brief explanation"
+```
 
-- Ensure Python's bin directory is in your PATH
-- Try using `python -m ngpt` instead of just `ngpt`
-  - This works because of the package's `__main__.py` module
-  - It's particularly useful in virtual environments or when the command isn't in your PATH
-  - All the same arguments and options work with this method: `python -m ngpt -i --prettify`
+### Getting Help
 
-## Tips and Best Practices
+For command-line help:
+```bash
+ngpt --help
+```
 
-1. **Use the right tool for the job**:
-   - Use `-c` for clean code generation
-   - Use `-s` for shell commands
-   - Use `-t` for complex, multiline inputs
+Visit the [GitHub repository](https://github.com/nazdridoy/ngpt) for:
+- Latest documentation
+- Issue reporting
+- Feature requests
+- Contributions
 
-2. **Craft effective prompts**:
-   - Be specific about what you want
-   - Provide context and examples when relevant
-   - Specify format, style, or constraints
+## Next Steps
 
-3. **Leverage configuration profiles**:
-   - Set up different profiles for different API providers
-   - Use lower-cost models for simpler tasks
-   - Reserve more powerful models for complex tasks
-
-4. **Protect API keys**:
-   - Store API keys in your configuration file
-   - Avoid passing API keys directly on the command line
-   - Use environment variables when appropriate
-
-5. **Improve efficiency**:
-   - Use `--no-stream` for faster responses in scripts
-   - Use interactive mode when having a conversation
-   - Exit interactive sessions when not in use to save API costs
+- Learn about [CLI Configuration](cli_config.md)
+- Explore [Git Commit Message Generation](gitcommsg.md)
+- Try [Basic Examples](../examples/basic.md)
+- Check [Advanced Examples](../examples/advanced.md) 
