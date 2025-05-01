@@ -39,11 +39,11 @@ It's fast, lightweight, and designed for both casual users and developers.
 
 Our comprehensive documentation includes:
 
-- [Installation Guide](https://nazdridoy.github.io/ngpt/installation.html) - Quick setup on Linux, Windows, macOS, and Android (Termux)
-- [CLI Usage Guide](https://nazdridoy.github.io/ngpt/usage/cli_usage.html) - Command-line tips and tricks
-- [Library Integration](https://nazdridoy.github.io/ngpt/usage/library_usage.html) - Using nGPT in your Python projects
-- [Configuration Guide](https://nazdridoy.github.io/ngpt/configuration.html) - Setting up API keys and preferences
-- [Examples & Tutorials](https://nazdridoy.github.io/ngpt/examples/basic.html) - Practical examples to get started
+- [Installation Guide](https://nazdridoy.github.io/ngpt/installation/) - Quick setup on Linux, Windows, macOS, and Android (Termux)
+- [CLI Usage Guide](https://nazdridoy.github.io/ngpt/usage/cli_usage/) - Command-line tips and tricks
+- [Configuration Guide](https://nazdridoy.github.io/ngpt/configuration/) - Setting up API keys and preferences
+- [Examples & Tutorials](https://nazdridoy.github.io/ngpt/examples/basic/) - Practical examples to get started
+- [Git Commit Message Generation](https://nazdridoy.github.io/ngpt/usage/gitcommsg/) - Create professional commit messages
 
 ## Quick Start
 
@@ -93,8 +93,8 @@ ngpt -i
 </p>
 
 <p align="center">
-  <a href="https://nazdridoy.github.io/ngpt/installation.html"><img src="https://img.shields.io/badge/Linux-support-blue?logo=linux" alt="Linux"></a>
-  <a href="https://nazdridoy.github.io/ngpt/installation.html"><img src="https://img.shields.io/badge/Windows-support-blue?logo=windows" alt="Windows"></a>
-  <a href="https://nazdridoy.github.io/ngpt/installation.html"><img src="https://img.shields.io/badge/macOS-support-blue?logo=apple" alt="macOS"></a>
-  <a href="https://nazdridoy.github.io/ngpt/installation.html"><img src="https://img.shields.io/badge/Android-Termux-blue?logo=android" alt="Android"></a>
+  <a href="https://nazdridoy.github.io/ngpt/installation/"><img src="https://img.shields.io/badge/Linux-support-blue?logo=linux" alt="Linux"></a>
+  <a href="https://nazdridoy.github.io/ngpt/installation/"><img src="https://img.shields.io/badge/Windows-support-blue?logo=windows" alt="Windows"></a>
+  <a href="https://nazdridoy.github.io/ngpt/installation/"><img src="https://img.shields.io/badge/macOS-support-blue?logo=apple" alt="macOS"></a>
+  <a href="https://nazdridoy.github.io/ngpt/installation/"><img src="https://img.shields.io/badge/Android-Termux-blue?logo=android" alt="Android"></a>
 </p> 

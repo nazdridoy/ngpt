@@ -8,10 +8,10 @@
 </p>
 
 <p align="center">
-  <a href="https://nazdridoy.github.io/ngpt/installation.html"><img src="https://img.shields.io/badge/Linux-support-blue?logo=linux" alt="Linux"></a>
-  <a href="https://nazdridoy.github.io/ngpt/installation.html"><img src="https://img.shields.io/badge/Windows-support-blue?logo=windows" alt="Windows"></a>
-  <a href="https://nazdridoy.github.io/ngpt/installation.html"><img src="https://img.shields.io/badge/macOS-support-blue?logo=apple" alt="macOS"></a>
-  <a href="https://nazdridoy.github.io/ngpt/installation.html"><img src="https://img.shields.io/badge/Android-Termux-blue?logo=android" alt="Android"></a>
+  <a href="https://nazdridoy.github.io/ngpt/installation/"><img src="https://img.shields.io/badge/Linux-support-blue?logo=linux" alt="Linux"></a>
+  <a href="https://nazdridoy.github.io/ngpt/installation/"><img src="https://img.shields.io/badge/Windows-support-blue?logo=windows" alt="Windows"></a>
+  <a href="https://nazdridoy.github.io/ngpt/installation/"><img src="https://img.shields.io/badge/macOS-support-blue?logo=apple" alt="macOS"></a>
+  <a href="https://nazdridoy.github.io/ngpt/installation/"><img src="https://img.shields.io/badge/Android-Termux-blue?logo=android" alt="Android"></a>
 </p> 
 
 🤖 nGPT: A Swiss army knife for LLMs: powerful CLI and interactive chatbot in one package. Seamlessly work with OpenAI, Ollama, Groq, Claude, Gemini, or any OpenAI-compatible API to generate code, craft git commits, rewrite text, and execute shell commands. Fast, lightweight, and designed for both casual users and developers.
@@ -43,7 +43,7 @@
 - 🔄 **Provider Switching**: Easily switch between different LLM providers with a single parameter
 - 🚀 **Performance Optimized**: Fast response times and minimal resource usage
 
-See the [Feature Overview](https://nazdridoy.github.io/ngpt/overview.html) for more details.
+See the [Feature Overview](https://nazdridoy.github.io/ngpt/overview/) for more details.
 
 
 ## Table of Contents
@@ -164,7 +164,7 @@ ngpt --provider OpenAI "Explain quantum physics" > openai_response.txt
 ngpt --provider Ollama "Explain quantum physics" > ollama_response.txt
 ```
 
-For more examples and detailed usage, visit the [CLI Usage Guide](https://nazdridoy.github.io/ngpt/usage/cli_usage.html).
+For more examples and detailed usage, visit the [CLI Usage Guide](https://nazdridoy.github.io/ngpt/usage/cli_usage/).
 
 ## Documentation
 
@@ -173,10 +173,10 @@ Comprehensive documentation, including usage guides and examples, is available a
 **[https://nazdridoy.github.io/ngpt/](https://nazdridoy.github.io/ngpt/)**
 
 Key documentation sections:
-- [Installation Guide](https://nazdridoy.github.io/ngpt/installation.html)
-- [CLI Usage Guide](https://nazdridoy.github.io/ngpt/usage/cli_usage.html)
-- [Configuration Guide](https://nazdridoy.github.io/ngpt/configuration.html)
-- [Examples & Tutorials](https://nazdridoy.github.io/ngpt/examples/basic.html)
+- [Installation Guide](https://nazdridoy.github.io/ngpt/installation/)
+- [CLI Usage Guide](https://nazdridoy.github.io/ngpt/usage/cli_usage/)
+- [Configuration Guide](https://nazdridoy.github.io/ngpt/configuration/)
+- [Examples & Tutorials](https://nazdridoy.github.io/ngpt/examples/basic/)
 
 ## Installation
 
@@ -196,7 +196,7 @@ paru -S ngpt
 
 Requires Python 3.8 or newer.
 
-For detailed installation instructions, see the [Installation Guide](https://nazdridoy.github.io/ngpt/installation.html).
+For detailed installation instructions, see the [Installation Guide](https://nazdridoy.github.io/ngpt/installation/).
 
 ## Usage
 
@@ -248,7 +248,7 @@ ngpt -c "create a python function that calculates fibonacci numbers"
 ngpt -t
 ```
 
-For more CLI examples and detailed usage information, see the [CLI Usage Guide](https://nazdridoy.github.io/ngpt/usage/cli_usage.html).
+For more CLI examples and detailed usage information, see the [CLI Usage Guide](https://nazdridoy.github.io/ngpt/usage/cli_usage/).
 
 ## Configuration
 
@@ -364,7 +364,7 @@ Modes (mutually exclusive)::
 
 > **Note**: For better visualization of conventional commit messages on GitHub, you can use the [GitHub Commit Labels](https://greasyfork.org/en/scripts/526153-github-commit-labels) userscript, which adds colorful labels to your commits.
 
-For a complete reference of all available options, see the [CLI Usage Guide](https://nazdridoy.github.io/ngpt/usage/cli_usage.html).
+For a complete reference of all available options, see the [CLI Usage Guide](https://nazdridoy.github.io/ngpt/usage/cli_usage/).
 
 ### CLI Configuration
 
@@ -437,7 +437,7 @@ CLI Configuration Help:
 
 ```
 
-For more details, see the [CLI Configuration Guide](https://nazdridoy.github.io/ngpt/usage/cli_config.html).
+For more details, see the [CLI Configuration Guide](https://nazdridoy.github.io/ngpt/usage/cli_config/).
 
 ### Interactive Configuration
 
@@ -469,7 +469,7 @@ In interactive mode:
 - For security, your API key is not displayed when editing configurations
 - When removing a configuration, you'll be asked to confirm before deletion
 
-For more details on configuring nGPT, see the [Configuration Guide](https://nazdridoy.github.io/ngpt/configuration.html).
+For more details on configuring nGPT, see the [Configuration Guide](https://nazdridoy.github.io/ngpt/configuration/).
 
 ### Configuration File
 
@@ -505,7 +505,7 @@ The configuration file uses a JSON list format, allowing you to store multiple c
 ]
 ```
 
-For details on the configuration file format and structure, see the [Configuration Guide](https://nazdridoy.github.io/ngpt/configuration.html).
+For details on the configuration file format and structure, see the [Configuration Guide](https://nazdridoy.github.io/ngpt/configuration/).
 
 ### Configuration Priority
 
