@@ -1,3 +1,10 @@
+---
+layout: default
+title: CLI Configuration Guide
+parent: Usage
+nav_order: 2
+---
+
 # CLI Configuration Guide
 
 nGPT offers a CLI configuration system that allows you to set persistent default values for command-line options. This guide explains how to use and manage CLI configurations.

@@ -1,6 +1,7 @@
 ---
+layout: default
 title: Contributing to NGPT
-description: Guidelines and instructions for contributing to the NGPT project
+nav_order: 7
 ---
 
 # Contributing to NGPT

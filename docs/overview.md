@@ -1,3 +1,9 @@
+---
+layout: default
+title: nGPT Overview
+nav_order: 2
+---
+
 # nGPT Overview
 
 ## What is nGPT?

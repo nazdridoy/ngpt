@@ -1,3 +1,10 @@
+---
+layout: default
+title: Basic Examples
+parent: Examples
+nav_order: 1
+---
+
 # Basic Examples
 
 This page provides practical examples of common nGPT usage patterns. These examples demonstrate the basic capabilities and how to use the most frequent commands.

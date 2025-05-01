@@ -1,3 +1,10 @@
+---
+layout: default
+title: Advanced Examples
+parent: Examples
+nav_order: 2
+---
+
 # Advanced Examples
 
 This page provides more complex and advanced examples of using nGPT's capabilities. These examples build on the [basic examples](basic.md) and demonstrate more sophisticated usage patterns.

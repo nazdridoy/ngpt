@@ -1,3 +1,9 @@
+---
+layout: default
+title: Installation Guide
+nav_order: 3
+---
+
 # Installation Guide
 
 This guide provides detailed instructions for installing nGPT on various platforms.

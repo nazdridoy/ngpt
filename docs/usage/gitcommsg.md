@@ -1,3 +1,10 @@
+---
+layout: default
+title: Git Commit Message Generation
+parent: Usage
+nav_order: 3
+---
+
 # Git Commit Message Generation
 
 nGPT offers a powerful feature for automatically generating conventional, detailed commit messages from git diffs. This guide explains how to use and customize this functionality.

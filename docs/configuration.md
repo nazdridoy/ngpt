@@ -1,3 +1,9 @@
+---
+layout: default
+title: Configuration Guide
+nav_order: 6
+---
+
 # Configuration Guide
 
 nGPT uses a flexible configuration system that supports multiple profiles for different API providers and models. This guide explains how to configure and manage your nGPT settings.
