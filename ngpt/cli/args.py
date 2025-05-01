@@ -79,14 +79,19 @@ def setup_argument_parser():
                       help='Set filepath to log conversation to, or create a temporary log file if no path provided')
     global_group.add_argument('--preprompt', 
                       help='Set custom system prompt to control AI behavior')
-    global_group.add_argument('--no-stream', action='store_true',
-                      help='Return the whole response without streaming')
-    global_group.add_argument('--prettify', action='store_const', const='auto',
-                      help='Render markdown responses and code with syntax highlighting and formatting')
-    global_group.add_argument('--stream-prettify', action='store_true',
-                      help='Enable streaming with markdown rendering (automatically uses Rich renderer)')
+    
+    # Output display options (mutually exclusive group)
+    output_group = parser.add_argument_group('Output Display Options (mutually exclusive)')
+    output_exclusive_group = output_group.add_mutually_exclusive_group()
+    output_exclusive_group.add_argument('--no-stream', action='store_true',
+                      help='Return the whole response without streaming or formatting')
+    output_exclusive_group.add_argument('--prettify', action='store_const', const='auto',
+                      help='Render complete response with markdown and code formatting (non-streaming)')
+    output_exclusive_group.add_argument('--stream-prettify', action='store_true', default=True,
+                      help='Stream response with real-time markdown rendering (default)')
+    
     global_group.add_argument('--renderer', choices=['auto', 'rich', 'glow'], default='auto',
-                      help='Select which markdown renderer to use with --prettify (auto, rich, or glow)')
+                      help='Select which markdown renderer to use with --prettify or --stream-prettify (auto, rich, or glow)')
     
     # GitCommit message options
     gitcommsg_group = parser.add_argument_group('Git Commit Message Options')
@@ -134,9 +139,29 @@ def validate_args(args):
     if args.all and not args.show_config:
         raise ValueError("--all can only be used with --show-config")
     
-    # Check if --prettify is used with --stream-prettify (conflict)
-    if args.prettify and args.stream_prettify:
-        raise ValueError("--prettify and --stream-prettify cannot be used together. Choose one option.")
+    # These three options are mutually exclusive rendering modes
+    provided_modes = []
+    if '--no-stream' in sys.argv:
+        provided_modes.append('--no-stream')
+    if '--prettify' in sys.argv:
+        provided_modes.append('--prettify')
+    if '--stream-prettify' in sys.argv:
+        provided_modes.append('--stream-prettify')
+    
+    # If more than one rendering mode explicitly provided, raise error
+    if len(provided_modes) > 1:
+        raise ValueError(f"The options {', '.join(provided_modes)} cannot be used together. These options are mutually exclusive.")
+    
+    # Handle the conflict between default stream-prettify and explicitly provided options
+    if args.no_stream:
+        args.stream_prettify = False
+        args.prettify = False
+    elif args.prettify:
+        args.stream_prettify = False
+        args.no_stream = False
+    elif args.stream_prettify:
+        args.no_stream = False
+        args.prettify = False
     
     # Check if --stream-prettify is used but Rich is not available
     if args.stream_prettify and not has_markdown_renderer('rich'):

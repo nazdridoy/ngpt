@@ -15,7 +15,7 @@ CLI_CONFIG_OPTIONS = {
     "preprompt": {"type": "str", "default": None, "context": ["all"]},
     "no-stream": {"type": "bool", "default": False, "context": ["all"], "exclusive": ["prettify", "stream-prettify"]},
     "prettify": {"type": "bool", "default": False, "context": ["all"], "exclusive": ["no-stream", "stream-prettify"]},
-    "stream-prettify": {"type": "bool", "default": False, "context": ["all"], "exclusive": ["no-stream", "prettify"]},
+    "stream-prettify": {"type": "bool", "default": True, "context": ["all"], "exclusive": ["no-stream", "prettify"]},
     "renderer": {"type": "str", "default": "auto", "context": ["all"]},
     "config-index": {"type": "int", "default": 0, "context": ["all"], "exclusive": ["provider"]},
     "web-search": {"type": "bool", "default": False, "context": ["all"]},
