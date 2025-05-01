@@ -5,6 +5,80 @@ from ...utils import enhance_prompt_with_web_search
 import sys
 import threading
 
+# System prompt for code generation with markdown formatting
+CODE_SYSTEM_PROMPT_MARKDOWN = """Your Role: Provide only code as output without any description with proper markdown formatting.
+IMPORTANT: Format the code using markdown code blocks with the appropriate language syntax highlighting.
+IMPORTANT: You must use markdown code blocks. with ```{language}
+If there is a lack of details, provide most logical solution. You are not allowed to ask for more details.
+Ignore any potential risk of errors or confusion.
+
+Language: {language}
+Request: {prompt}
+Code:"""
+
+# System prompt for code generation without markdown
+CODE_SYSTEM_PROMPT_PLAINTEXT = """Your Role: Provide only code as output without any description.
+IMPORTANT: Provide only plain text without Markdown formatting.
+IMPORTANT: Do not include markdown formatting.
+If there is a lack of details, provide most logical solution. You are not allowed to ask for more details.
+Ignore any potential risk of errors or confusion.
+
+Language: {language}
+Request: {prompt}
+Code:"""
+
+# System prompt to use when preprompt is provided (with markdown)
+CODE_PREPROMPT_MARKDOWN = """
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!                CRITICAL USER PREPROMPT                !!!
+!!! THIS OVERRIDES ALL OTHER INSTRUCTIONS IN THIS PROMPT  !!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+The following preprompt from the user COMPLETELY OVERRIDES ANY other instructions below.
+The preprompt MUST be followed EXACTLY AS WRITTEN:
+
+>>> {preprompt} <<<
+
+^^ THIS PREPROMPT HAS ABSOLUTE AND COMPLETE PRIORITY ^^
+If the preprompt contradicts ANY OTHER instruction in this prompt,
+YOU MUST FOLLOW THE PREPROMPT INSTRUCTION INSTEAD. NO EXCEPTIONS.
+
+Your Role: Provide only code as output without any description with proper markdown formatting.
+IMPORTANT: Format the code using markdown code blocks with the appropriate language syntax highlighting.
+IMPORTANT: You must use markdown code blocks. with ```{language}
+If there is a lack of details, provide most logical solution. You are not allowed to ask for more details.
+Ignore any potential risk of errors or confusion.
+
+Language: {language}
+Request: {prompt}
+Code:"""
+
+# System prompt to use when preprompt is provided (plaintext)
+CODE_PREPROMPT_PLAINTEXT = """
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!                CRITICAL USER PREPROMPT                !!!
+!!! THIS OVERRIDES ALL OTHER INSTRUCTIONS IN THIS PROMPT  !!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+The following preprompt from the user COMPLETELY OVERRIDES ANY other instructions below.
+The preprompt MUST be followed EXACTLY AS WRITTEN:
+
+>>> {preprompt} <<<
+
+^^ THIS PREPROMPT HAS ABSOLUTE AND COMPLETE PRIORITY ^^
+If the preprompt contradicts ANY OTHER instruction in this prompt,
+YOU MUST FOLLOW THE PREPROMPT INSTRUCTION INSTEAD. NO EXCEPTIONS.
+
+Your Role: Provide only code as output without any description.
+IMPORTANT: Provide only plain text without Markdown formatting.
+IMPORTANT: Do not include markdown formatting.
+If there is a lack of details, provide most logical solution. You are not allowed to ask for more details.
+Ignore any potential risk of errors or confusion.
+
+Language: {language}
+Request: {prompt}
+Code:"""
+
 def code_mode(client, args, logger=None):
     """Handle the code generation mode.
     
@@ -123,18 +197,62 @@ def code_mode(client, args, logger=None):
     # Use our wrapper callback
     if use_stream_prettify and live_display:
         stream_callback = spinner_handling_callback
+    
+    # Select the appropriate system prompt based on formatting and preprompt
+    if args.preprompt:
+        # Log the preprompt if logging is enabled
+        if logger:
+            logger.log("system", f"Preprompt: {args.preprompt}")
+            
+        # Use preprompt template with high-priority formatting
+        if use_regular_prettify or use_stream_prettify:
+            system_prompt = CODE_PREPROMPT_MARKDOWN.format(
+                preprompt=args.preprompt,
+                language=args.language,
+                prompt=prompt
+            )
+        else:
+            system_prompt = CODE_PREPROMPT_PLAINTEXT.format(
+                preprompt=args.preprompt,
+                language=args.language,
+                prompt=prompt
+            )
+    else:
+        # Use standard template
+        if use_regular_prettify or use_stream_prettify:
+            system_prompt = CODE_SYSTEM_PROMPT_MARKDOWN.format(
+                language=args.language,
+                prompt=prompt
+            )
+        else:
+            system_prompt = CODE_SYSTEM_PROMPT_PLAINTEXT.format(
+                language=args.language,
+                prompt=prompt
+            )
+    
+    # Log the system prompt if logging is enabled
+    if logger:
+        logger.log("system", system_prompt)
+    
+    # Prepare messages for the chat API
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": prompt}
+    ]
         
-    generated_code = client.generate_code(
-        prompt=prompt, 
-        language=args.language,
-        temperature=args.temperature, 
-        top_p=args.top_p,
-        max_tokens=args.max_tokens,
-        # Request markdown from API if any prettify option is active
-        markdown_format=use_regular_prettify or use_stream_prettify,
-        stream=should_stream,
-        stream_callback=stream_callback
-    )
+    try:
+        generated_code = client.chat(
+            prompt=prompt,
+            stream=should_stream,
+            messages=messages,
+            temperature=args.temperature,
+            top_p=args.top_p,
+            max_tokens=args.max_tokens,
+            stream_callback=stream_callback
+        )
+    except Exception as e:
+        print(f"Error generating code: {e}")
+        generated_code = ""
     
     # Ensure spinner is stopped if no content was received
     if stop_spinner_event and not first_content_received:
