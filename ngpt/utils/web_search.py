@@ -11,6 +11,7 @@ from duckduckgo_search import DDGS
 from urllib.parse import urlparse
 import requests
 import sys
+import datetime
 
 # Get actual logger from global context instead of using standard logging
 from . import log
@@ -36,7 +37,7 @@ def get_logger():
             def debug(self, msg): pass
         return DefaultLogger()
 
-def perform_web_search(query: str, max_results: int = 3) -> List[Dict[str, Any]]:
+def perform_web_search(query: str, max_results: int = 5) -> List[Dict[str, Any]]:
     """
     Search the web using DuckDuckGo and return relevant results.
     
@@ -211,10 +212,13 @@ def get_web_search_results(query: str, max_results: int = 3, max_chars_per_resul
             logger.info(f"Successfully retrieved content from all {success_count} sources")
     else:
         logger.error("No search results were found")
+    
+    # Add current timestamp
+    current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             
     return {
         'query': query,
-        'timestamp': 'current_time',  # Could replace with actual timestamp
+        'timestamp': current_time,
         'results': enhanced_results
     }
 
@@ -230,8 +234,9 @@ def format_web_search_results_for_prompt(search_results: Dict[str, Any]) -> str:
     """
     query = search_results['query']
     results = search_results['results']
+    timestamp = search_results['timestamp']
     
-    formatted_text = f"[Web Search Results for: {query}]\n\n"
+    formatted_text = f"[Web Search Results for: {query} (searched at {timestamp})]\n\n"
     
     for i, result in enumerate(results, 1):
         formatted_text += f"RESULT {i}: {result['title']}\n"
@@ -239,11 +244,27 @@ def format_web_search_results_for_prompt(search_results: Dict[str, Any]) -> str:
         formatted_text += f"CONTENT:\n{result['content']}\n\n"
     
     formatted_text += f"[End of Web Search Results]\n\n"
-    formatted_text += "Consider the above information when answering the following question:\n\n"
+    formatted_text += "Use the above web search information to help answer the user's question. When using this information:\n"
+    formatted_text += "1. Use numbered citations in square brackets [1], [2], etc. when presenting information from search results\n"
+    formatted_text += "2. Include a numbered reference list at the end of your response with the source URLs\n"
+    formatted_text += "3. Format citations like 'According to [1]...' or 'Research indicates [2]...' or add citations at the end of sentences or paragraphs\n"
+    formatted_text += "4. If search results contain conflicting information, acknowledge the differences and explain them with citations\n"
+    formatted_text += "5. If the search results don't provide sufficient information, acknowledge the limitations\n"
+    formatted_text += "6. Balance information from multiple sources when appropriate\n"
+    formatted_text += "7. YOU MUST include an empty blockquote line ('>') between each reference in the reference list\n"
+    formatted_text += "8. YOU MUST include ALL available references (between 2-7 sources) in your reference list\n\n"
+    formatted_text += "Example citation format in text:\n"
+    formatted_text += "Today is Thursday [1] and it's expected to rain tomorrow [2].\n\n"
+    formatted_text += "Example reference format (YOU MUST FOLLOW THIS EXACT FORMAT WITH EMPTY LINES BETWEEN REFERENCES):\n"
+    formatted_text += "> [0] https://example.com/date\n"
+    formatted_text += ">\n"
+    formatted_text += "> [1] https://weather.com/forecast\n"
+    formatted_text += ">\n"
+    formatted_text += "> [2] https://www.timeanddate.com\n\n"
     
     return formatted_text
 
-def enhance_prompt_with_web_search(prompt: str, max_results: int = 3, logger=None) -> str:
+def enhance_prompt_with_web_search(prompt: str, max_results: int = 5, logger=None) -> str:
     """
     Enhance a prompt with web search results.
     
