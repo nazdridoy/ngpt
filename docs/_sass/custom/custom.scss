@@ -1,1 +1,18 @@
-// Custom styles go here 
+// Custom styles
+// This file is automatically imported by the Just the Docs theme
+
+// Example of customizing the theme
+.main-content {
+  a {
+    text-decoration: underline;
+    
+    &:hover {
+      text-decoration: none;
+    }
+  }
+}
+
+// Better code block styling
+pre.highlight, code {
+  border-radius: 3px;
+} 
