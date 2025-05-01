@@ -22,6 +22,11 @@ from .cli_config import (
     get_cli_config_dir,
     get_cli_config_path
 )
+from .web_search import (
+    enhance_prompt_with_web_search,
+    get_web_search_results,
+    format_web_search_results_for_prompt
+)
 
 __all__ = [
     "create_logger", "Logger",
@@ -29,5 +34,6 @@ __all__ = [
     "add_config_entry", "remove_config_entry", "DEFAULT_CONFIG", "DEFAULT_CONFIG_ENTRY",
     "load_cli_config", "set_cli_config_option", "get_cli_config_option", 
     "unset_cli_config_option", "apply_cli_config", "list_cli_config_options",
-    "CLI_CONFIG_OPTIONS", "get_cli_config_dir", "get_cli_config_path"
+    "CLI_CONFIG_OPTIONS", "get_cli_config_dir", "get_cli_config_path",
+    "enhance_prompt_with_web_search", "get_web_search_results", "format_web_search_results_for_prompt"
 ]

@@ -6,6 +6,7 @@ import sys
 import time
 from .formatters import COLORS
 from .renderers import prettify_markdown, prettify_streaming_markdown
+from ..utils import enhance_prompt_with_web_search
 
 # Optional imports for enhanced UI
 try:
@@ -63,6 +64,10 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
     # Show logging info if logger is available
     if logger:
         print(f"{COLORS['green']}Logging conversation to: {logger.get_log_path()}{COLORS['reset']}")
+    
+    # Display a note about web search if enabled
+    if web_search:
+        print(f"{COLORS['green']}Web search capability is enabled.{COLORS['reset']}")
     
     # Display a note about markdown rendering only once at the beginning
     if prettify and not no_stream and not stream_prettify:
@@ -188,6 +193,28 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
             # Log user message if logging is enabled
             if logger:
                 logger.log("user", user_input)
+                
+            # Enhance prompt with web search if enabled
+            enhanced_prompt = user_input
+            if web_search:
+                try:
+                    print(f"{COLORS['cyan']}Searching the web...{COLORS['reset']}")
+                    enhanced_prompt = enhance_prompt_with_web_search(user_input, logger=logger)
+                    print(f"{COLORS['green']}Enhanced input with web search results.{COLORS['reset']}")
+                    
+                    # Update the user message in conversation with enhanced prompt
+                    for i in range(len(conversation) - 1, -1, -1):
+                        if conversation[i]["role"] == "user" and conversation[i]["content"] == user_input:
+                            conversation[i]["content"] = enhanced_prompt
+                            break
+                    
+                    # Log the enhanced prompt if logging is enabled
+                    if logger:
+                        # Use "web_search" role instead of "system" for clearer logs
+                        logger.log("web_search", enhanced_prompt.replace(user_input, "").strip())
+                except Exception as e:
+                    print(f"{COLORS['yellow']}Warning: Failed to enhance prompt with web search: {str(e)}{COLORS['reset']}")
+                    # Continue with the original prompt if web search fails
             
             # Print assistant indicator with formatting - but only if we're not going to show a rich formatted box
             # With Rich prettify, no header should be printed as the Rich panel already includes it
@@ -271,10 +298,9 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
             
             # Get AI response with conversation history
             response = client.chat(
-                prompt=user_input,
+                prompt=enhanced_prompt,
                 messages=conversation,
                 stream=should_stream,
-                web_search=web_search,
                 temperature=temperature,
                 top_p=top_p,
                 max_tokens=max_tokens,

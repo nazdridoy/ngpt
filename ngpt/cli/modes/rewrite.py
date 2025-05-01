@@ -5,6 +5,7 @@ import time
 from ..formatters import COLORS
 from ..renderers import prettify_markdown, prettify_streaming_markdown
 from ..ui import get_multiline_input, spinner
+from ...utils import enhance_prompt_with_web_search
 
 # System prompt for rewriting text
 REWRITE_SYSTEM_PROMPT = """You are an expert text editor and rewriter. Your task is to rewrite the user's text to improve readability and flow while carefully preserving the original meaning, tone, and style.
@@ -125,6 +126,21 @@ def rewrite_mode(client, args, logger=None):
         print(f"{COLORS['yellow']}Error: Empty input. Please provide text to rewrite.{COLORS['reset']}")
         return
     
+    # Enhance input with web search if enabled
+    if args.web_search:
+        try:
+            original_text = input_text
+            input_text = enhance_prompt_with_web_search(input_text, logger=logger)
+            print("Enhanced input with web search results.")
+            
+            # Log the enhanced input if logging is enabled
+            if logger:
+                # Use "web_search" role instead of "system" for clearer logs
+                logger.log("web_search", input_text.replace(original_text, "").strip())
+        except Exception as e:
+            print(f"{COLORS['yellow']}Warning: Failed to enhance input with web search: {str(e)}{COLORS['reset']}")
+            # Continue with the original input if web search fails
+    
     # Set up messages array with system prompt and user content
     messages = [
         {"role": "system", "content": REWRITE_SYSTEM_PROMPT},
@@ -195,7 +211,6 @@ def rewrite_mode(client, args, logger=None):
     response = client.chat(
         prompt=None,  # Not used when messages are provided
         stream=should_stream, 
-        web_search=args.web_search,
         temperature=args.temperature, 
         top_p=args.top_p,
         max_tokens=args.max_tokens, 

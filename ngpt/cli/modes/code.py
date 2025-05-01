@@ -1,6 +1,7 @@
 from ..formatters import COLORS
 from ..renderers import prettify_markdown, prettify_streaming_markdown, has_markdown_renderer, show_available_renderers
 from ..ui import spinner
+from ...utils import enhance_prompt_with_web_search
 import sys
 import threading
 
@@ -25,6 +26,21 @@ def code_mode(client, args, logger=None):
     # Log the user prompt if logging is enabled
     if logger:
         logger.log("user", prompt)
+    
+    # Enhance prompt with web search if enabled
+    if args.web_search:
+        try:
+            original_prompt = prompt
+            prompt = enhance_prompt_with_web_search(prompt, logger=logger)
+            print("Enhanced input with web search results.")
+            
+            # Log the enhanced prompt if logging is enabled
+            if logger:
+                # Use "web_search" role instead of "system" for clearer logs
+                logger.log("web_search", prompt.replace(original_prompt, "").strip())
+        except Exception as e:
+            print(f"{COLORS['yellow']}Warning: Failed to enhance prompt with web search: {str(e)}{COLORS['reset']}")
+            # Continue with the original prompt if web search fails
 
     # Setup for streaming and prettify logic
     stream_callback = None
@@ -110,8 +126,7 @@ def code_mode(client, args, logger=None):
         
     generated_code = client.generate_code(
         prompt=prompt, 
-        language=args.language, 
-        web_search=args.web_search,
+        language=args.language,
         temperature=args.temperature, 
         top_p=args.top_p,
         max_tokens=args.max_tokens,

@@ -1,5 +1,6 @@
 from ..formatters import COLORS
 from ..ui import spinner
+from ...utils import enhance_prompt_with_web_search
 import subprocess
 import sys
 import threading
@@ -26,6 +27,21 @@ def shell_mode(client, args, logger=None):
     if logger:
         logger.log("user", prompt)
     
+    # Enhance prompt with web search if enabled
+    if args.web_search:
+        try:
+            original_prompt = prompt
+            prompt = enhance_prompt_with_web_search(prompt, logger=logger)
+            print("Enhanced input with web search results.")
+            
+            # Log the enhanced prompt if logging is enabled
+            if logger:
+                # Use "web_search" role instead of "system" for clearer logs
+                logger.log("web_search", prompt.replace(original_prompt, "").strip())
+        except Exception as e:
+            print(f"{COLORS['yellow']}Warning: Failed to enhance prompt with web search: {str(e)}{COLORS['reset']}")
+            # Continue with the original prompt if web search fails
+    
     # Start spinner while waiting for command generation
     stop_spinner = threading.Event()
     spinner_thread = threading.Thread(
@@ -37,9 +53,9 @@ def shell_mode(client, args, logger=None):
     spinner_thread.start()
     
     try:
-        command = client.generate_shell_command(prompt, web_search=args.web_search, 
-                                            temperature=args.temperature, top_p=args.top_p,
-                                            max_tokens=args.max_tokens)
+        command = client.generate_shell_command(prompt,
+                                           temperature=args.temperature, top_p=args.top_p,
+                                           max_tokens=args.max_tokens)
     finally:
         # Stop the spinner
         stop_spinner.set()

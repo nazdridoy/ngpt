@@ -32,7 +32,6 @@ class NGPTClient:
         max_tokens: Optional[int] = None,
         top_p: float = 1.0,
         messages: Optional[List[Dict[str, str]]] = None,
-        web_search: bool = False,
         markdown_format: bool = False,
         stream_callback: Optional[callable] = None,
         **kwargs
@@ -47,7 +46,6 @@ class NGPTClient:
             max_tokens: Maximum number of tokens to generate
             top_p: Controls diversity via nucleus sampling
             messages: Optional list of message objects to override default behavior
-            web_search: Whether to enable web search capability
             markdown_format: If True, allow markdown-formatted responses, otherwise plain text
             stream_callback: Optional callback function for streaming mode updates
             **kwargs: Additional arguments to pass to the API
@@ -74,10 +72,6 @@ class NGPTClient:
             "temperature": temperature,
             "top_p": top_p,
         }
-        
-        # Conditionally add web_search
-        if web_search:
-            payload["web_search"] = True
         
         # Add max_tokens if provided
         if max_tokens is not None:
@@ -180,7 +174,6 @@ class NGPTClient:
     def generate_shell_command(
         self, 
         prompt: str, 
-        web_search: bool = False,
         temperature: float = 0.4,
         top_p: float = 0.95,
         max_tokens: Optional[int] = None
@@ -190,7 +183,6 @@ class NGPTClient:
         
         Args:
             prompt: Description of the command to generate
-            web_search: Whether to enable web search capability
             temperature: Controls randomness in the response
             top_p: Controls diversity via nucleus sampling
             max_tokens: Maximum number of tokens to generate
@@ -241,7 +233,6 @@ Command:"""
                 prompt=prompt,
                 stream=False,
                 messages=messages,
-                web_search=web_search,
                 temperature=temperature,
                 top_p=top_p,
                 max_tokens=max_tokens
@@ -254,7 +245,6 @@ Command:"""
         self, 
         prompt: str, 
         language: str = "python", 
-        web_search: bool = False,
         temperature: float = 0.4,
         top_p: float = 0.95,
         max_tokens: Optional[int] = None,
@@ -268,7 +258,6 @@ Command:"""
         Args:
             prompt: Description of the code to generate
             language: Programming language to generate code in
-            web_search: Whether to enable web search capability
             temperature: Controls randomness in the response
             top_p: Controls diversity via nucleus sampling
             max_tokens: Maximum number of tokens to generate
@@ -315,7 +304,6 @@ Code:"""
                 prompt=prompt,
                 stream=stream,
                 messages=messages,
-                web_search=web_search,
                 temperature=temperature,
                 top_p=top_p,
                 max_tokens=max_tokens,

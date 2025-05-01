@@ -1,6 +1,7 @@
 from ..formatters import COLORS
 from ..renderers import prettify_markdown, prettify_streaming_markdown
 from ..ui import get_multiline_input, spinner
+from ...utils import enhance_prompt_with_web_search
 import threading
 import sys
 
@@ -24,6 +25,21 @@ def text_mode(client, args, logger=None):
     # Log the user message if logging is enabled
     if logger:
         logger.log("user", prompt)
+    
+    # Enhance prompt with web search if enabled
+    if args.web_search:
+        try:
+            original_prompt = prompt
+            prompt = enhance_prompt_with_web_search(prompt, logger=logger)
+            print("Enhanced input with web search results.")
+            
+            # Log the enhanced prompt if logging is enabled
+            if logger:
+                # Use "web_search" role instead of "system" for clearer logs
+                logger.log("web_search", prompt.replace(original_prompt, "").strip())
+        except Exception as e:
+            print(f"{COLORS['yellow']}Warning: Failed to enhance prompt with web search: {str(e)}{COLORS['reset']}")
+            # Continue with the original prompt if web search fails
     
     # Create messages array with preprompt if available
     messages = None
@@ -94,7 +110,7 @@ def text_mode(client, args, logger=None):
     if args.stream_prettify and live_display:
         stream_callback = spinner_handling_callback
     
-    response = client.chat(prompt, stream=should_stream, web_search=args.web_search,
+    response = client.chat(prompt, stream=should_stream,
                        temperature=args.temperature, top_p=args.top_p,
                        max_tokens=args.max_tokens, messages=messages,
                        markdown_format=args.prettify or args.stream_prettify,
