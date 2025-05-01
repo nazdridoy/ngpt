@@ -29,11 +29,11 @@ def get_logger():
     if _logger is not None:
         return _logger
     else:
-        # Default logging to stderr if no logger provided
+        # Default logging to stderr if no logger provided, but only for errors
         class DefaultLogger:
-            def info(self, msg): print(f"INFO: {msg}", file=sys.stderr)
+            def info(self, msg): pass  # Suppress INFO messages
             def error(self, msg): print(f"ERROR: {msg}", file=sys.stderr)
-            def warning(self, msg): print(f"WARNING: {msg}", file=sys.stderr)
+            def warning(self, msg): pass  # Suppress WARNING messages
             def debug(self, msg): pass
         return DefaultLogger()
 
@@ -256,15 +256,15 @@ def format_web_search_results_for_prompt(search_results: Dict[str, Any]) -> str:
     formatted_text += "Example citation format in text:\n"
     formatted_text += "Today is Thursday [1] and it's expected to rain tomorrow [2].\n\n"
     formatted_text += "Example reference format (YOU MUST FOLLOW THIS EXACT FORMAT WITH EMPTY LINES BETWEEN REFERENCES):\n"
-    formatted_text += "> [0] https://example.com/date\n"
+    formatted_text += "> [1] https://example.com/date\n"
     formatted_text += ">\n"
-    formatted_text += "> [1] https://weather.com/forecast\n"
+    formatted_text += "> [2] https://weather.com/forecast\n"
     formatted_text += ">\n"
-    formatted_text += "> [2] https://www.timeanddate.com\n\n"
+    formatted_text += "> [3] https://www.timeanddate.com\n\n"
     
     return formatted_text
 
-def enhance_prompt_with_web_search(prompt: str, max_results: int = 5, logger=None) -> str:
+def enhance_prompt_with_web_search(prompt: str, max_results: int = 5, logger=None, disable_citations: bool = False) -> str:
     """
     Enhance a prompt with web search results.
     
@@ -272,6 +272,7 @@ def enhance_prompt_with_web_search(prompt: str, max_results: int = 5, logger=Non
         prompt: The original user prompt
         max_results: Maximum number of search results to include
         logger: Optional logger to use
+        disable_citations: If True, disables citation instructions (used for code and shell modes)
         
     Returns:
         Enhanced prompt with web search results prepended
@@ -282,10 +283,28 @@ def enhance_prompt_with_web_search(prompt: str, max_results: int = 5, logger=Non
         
     logger = get_logger()
     search_results = get_web_search_results(prompt, max_results)
-    formatted_results = format_web_search_results_for_prompt(search_results)
+    
+    if disable_citations:
+        # Modified version without citation instructions for code/shell modes
+        query = search_results['query']
+        results = search_results['results']
+        timestamp = search_results['timestamp']
+        
+        formatted_text = f"[Web Search Results for: {query} (searched at {timestamp})]\n\n"
+        
+        for i, result in enumerate(results, 1):
+            formatted_text += f"RESULT {i}: {result['title']}\n"
+            formatted_text += f"URL: {result['url']}\n"
+            formatted_text += f"CONTENT:\n{result['content']}\n\n"
+        
+        formatted_text += f"[End of Web Search Results]\n\n"
+        formatted_text += "Use the above web search information to help you, but do not include citations or references in your response.\n\n"
+    else:
+        # Standard version with citation instructions
+        formatted_text = format_web_search_results_for_prompt(search_results)
     
     # Combine results with original prompt
-    enhanced_prompt = formatted_results + prompt
+    enhanced_prompt = formatted_text + prompt
     
     logger.info("Enhanced input with web search results")
     return enhanced_prompt 

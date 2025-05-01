@@ -31,7 +31,7 @@ def shell_mode(client, args, logger=None):
     if args.web_search:
         try:
             original_prompt = prompt
-            prompt = enhance_prompt_with_web_search(prompt, logger=logger)
+            prompt = enhance_prompt_with_web_search(prompt, logger=logger, disable_citations=True)
             print("Enhanced input with web search results.")
             
             # Log the enhanced prompt if logging is enabled
