@@ -10,6 +10,8 @@ permalink: /usage/gitcommsg/
 
 nGPT offers a powerful feature for automatically generating conventional, detailed commit messages from git diffs. This guide explains how to use and customize this functionality.
 
+![2025-05-03_01-04-54](https://github.com/user-attachments/assets/62f00eee-67bf-4a77-8e66-9aeb4cafd527)
+
 ## Overview
 
 The git commit message generation feature (`-g` or `--gitcommsg` flag) analyzes your staged changes (or a provided diff file) and generates a comprehensive commit message following the [Conventional Commits](https://www.conventionalcommits.org/) format.
