@@ -10,6 +10,8 @@ permalink: /usage/cli_config/
 
 nGPT offers a CLI configuration system that allows you to set persistent default values for command-line options. This guide explains how to use and manage CLI configurations.
 
+![ngpt-sh-c-a](https://raw.githubusercontent.com/nazdridoy/ngpt/main/previews/ngpt-sh-c-a.png)
+
 ## Overview
 
 The CLI configuration system is separate from your API configuration (which stores API keys, base URLs, and models). Instead, it stores your preferred default values for CLI parameters like `temperature`, `language`, or `renderer`.

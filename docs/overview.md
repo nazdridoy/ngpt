@@ -11,6 +11,8 @@ permalink: /overview/
 
 nGPT is a Swiss army knife for LLMs: powerful CLI and interactive chatbot in one package. Seamlessly work with OpenAI, Ollama, Groq, Claude, Gemini, or any OpenAI-compatible API to generate code, craft git commits, rewrite text, and execute shell commands. Fast, lightweight, and designed for both casual users and developers.
 
+![ngpt-w-self](https://raw.githubusercontent.com/nazdridoy/ngpt/main/previews/ngpt-w-self.png)
+
 ## Key Features
 
 - **Versatile**: Powerful and easy-to-use CLI tool for various AI tasks

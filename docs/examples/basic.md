@@ -10,6 +10,8 @@ permalink: /examples/basic/
 
 This page provides practical examples of common nGPT usage patterns. These examples demonstrate the basic capabilities and how to use the most frequent commands.
 
+![ngpt-s-c](https://raw.githubusercontent.com/nazdridoy/ngpt/main/previews/ngpt-s-c.png)
+
 ## Chat Examples
 
 ### Simple Question and Answer
