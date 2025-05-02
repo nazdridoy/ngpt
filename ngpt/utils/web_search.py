@@ -1,5 +1,5 @@
 """
-Web search utilities for nGPT using duckduckgo-search and BeautifulSoup4.
+Web search utilities for nGPT using BeautifulSoup4.
 
 This module provides functionality to search the web and extract
 information from search results to enhance AI prompts.
@@ -7,8 +7,7 @@ information from search results to enhance AI prompts.
 
 import re
 from typing import List, Dict, Any, Optional
-from duckduckgo_search import DDGS
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 import requests
 import sys
 import datetime
@@ -42,7 +41,7 @@ def get_logger():
 
 def perform_web_search(query: str, max_results: int = 5) -> List[Dict[str, Any]]:
     """
-    Search the web using DuckDuckGo and return relevant results.
+    Search DuckDuckGo directly and return relevant results.
     
     Args:
         query: The search query
@@ -53,8 +52,48 @@ def perform_web_search(query: str, max_results: int = 5) -> List[Dict[str, Any]]
     """
     logger = get_logger()
     try:
-        ddgs = DDGS()
-        results = list(ddgs.text(query, max_results=max_results))
+        # Headers to mimic a browser request
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        }
+        
+        # DuckDuckGo search URL
+        encoded_query = requests.utils.quote(query)
+        url = f"https://html.duckduckgo.com/html/?q={encoded_query}"
+        
+        # Fetch search results
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        # Parse HTML response with html.parser (no lxml dependency)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        results = []
+        
+        # Extract search results
+        for result in soup.select('.result')[:max_results]:
+            title_elem = result.select_one('.result__title')
+            snippet_elem = result.select_one('.result__snippet')
+            url_elem = result.select_one('.result__url')
+            
+            # Extract actual URL from DDG's redirect URL if needed
+            href = title_elem.find('a')['href'] if title_elem and title_elem.find('a') else None
+            if href and href.startswith('/'):
+                # Parse DDG redirect URL to get actual URL
+                parsed_url = urlparse(href)
+                query_params = parse_qs(parsed_url.query)
+                actual_url = query_params.get('uddg', [None])[0]
+            else:
+                actual_url = href
+            
+            # Add result to list
+            if title_elem and actual_url:
+                results.append({
+                    'title': title_elem.get_text(strip=True),
+                    'href': actual_url,
+                    'body': snippet_elem.get_text(strip=True) if snippet_elem else ''
+                })
+        
         return results
     except Exception as e:
         logger.error(f"Error performing web search: {str(e)}")
@@ -112,18 +151,15 @@ def extract_article_content(url: str, max_chars: int = 5000) -> Optional[str]:
                         # Default to UTF-8 if we can't detect
                         response.encoding = 'utf-8'
                 
-                # Parse with BeautifulSoup using lxml parser for better results if available
-                try:
-                    soup = BeautifulSoup(response.text, 'lxml')
-                except ImportError:
-                    soup = BeautifulSoup(response.text, 'html.parser')
+                # Parse with BeautifulSoup using html.parser
+                soup = BeautifulSoup(response.text, 'html.parser')
                 
                 # Extract main content using multiple strategies
                 extracted_content = None
                 
                 # ---------- PREPROCESSING ----------
                 # Clone the soup before preprocessing
-                processed_soup = BeautifulSoup(str(soup), 'lxml' if 'lxml' in str(type(soup.parser)) else 'html.parser')
+                processed_soup = BeautifulSoup(str(soup), 'html.parser')
                 
                 # Remove all script, style tags and comments
                 for element in processed_soup.find_all(['script', 'style', 'noscript']):

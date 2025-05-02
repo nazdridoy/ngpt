@@ -53,10 +53,11 @@ nGPT uses a sophisticated content extraction algorithm that:
    - Paragraph density and structure
    - Content indicators in HTML attributes
 
-Our extraction technology incorporates techniques from leading content extraction libraries while maintaining minimal dependencies, ensuring:
+Our extraction technology uses Python's standard library and BeautifulSoup with the built-in html.parser, ensuring:
 
 - High-quality content extraction
 - Fast performance
+- Minimal dependencies
 - Accurate identification of main content versus navigation/boilerplate
 - Special handling for popular sites like Wikipedia and major news outlets
 

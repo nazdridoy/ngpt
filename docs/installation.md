@@ -60,6 +60,7 @@ nGPT requires:
 - `rich` library for markdown formatting and syntax highlighting (v10.0.0 or newer)
 - `prompt_toolkit` library for interactive features (v3.0.0 or newer)
 - `pyperclip` library for clipboard operations (v1.8.0 or newer)
+- `beautifulsoup4` library for web content extraction (v4.12.0 or newer)
 
 All required dependencies are automatically installed when you install nGPT.
 
