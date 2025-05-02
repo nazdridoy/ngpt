@@ -60,8 +60,31 @@ def shell_mode(client, args, logger=None):
     if args.web_search:
         try:
             original_prompt = prompt
+            
+            # Start spinner for web search
+            stop_spinner = threading.Event()
+            spinner_thread = threading.Thread(
+                target=spinner, 
+                args=("Searching the web for information...",), 
+                kwargs={"stop_event": stop_spinner, "color": COLORS['cyan']}
+            )
+            spinner_thread.daemon = True
+            spinner_thread.start()
+            
+            try:
             prompt = enhance_prompt_with_web_search(prompt, logger=logger, disable_citations=True)
+                # Stop the spinner
+                stop_spinner.set()
+                spinner_thread.join()
+                # Clear the spinner line completely
+                sys.stdout.write("\r" + " " * 100 + "\r")
+                sys.stdout.flush()
             print("Enhanced input with web search results.")
+            except Exception as e:
+                # Stop the spinner before re-raising
+                stop_spinner.set()
+                spinner_thread.join()
+                raise e
             
             # Log the enhanced prompt if logging is enabled
             if logger:

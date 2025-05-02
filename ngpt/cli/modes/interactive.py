@@ -6,6 +6,7 @@ import sys
 import time
 from ..formatters import COLORS
 from ..renderers import prettify_markdown, prettify_streaming_markdown
+from ..ui import spinner
 from ...utils import enhance_prompt_with_web_search
 
 # Optional imports for enhanced UI
@@ -198,9 +199,30 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
             enhanced_prompt = user_input
             if web_search:
                 try:
-                    print(f"{COLORS['cyan']}Searching the web...{COLORS['reset']}")
+                    # Start spinner for web search
+                    stop_spinner = threading.Event()
+                    spinner_thread = threading.Thread(
+                        target=spinner, 
+                        args=("Searching the web for information...",), 
+                        kwargs={"stop_event": stop_spinner, "color": COLORS['cyan']}
+                    )
+                    spinner_thread.daemon = True
+                    spinner_thread.start()
+                    
+                    try:
                     enhanced_prompt = enhance_prompt_with_web_search(user_input, logger=logger)
+                        # Stop the spinner
+                        stop_spinner.set()
+                        spinner_thread.join()
+                        # Clear the spinner line completely
+                        sys.stdout.write("\r" + " " * shutil.get_terminal_size().columns + "\r")
+                        sys.stdout.flush()
                     print(f"{COLORS['green']}Enhanced input with web search results.{COLORS['reset']}")
+                    except Exception as e:
+                        # Stop the spinner before re-raising
+                        stop_spinner.set()
+                        spinner_thread.join()
+                        raise e
                     
                     # Update the user message in conversation with enhanced prompt
                     for i in range(len(conversation) - 1, -1, -1):
