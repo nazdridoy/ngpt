@@ -27,7 +27,7 @@
 - 🔄 **API Flexibility**: Works with OpenAI, Ollama, Groq, Claude, Gemini, and any OpenAI-compatible endpoint
 - 💬 **Interactive Chat**: Continuous conversation with memory in modern UI
 - 📊 **Streaming Responses**: Real-time output for better user experience
-- 🔍 **Web Search**: Enhance any model with contextual information from the web
+- 🔍 **Web Search**: Enhance any model with contextual information from the web, using advanced content extraction to identify the most relevant information from web pages
 - 📥 **Stdin Processing**: Process piped content by using `{}` placeholder in prompts
 - 🎨 **Markdown Rendering**: Beautiful formatting of markdown and code with syntax highlighting
 - ⚡ **Real-time Markdown**: Stream responses with live updating syntax highlighting and formatting

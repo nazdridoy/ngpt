@@ -7,7 +7,7 @@ permalink: /
 
 # nGPT Documentation
 
-Welcome to the documentation for nGPT, a Swiss army knife for LLMs: powerful CLI and interactive chatbot in one package. Seamlessly work with OpenAI, Ollama, Groq, Claude, Gemini, or any OpenAI-compatible API to generate code, craft git commits, rewrite text, and execute shell commands. Fast, lightweight, and designed for both casual users and developers.
+Welcome to the nGPT documentation. This guide will help you get started with nGPT, a Swiss army knife for LLMs that combines a powerful CLI and interactive chatbot in one package.
 
 ## Table of Contents
 
@@ -17,12 +17,18 @@ Welcome to the documentation for nGPT, a Swiss army knife for LLMs: powerful CLI
   - [CLI Usage](usage/cli_usage.md)
   - [CLI Configuration](usage/cli_config.md)
   - [Git Commit Messages](usage/gitcommsg.md)
+  - [Web Search](usage/web_search.md)
 - [Examples](examples/basic.md)
   - [Basic Examples](examples/basic.md)
   - [Advanced Examples](examples/advanced.md)
 - [Configuration](configuration.md)
 - [Contributing](CONTRIBUTING.md)
 - [License](LICENSE.md)
+
+
+## What is nGPT?
+
+nGPT is a versatile command-line tool designed to interact with AI language models through various APIs. It provides a seamless interface for generating text, code, shell commands, and more, all from your terminal.
 
 ## Getting Started
 

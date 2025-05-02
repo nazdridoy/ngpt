@@ -1,6 +1,6 @@
 [project]
 name = "ngpt"
-version = "3.4.5"
+version = "3.5.0"
 description = "Swiss army knife for LLMs: powerful CLI and interactive chatbot in one package. Seamlessly work with OpenAI, Ollama, Groq, Claude, Gemini, or any OpenAI-compatible API to generate code, craft git commits, rewrite text, and execute shell commands."
 authors = [
     {name = "nazDridoy", email = "nazdridoy399@gmail.com"},
@@ -11,7 +11,7 @@ dependencies = [
     "prompt_toolkit>=3.0.0",
     "pyperclip>=1.8.0",
     "duckduckgo-search>=3.0.0",
-    "trafilatura>=1.6.0",
+    "beautifulsoup4>=4.12.0",
 ]
 requires-python = ">=3.8"
 readme = "README.md"
