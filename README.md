@@ -333,6 +333,7 @@ Key documentation sections:
    # Enter model: gemini-2.0-flash
    ```
 
+For more detailed information, refer to the [API Key Setup documentation](https://nazdridoy.github.io/ngpt/configuration/#api-key-setup).
 
 ### CLI Configuration
 
