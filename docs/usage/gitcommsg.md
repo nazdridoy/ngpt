@@ -10,7 +10,7 @@ permalink: /usage/gitcommsg/
 
 nGPT offers a powerful feature for automatically generating conventional, detailed commit messages from git diffs. This guide explains how to use and customize this functionality.
 
-![2025-05-03_01-04-54](https://github.com/user-attachments/assets/62f00eee-67bf-4a77-8e66-9aeb4cafd527)
+![ngpt-g](https://raw.githubusercontent.com/nazdridoy/ngpt/main/previews/ngpt-g.png)
 
 ## Overview
 

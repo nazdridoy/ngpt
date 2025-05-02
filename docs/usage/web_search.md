@@ -15,7 +15,7 @@ nGPT includes a powerful web search capability that enhances your prompts with r
 - Providing context for questions about current events
 - Fact-checking and verification
 
-![2025-05-03_01-14-31](https://github.com/user-attachments/assets/4a73eeda-fb0c-4d5a-a9a9-85f00667b3ab)
+![ngpt-w](https://raw.githubusercontent.com/nazdridoy/ngpt/main/previews/ngpt-w.png)
 
 ## Using Web Search
 

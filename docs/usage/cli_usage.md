@@ -10,7 +10,7 @@ permalink: /usage/cli_usage/
 
 This guide provides comprehensive documentation on how to use nGPT as a command-line interface (CLI) tool.
 
-![2025-05-03_01-18-39](https://github.com/user-attachments/assets/1f07fafe-9bca-4dea-9bef-07d3823482b8)
+![ngpt-s-c](https://raw.githubusercontent.com/nazdridoy/ngpt/main/previews/ngpt-s-c.png)
 
 ## Basic Usage
 

@@ -9,6 +9,8 @@ permalink: /
 
 Welcome to the nGPT documentation. This guide will help you get started with nGPT, a Swiss army knife for LLMs that combines a powerful CLI and interactive chatbot in one package.
 
+![ngpt-i](https://raw.githubusercontent.com/nazdridoy/ngpt/main/previews/ngpt-i.png)
+
 ## Table of Contents
 
 - [Overview](overview.md)
