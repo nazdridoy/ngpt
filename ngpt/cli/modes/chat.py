@@ -71,14 +71,14 @@ def chat_mode(client, args, logger=None):
             spinner_thread.start()
             
             try:
-            prompt = enhance_prompt_with_web_search(prompt, logger=logger)
+                prompt = enhance_prompt_with_web_search(prompt, logger=logger)
                 # Stop the spinner
                 stop_spinner.set()
                 spinner_thread.join()
                 # Clear the spinner line completely
                 sys.stdout.write("\r" + " " * 100 + "\r")
                 sys.stdout.flush()
-            print("Enhanced input with web search results.")
+                print("Enhanced input with web search results.")
             except Exception as e:
                 # Stop the spinner before re-raising
                 stop_spinner.set()

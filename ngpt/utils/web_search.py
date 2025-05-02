@@ -31,10 +31,10 @@ def get_logger():
     if _logger is not None:
         return _logger
     else:
-        # Default logging to stderr if no logger provided, but only for errors
+        # Default logging behavior - suppress all messages to console
         class DefaultLogger:
             def info(self, msg): pass  # Suppress INFO messages
-            def error(self, msg): print(f"ERROR: {msg}", file=sys.stderr)
+            def error(self, msg): pass  # Suppress ERROR messages instead of printing to stderr
             def warning(self, msg): pass  # Suppress WARNING messages
             def debug(self, msg): pass
         return DefaultLogger()

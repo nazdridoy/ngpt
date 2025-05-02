@@ -210,14 +210,14 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
                     spinner_thread.start()
                     
                     try:
-                    enhanced_prompt = enhance_prompt_with_web_search(user_input, logger=logger)
+                        enhanced_prompt = enhance_prompt_with_web_search(user_input, logger=logger)
                         # Stop the spinner
                         stop_spinner.set()
                         spinner_thread.join()
                         # Clear the spinner line completely
                         sys.stdout.write("\r" + " " * shutil.get_terminal_size().columns + "\r")
                         sys.stdout.flush()
-                    print(f"{COLORS['green']}Enhanced input with web search results.{COLORS['reset']}")
+                        print(f"{COLORS['green']}Enhanced input with web search results.{COLORS['reset']}")
                     except Exception as e:
                         # Stop the spinner before re-raising
                         stop_spinner.set()
