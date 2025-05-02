@@ -93,8 +93,8 @@ ngpt -i
 </p>
 
 <p align="center">
-  <a href="https://nazdridoy.github.io/ngpt/installation/"><img src="https://img.shields.io/badge/Linux-support-blue?logo=linux" alt="Linux"></a>
-  <a href="https://nazdridoy.github.io/ngpt/installation/"><img src="https://img.shields.io/badge/Windows-support-blue?logo=windows" alt="Windows"></a>
-  <a href="https://nazdridoy.github.io/ngpt/installation/"><img src="https://img.shields.io/badge/macOS-support-blue?logo=apple" alt="macOS"></a>
-  <a href="https://nazdridoy.github.io/ngpt/installation/"><img src="https://img.shields.io/badge/Android-Termux-blue?logo=android" alt="Android"></a>
+  <a href="https://nazdridoy.github.io/ngpt/installation/#linuxmacos"><img src="https://img.shields.io/badge/Linux-support-blue?logo=linux" alt="Linux"></a>
+  <a href="https://nazdridoy.github.io/ngpt/installation/#windows"><img src="https://img.shields.io/badge/Windows-support-blue?logo=windows" alt="Windows"></a>
+  <a href="https://nazdridoy.github.io/ngpt/installation/#linuxmacos"><img src="https://img.shields.io/badge/macOS-support-blue?logo=apple" alt="macOS"></a>
+  <a href="https://nazdridoy.github.io/ngpt/installation/#android-termux"><img src="https://img.shields.io/badge/Android-Termux-blue?logo=android" alt="Android"></a>
 </p> 
