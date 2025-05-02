@@ -32,7 +32,7 @@ For a quick start, refer to the [Installation](installation.md) and [CLI Usage](
 
 - **Versatile**: Powerful and easy-to-use CLI tool for various AI tasks
 - **Lightweight**: Minimal dependencies with everything you need included
-- **API Flexibility**: Works with OpenAI, Ollama, Groq, Claude, Gemini, and any compatible endpoint
+- **API Flexibility**: Works with OpenAI, Ollama, Groq, Claude, Gemini, and any OpenAI-compatible endpoint
 - **Interactive Chat**: Continuous conversation with memory in modern UI
 - **Streaming Responses**: Real-time output for better user experience
 - **Web Search**: Enhance any model with contextual information from the web

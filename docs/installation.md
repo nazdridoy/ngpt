@@ -75,6 +75,9 @@ pip install ngpt
 
 # Using uv
 uv pip install ngpt
+
+# Install ngpt as a global tool
+uv tool install ngpt
 ```
 
 Or, if you prefer using pipx for isolated application installations:
@@ -107,6 +110,9 @@ pip install ngpt
 
 # Using uv
 uv pip install ngpt
+
+# Install ngpt as a global tool
+uv tool install ngpt
 ```
 
 ### Android (Termux)
@@ -119,14 +125,22 @@ nGPT can be used on Android devices through Termux:
 ```bash
 pkg update && pkg upgrade
 pkg install python
-pip install ngpt
+pip install uv
 ```
 
-You may need to install additional dependencies:
+Install nGPT using either pip or uv:
 
 ```bash
-pkg install libffi openssl
+# Using pip
+pip install ngpt
+
+# Using uv
+uv pip install ngpt
+
+# Install ngpt as a global tool
+uv tool install ngpt
 ```
+
 
 ### Installation in a Virtual Environment
 
@@ -212,6 +226,9 @@ pip install --upgrade ngpt
 
 # Using uv
 uv pip install --upgrade ngpt
+
+# Using uv tool
+uv tool upgrage ngpt
 
 # Using AUR (Arch Linux)
 paru -Syu ngpt

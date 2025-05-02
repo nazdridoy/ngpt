@@ -28,15 +28,15 @@ Thank you for your interest in contributing to NGPT! This document provides guid
     - `args.py` - Argument parsing setup
     - `config_manager.py` - CLI configuration handling
     - `formatters.py` - Output formatting logic
-    - `interactive.py` - Interactive mode implementation
     - `modes/` - Different operational modes
       - `__init__.py` - Modes initialization
       - `chat.py` - Chat mode functionality
       - `code.py` - Code generation mode
       - `gitcommsg.py` - Git commit message generation
+      - `interactive.py` - Interactive mode implementation
+      - `rewrite.py` - Text rewriting mode
       - `shell.py` - Shell command generation
       - `text.py` - Text generation mode
-      - `rewrite.py` - Text rewriting mode
     - `renderers.py` - Output rendering logic (e.g., markdown)
     - `ui.py` - User interface elements (e.g., prompts, spinners)
   - `utils/` - Utility modules

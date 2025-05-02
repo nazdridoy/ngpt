@@ -15,7 +15,7 @@ nGPT is a Swiss army knife for LLMs: powerful CLI and interactive chatbot in one
 
 - **Versatile**: Powerful and easy-to-use CLI tool for various AI tasks
 - **Lightweight**: Minimal dependencies with everything you need included
-- **API Flexibility**: Works with OpenAI, Ollama, Groq, Claude, Gemini, and any compatible endpoint
+- **API Flexibility**: Works with OpenAI, Ollama, Groq, Claude, Gemini, and any OpenAI-compatible endpoint
 - **Interactive Chat**: Continuous conversation with memory in modern UI
 - **Streaming Responses**: Real-time output for better user experience
 - **Web Search**: Enhance any model with contextual information from the web
@@ -47,42 +47,49 @@ ngpt "Tell me about quantum computing"
 Start an ongoing conversation with memory:
 ```bash
 ngpt -i
+ngpt --interactive
 ```
 
 ### Code Generation Mode
 Generate clean code without markdown formatting or explanations:
 ```bash
 ngpt --code "function to calculate Fibonacci numbers"
+ngpt -c "function to calculate Fibonacci numbers"
 ```
 
 ### Shell Command Mode
 Generate and execute OS-aware shell commands:
 ```bash
 ngpt --shell "list all files recursively"
+ngpt -s "list all files recursively"
 ```
 
 ### Text Rewriting Mode
 Improve the quality of text while preserving tone and meaning:
 ```bash
 cat text.txt | ngpt --rewrite
+cat text.txt | ngpt -r
 ```
 
 ### Git Commit Message Mode
 Generate conventional, detailed commit messages from git diffs:
 ```bash
 ngpt --gitcommsg
+ngpt -g
 ```
 
 ### Multiline Text Input Mode
 Open an interactive editor for complex prompts:
 ```bash
 ngpt --text
+ngpt -t
 ```
 
 ### Stdin Processing Mode
 Process piped content using a placeholder:
 ```bash
 cat README.md | ngpt --pipe "Summarize this document: {}"
+cat README.md | ngpt -p "Summarize this document: {}"
 ```
 
 ## Architecture

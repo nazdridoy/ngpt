@@ -32,64 +32,79 @@ Where:
 
 ## All CLI Options
 
-Below is a comprehensive list of all available command-line options, organized by category:
+You can set configuration options directly via command-line arguments:
 
-### Core Mode Options
+```
+usage: ngpt [-h] [-v] [--language LANGUAGE] [--config [CONFIG]] [--config-index CONFIG_INDEX] [--provider PROVIDER] [--remove]
+            [--show-config] [--all] [--list-models] [--list-renderers] [--cli-config [COMMAND ...]] [--api-key API_KEY]
+            [--base-url BASE_URL] [--model MODEL] [--web-search] [--temperature TEMPERATURE] [--top_p TOP_P]
+            [--max_tokens MAX_TOKENS] [--log [FILE]] [--preprompt PREPROMPT] [--no-stream | --prettify | --stream-prettify]
+            [--renderer {auto,rich,glow}] [--rec-chunk] [--diff [FILE]] [--chunk-size CHUNK_SIZE]
+            [--analyses-chunk-size ANALYSES_CHUNK_SIZE] [--max-msg-lines MAX_MSG_LINES]
+            [--max-recursion-depth MAX_RECURSION_DEPTH] [-i | -s | -c | -t |-p | -r | -g]
+            [prompt]
+```
 
-| Option | Description |
-|--------|-------------|
-| `-i, --interactive` | Start an interactive chat session with conversation memory and special commands |
-| `-s, --shell` | Generate and execute shell commands appropriate for your operating system |
-| `-c, --code` | Generate clean code without markdown formatting or explanations |
-| `-t, --text` | Open interactive multiline editor for complex prompts with syntax highlighting |
-| `-p, --pipe` | Read from stdin and use content in your prompt with {} placeholder |
-| `-r, --rewrite` | Rewrite text to improve quality while preserving original tone and meaning |
-| `-g, --gitcommsg` | Generate AI-powered git commit messages for staged changes or from a diff file |
+### Positional Arguments
 
-### Configuration Management
+- `[PROMPT]`: The prompt to send
 
-| Option | Description |
-|--------|-------------|
-| `--api-key <key>` | API key for the service (overrides stored configuration) |
-| `--base-url <url>` | Base URL for the API endpoint (overrides stored configuration) |
-| `--model <n>` | Model to use for this request (overrides stored configuration) |
-| `--config <path>` | Path to a custom configuration file or, when used without a value, enters interactive configuration mode |
-| `--config-index <index>` | Index of the configuration to use (default: 0) |
-| `--provider <n>` | Provider name to identify the configuration to use (alternative to --config-index) |
-| `--show-config` | Show current configuration details and exit |
-| `--all` | Used with `--show-config` to display all configurations instead of just the active one |
-| `--list-models` | List all available models for the selected configuration (can be combined with --config-index) |
-| `--remove` | Remove the configuration at the specified index (requires --config and --config-index or --provider) |
-| `--cli-config <cmd>` | Manage persistent CLI option defaults with commands: `set`, `get`, `unset`, `list`, `help` |
+### General Options
 
-### Response Formatting
+- `-h, --help`: Show help message and exit
+- `-v, --version`: Show version information and exit
+- `--language <LANGUAGE>`: Programming language to generate code in (for code mode)
 
-| Option | Description |
-|--------|-------------|
-| `--no-stream` | Return the whole response without streaming (useful for scripts) |
-| `--prettify` | Render markdown responses and code with syntax highlighting (disables streaming) |
-| `--stream-prettify` | Enable real-time markdown rendering with syntax highlighting while streaming (uses Rich) |
-| `--renderer <n>` | Select which markdown renderer to use with --prettify (auto, rich, or glow) |
-| `--list-renderers` | Show available markdown renderers for use with --prettify |
+### Configuration Options
 
-### Generation Control
+- `--config <[CONFIG]>`: Path to a custom config file or, if no value provided, enter interactive configuration mode to create a new config
+- `--config-index <CONFIG_INDEX>`: Index of the configuration to use or edit (default: 0)
+- `--provider <PROVIDER>`: Provider name to identify the configuration to use
+- `--remove`: Remove the configuration at the specified index (requires --config and --config-index or --provider)
+- `--show-config`: Show the current configuration(s) and exit
+- `--all`: Show details for all configurations (requires --show-config)
+- `--list-models`: List all available models for the current configuration and exit
+- `--list-renderers`: Show available markdown renderers for use with --prettify
+- `--cli-config <[COMMAND ...]>`: Manage CLI configuration (set, get, unset, list, help)
 
-| Option | Description |
-|--------|-------------|
-| `--preprompt <text>` | Set custom system prompt to control AI behavior and guide responses |
-| `--web-search` | Enable web search capability if supported by your API endpoint |
-| `--temperature <value>` | Set temperature parameter controlling randomness (0.0-2.0, default: 0.7) |
-| `--top_p <value>` | Set top_p parameter controlling diversity (0.0-1.0, default: 1.0) |
-| `--max_tokens <number>` | Set maximum response length in tokens |
-| `--language <lang>` | Programming language to generate code in when using -c/--code (default: python) |
+### Global Options
 
-### Utility Options
+- `--api-key <API_KEY>`: API key for the service
+- `--base-url <BASE_URL>`: Base URL for the API
+- `--model <MODEL>`: Model to use
+- `--web-search`: Enable web search capability using DuckDuckGo to enhance prompts with relevant information
+- `--temperature <TEMPERATURE>`: Set temperature (controls randomness, default: 0.7)
+- `--top_p <TOP_P>`: Set top_p (controls diversity, default: 1.0)
+- `--max_tokens <MAX_TOKENS>`: Set max response length in tokens
+- `--log <[FILE]>`: Set filepath to log conversation to, or create a temporary log file if no path provided
+- `--preprompt <PREPROMPT>`: Set custom system prompt to control AI behavior
+- `--renderer <{auto,rich,glow}>`: Select which markdown renderer to use with --prettify or --stream-prettify (auto, rich, or glow)
 
-| Option | Description |
-|--------|-------------|
-| `--log [file]` | Enable logging: use `--log` to create a temporary log file, or `--log PATH` for a specific location |
-| `-v, --version` | Show version information and exit |
-| `-h, --help` | Show help message and exit |
+### Output Display Options (mutually exclusive)
+
+- `--no-stream`: Return the whole response without streaming or formatting
+- `--prettify`: Render complete response with markdown and code formatting (non-streaming)
+- `--stream-prettify`: Stream response with real-time markdown rendering (default)
+
+### Git Commit Message Options
+
+- `--rec-chunk`: Process large diffs in chunks with recursive analysis if needed
+- `--diff <[FILE]>`: Use diff from specified file instead of staged changes. If used without a path, uses the path from CLI config.
+- `--chunk-size <CHUNK_SIZE>`: Number of lines per chunk when chunking is enabled (default: 200)
+- `--analyses-chunk-size <ANALYSES_CHUNK_SIZE>`: Number of lines per chunk when recursively chunking analyses (default: 200)
+- `--max-msg-lines <MAX_MSG_LINES>`: Maximum number of lines in commit message before condensing (default: 20)
+- `--max-recursion-depth <MAX_RECURSION_DEPTH>`: Maximum recursion depth for commit message condensing (default: 3)
+
+### Modes (mutually exclusive)
+
+- `-i, --interactive`: Start an interactive chat session
+- `-s, --shell`: Generate and execute shell commands
+- `-c, --code`: Generate code
+- `-t, --text`: Enter multi-line text input (submit with Ctrl+D)
+- `-p, --pipe`: Read from stdin and use content with prompt. Use {} in prompt as placeholder for stdin content
+- `-r, --rewrite`: Rewrite text from stdin to be more natural while preserving tone and meaning
+- `-g, --gitcommsg`: Generate AI-powered git commit messages from staged changes or diff file
+
 
 ## Mode Details
 
@@ -370,6 +385,23 @@ ngpt --config --provider OpenAI
 ngpt --config --remove --config-index 2
 ```
 
+### Environment Variables
+
+You can set the following environment variables to override configuration:
+
+```bash
+# Set API key
+export OPENAI_API_KEY="your-api-key"
+
+# Set base URL
+export OPENAI_BASE_URL="https://api.alternative.com/v1/"
+
+# Set model
+export OPENAI_MODEL="alternative-model"
+```
+
+These will take precedence over values in the configuration file but can be overridden by command-line arguments.
+
 ### Show Configuration
 
 View your current configuration:
@@ -522,6 +554,33 @@ ngpt --model gpt-3.5-turbo "Quick question"
 # Limit max tokens for faster responses
 ngpt --max_tokens 100 "Give me a brief explanation"
 ```
+
+**Model Availability Issues**
+```bash
+# Check which models are available
+ngpt --list-models
+
+# Try a different model
+ngpt --model gpt-3.5-turbo "Test prompt"
+```
+
+**Base URL Issues**
+```bash
+# Check if your base URL is correct
+ngpt --show-config
+
+# Try an alternative base URL
+ngpt --base-url "https://alternative-endpoint.com/v1/" "Test prompt"
+```
+
+### Securing Your Configuration
+
+Your API keys are stored in the configuration file. To ensure they remain secure:
+
+1. Ensure the configuration file has appropriate permissions: `chmod 600 ~/.config/ngpt/ngpt.conf`
+2. For shared environments, consider using environment variables instead
+3. Don't share your configuration file or API keys with others
+4. If you suspect your key has been compromised, regenerate it from your API provider's console
 
 ### Getting Help
 

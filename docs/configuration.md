@@ -142,64 +142,80 @@ The interactive configuration will prompt you for values and guide you through t
 
 ## Command-Line Configuration
 
-You can also set configuration options directly via command-line arguments:
+You can set configuration options directly via command-line arguments:
 
-### Key Configuration Flags
+```
+usage: ngpt [-h] [-v] [--language LANGUAGE] [--config [CONFIG]] [--config-index CONFIG_INDEX] [--provider PROVIDER] [--remove]
+            [--show-config] [--all] [--list-models] [--list-renderers] [--cli-config [COMMAND ...]] [--api-key API_KEY]
+            [--base-url BASE_URL] [--model MODEL] [--web-search] [--temperature TEMPERATURE] [--top_p TOP_P]
+            [--max_tokens MAX_TOKENS] [--log [FILE]] [--preprompt PREPROMPT] [--no-stream | --prettify | --stream-prettify]
+            [--renderer {auto,rich,glow}] [--rec-chunk] [--diff [FILE]] [--chunk-size CHUNK_SIZE]
+            [--analyses-chunk-size ANALYSES_CHUNK_SIZE] [--max-msg-lines MAX_MSG_LINES]
+            [--max-recursion-depth MAX_RECURSION_DEPTH] [-i | -s | -c | -t |-p | -r | -g]
+            [prompt]
+```
 
-- `--api-key <key>`: Specify the API key directly.
-- `--base-url <url>`: Specify the API endpoint URL.
-- `--model <n>`: Specify the AI model name.
-- `--config <path>`: Use a specific configuration file.
-- `--config-index <index>`: Select a configuration profile by its index (0-based).
-- `--provider <n>`: Select a configuration profile by its provider name.
-- `--show-config [--all]`: Display the current (or all) configuration(s).
-- `--list-models`: List models available for the selected configuration.
-- `--list-renderers`: Show available markdown renderers for use with --prettify.
-- `--config`: Enter interactive mode to add/edit/remove configurations.
-  - Use with `--config-index <index>` or `--provider <n>` to edit.
-  - Use with `--remove` and `--config-index <index>` or `--provider <n>` to remove.
+### Positional Arguments
 
-### Mode Flags (mutually exclusive)
+- `[PROMPT]`: The prompt to send
 
-- `-i, --interactive`: Start an interactive chat session.
-- `-s, --shell`: Generate and execute shell commands.
-- `-c, --code`: Generate code.
-  - `--language <lang>`: Specify the programming language for code generation (default: `python`).
-- `-t, --text`: Use a multiline editor for input.
-- `-p, --pipe`: Read from stdin and use content in your prompt with {} placeholder.
-- `-r, --rewrite`: Rewrite text from stdin to be more natural while preserving tone and meaning.
-- `-g, --gitcommsg`: Generate AI-powered git commit messages from staged changes or diff file.
+### General Options
 
-### Output Control Flags
+- `-h, --help`: Show help message and exit
+- `-v, --version`: Show version information and exit
+- `--language <LANGUAGE>`: Programming language to generate code in (for code mode)
 
-- `--no-stream`: Disable streaming output.
-- `--prettify`: Enable formatted markdown/code output (disables streaming).
-  - `--renderer <n>`: Choose the renderer (`auto`, `rich`, `glow`).
-- `--stream-prettify`: Enable real-time formatted output while streaming (uses Rich).
+### Configuration Options
 
-### Generation Control Flags
+- `--config <[CONFIG]>`: Path to a custom config file or, if no value provided, enter interactive configuration mode to create a new config
+- `--config-index <CONFIG_INDEX>`: Index of the configuration to use or edit (default: 0)
+- `--provider <PROVIDER>`: Provider name to identify the configuration to use
+- `--remove`: Remove the configuration at the specified index (requires --config and --config-index or --provider)
+- `--show-config`: Show the current configuration(s) and exit
+- `--all`: Show details for all configurations (requires --show-config)
+- `--list-models`: List all available models for the current configuration and exit
+- `--list-renderers`: Show available markdown renderers for use with --prettify
+- `--cli-config <[COMMAND ...]>`: Manage CLI configuration (set, get, unset, list, help)
 
-- `--preprompt <text>`: Set a custom system prompt.
-- `--log [file]`: Enable logging: use `--log` to create a temporary log file, or `--log PATH` for a specific location.
-- `--temperature <value>`: Set the generation temperature (0.0-2.0, default: 0.7).
-- `--top_p <value>`: Set the nucleus sampling top_p value (0.0-1.0, default: 1.0).
-- `--max_tokens <number>`: Set the maximum number of tokens for the response.
-- `--web-search`: Enable web search capability (if supported by the API).
+### Global Options
 
-### Git Commit Message Flags
+- `--api-key <API_KEY>`: API key for the service
+- `--base-url <BASE_URL>`: Base URL for the API
+- `--model <MODEL>`: Model to use
+- `--web-search`: Enable web search capability using DuckDuckGo to enhance prompts with relevant information
+- `--temperature <TEMPERATURE>`: Set temperature (controls randomness, default: 0.7)
+- `--top_p <TOP_P>`: Set top_p (controls diversity, default: 1.0)
+- `--max_tokens <MAX_TOKENS>`: Set max response length in tokens
+- `--log <[FILE]>`: Set filepath to log conversation to, or create a temporary log file if no path provided
+- `--preprompt <PREPROMPT>`: Set custom system prompt to control AI behavior
+- `--renderer <{auto,rich,glow}>`: Select which markdown renderer to use with --prettify or --stream-prettify (auto, rich, or glow)
 
-- `--preprompt <text>`: Context to guide AI generation (e.g., file types, commit type).
-- `-r, --rec-chunk`: Process large diffs in chunks with recursive analysis if needed.
-- `--diff [file]`: Use diff from specified file instead of staged changes.
-- `--chunk-size <number>`: Number of lines per chunk when chunking is enabled (default: 200).
-- `--analyses-chunk-size <number>`: Number of lines per chunk when recursively chunking analyses (default: 200).
-- `--max-msg-lines <number>`: Maximum number of lines in commit message before condensing (default: 20).
-- `--max-recursion-depth <number>`: Maximum recursion depth for commit message condensing (default: 3).
+### Output Display Options (mutually exclusive)
 
-### Other Flags
+- `--no-stream`: Return the whole response without streaming or formatting
+- `--prettify`: Render complete response with markdown and code formatting (non-streaming)
+- `--stream-prettify`: Stream response with real-time markdown rendering (default)
 
-- `-v, --version`: Show the nGPT version.
-- `--cli-config <command> [option] [value]`: Manage persistent CLI option defaults (`set`, `get`, `unset`, `list`, `help`).
+### Git Commit Message Options
+
+- `--rec-chunk`: Process large diffs in chunks with recursive analysis if needed
+- `--diff <[FILE]>`: Use diff from specified file instead of staged changes. If used without a path, uses the path from CLI config.
+- `--chunk-size <CHUNK_SIZE>`: Number of lines per chunk when chunking is enabled (default: 200)
+- `--analyses-chunk-size <ANALYSES_CHUNK_SIZE>`: Number of lines per chunk when recursively chunking analyses (default: 200)
+- `--max-msg-lines <MAX_MSG_LINES>`: Maximum number of lines in commit message before condensing (default: 20)
+- `--max-recursion-depth <MAX_RECURSION_DEPTH>`: Maximum recursion depth for commit message condensing (default: 3)
+
+### Modes (mutually exclusive)
+
+- `-i, --interactive`: Start an interactive chat session
+- `-s, --shell`: Generate and execute shell commands
+- `-c, --code`: Generate code
+- `-t, --text`: Enter multi-line text input (submit with Ctrl+D)
+- `-p, --pipe`: Read from stdin and use content with prompt. Use {} in prompt as placeholder for stdin content
+- `-r, --rewrite`: Rewrite text from stdin to be more natural while preserving tone and meaning
+- `-g, --gitcommsg`: Generate AI-powered git commit messages from staged changes or diff file
+
+### Command Examples
 
 ```bash
 # Example: Use specific API key, base URL, and model for a single command

@@ -43,15 +43,12 @@ Here's an example of the generated output:
 ```
 feat(auth): implement OAuth2 authentication flow
 
-Add OAuth2 authentication support with the following changes:
-- Create new AuthService class to handle token management
-- Implement login/logout functionality in UserController
-- Add configuration options for OAuth providers
-- Update user model to store OAuth tokens
-- Add unit tests for authentication flow
+- [feat] Create new AuthService class to handle token management
+- [feat] Implement login/logout functionality in UserController
+- [feat] Add configuration options for OAuth providers
+- [Update] Update user model to store OAuth tokens
+- [feat] Add unit tests for authentication flow
 
-This change allows users to sign in using third-party OAuth providers
-while maintaining the existing email/password authentication method.
 ```
 
 ## Full Command Options
