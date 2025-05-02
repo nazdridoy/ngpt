@@ -300,6 +300,7 @@ Key documentation sections:
 - [CLI Usage Guide](https://nazdridoy.github.io/ngpt/usage/cli_usage/)
 - [Configuration Guide](https://nazdridoy.github.io/ngpt/configuration/)
 - [Examples & Tutorials](https://nazdridoy.github.io/ngpt/examples/basic/)
+- [Git Commit Message Guide](https://nazdridoy.github.io/ngpt/usage/gitcommsg/)
 
 
 ## Configuration
