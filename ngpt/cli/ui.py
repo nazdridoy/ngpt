@@ -1,6 +1,7 @@
 import sys
 import time
 import shutil
+import platform
 from .formatters import COLORS
 
 # Optional imports for enhanced UI
@@ -154,6 +155,68 @@ def get_multiline_input():
         except KeyboardInterrupt:
             print("\nInput cancelled by user. Exiting gracefully.")
             return None
+
+def get_terminal_input():
+    """Get input from terminal in a cross-platform way, even when stdin is redirected."""
+    if platform.system() == 'Windows':
+        # Windows-specific solution
+        try:
+            import msvcrt
+            sys.stdout.flush()
+            # Wait for a keypress
+            char = msvcrt.getch().decode('utf-8').lower()
+            print(char)  # Echo the character
+            return char
+        except ImportError:
+            # Fallback if msvcrt is not available
+            return None
+    else:
+        # Unix-like systems (Linux, macOS)
+        try:
+            with open('/dev/tty', 'r') as tty:
+                return tty.readline().strip().lower()
+        except (IOError, OSError):
+            return None
+
+def copy_to_clipboard(content, prompt_message=None):
+    """Copy content to clipboard with user confirmation.
+    
+    Args:
+        content: The text content to copy to clipboard
+        prompt_message: Optional custom message for the prompt (default: "Copy to clipboard? (y/n)")
+        
+    Returns:
+        bool: True if copied to clipboard successfully, False otherwise
+    """
+    # Only prompt if stdout is connected to a terminal
+    if not sys.stdout.isatty():
+        return False
+        
+    try:
+        # Default prompt message
+        if prompt_message is None:
+            prompt_message = "Copy to clipboard? (y/n)"
+            
+        # Make the prompt more visible with colors and formatting
+        clipboard_prompt = f"{COLORS['cyan']}{COLORS['bold']}{prompt_message}{COLORS['reset']} "
+        print(clipboard_prompt, end="")
+        sys.stdout.flush()
+        
+        # Cross-platform terminal input
+        answer = get_terminal_input()
+        
+        if answer == 'y':
+            try:
+                import pyperclip
+                pyperclip.copy(content)
+                print(f"{COLORS['green']}Copied to clipboard.{COLORS['reset']}")
+                return True
+            except ImportError:
+                print(f"{COLORS['yellow']}pyperclip not installed. Try: pip install \"ngpt[clipboard]\" {COLORS['reset']}")
+                return False
+        return False
+    except (KeyboardInterrupt, EOFError):
+        return False
 
 def spinner(message, duration=5, spinner_chars="⣾⣽⣻⢿⡿⣟⣯⣷", color=None, stop_event=None, clean_exit=False):
     """Display a spinner animation with a message.

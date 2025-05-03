@@ -1,6 +1,6 @@
 [project]
 name = "ngpt"
-version = "3.5.3"
+version = "3.5.4"
 description = "Swiss army knife for LLMs: powerful CLI and interactive chatbot in one package. Seamlessly work with OpenAI, Ollama, Groq, Claude, Gemini, or any OpenAI-compatible API to generate code, craft git commits, rewrite text, and execute shell commands."
 authors = [
     {name = "nazDridoy", email = "nazdridoy399@gmail.com"},

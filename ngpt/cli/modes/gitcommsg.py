@@ -8,7 +8,7 @@ import threading
 from datetime import datetime
 import logging
 from ..formatters import COLORS
-from ..ui import spinner
+from ..ui import spinner, copy_to_clipboard
 from ...utils.log import create_gitcommsg_logger
 from ...utils.cli_config import get_cli_config_option
 
@@ -1128,15 +1128,9 @@ def gitcommsg_mode(client, args, logger=None):
             active_logger.log_content("INFO", "FINAL_COMMIT_MESSAGE", result)
         
         # Try to copy to clipboard
-        try:
-            import pyperclip
-            pyperclip.copy(result)
-            print(f"\n{COLORS['green']}(Copied to clipboard){COLORS['reset']}")
-            if active_logger:
-                active_logger.info("Commit message copied to clipboard")
-        except ImportError:
-            if active_logger:
-                active_logger.debug("pyperclip not available, couldn't copy to clipboard")
+        copy_to_clipboard(result)
+        if active_logger:
+            active_logger.info("Offered to copy commit message to clipboard")
     
     except Exception as e:
         print(f"{COLORS['red']}Error: {str(e)}{COLORS['reset']}")

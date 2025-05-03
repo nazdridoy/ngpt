@@ -1,10 +1,9 @@
 import sys
-import platform
 import threading
 import time
 from ..formatters import COLORS
 from ..renderers import prettify_markdown, prettify_streaming_markdown
-from ..ui import get_multiline_input, spinner
+from ..ui import get_multiline_input, spinner, copy_to_clipboard
 from ...utils import enhance_prompt_with_web_search
 
 # System prompt for rewriting text
@@ -70,28 +69,6 @@ BETTER: "We were hoping you could help with this issue we're having with the ser
 ORIGINAL: "The user interface, which is built using React, Redux, and various other frontend technologies, needs to be redesigned to accommodate the new features that we want to add to the application."
 BETTER: "The React/Redux user interface needs redesigning to accommodate our planned new features."
 """
-
-def get_terminal_input():
-    """Get input from terminal in a cross-platform way, even when stdin is redirected."""
-    if platform.system() == 'Windows':
-        # Windows-specific solution
-        try:
-            import msvcrt
-            sys.stdout.flush()
-            # Wait for a keypress
-            char = msvcrt.getch().decode('utf-8').lower()
-            print(char)  # Echo the character
-            return char
-        except ImportError:
-            # Fallback if msvcrt is not available
-            return None
-    else:
-        # Unix-like systems (Linux, macOS)
-        try:
-            with open('/dev/tty', 'r') as tty:
-                return tty.readline().strip().lower()
-        except (IOError, OSError):
-            return None
 
 def rewrite_mode(client, args, logger=None):
     """Handle the text rewriting mode.
@@ -267,24 +244,5 @@ def rewrite_mode(client, args, logger=None):
             print(response)
             
     # Offer to copy to clipboard if not in a redirected output
-    if not args.no_stream and sys.stdout.isatty():
-        try:
-            # Make sure to flush output before asking for input
-            # Make the prompt more visible with colors and formatting
-            clipboard_prompt = f"{COLORS['cyan']}{COLORS['bold']}Copy to clipboard? (y/n){COLORS['reset']} "
-            print(clipboard_prompt, end="")
-            sys.stdout.flush()
-            
-            # Cross-platform terminal input
-            answer = get_terminal_input()
-            
-            if answer == 'y':
-                try:
-                    import pyperclip
-                    pyperclip.copy(response)
-                    print(f"{COLORS['green']}Copied to clipboard.{COLORS['reset']}")
-                except ImportError:
-                    print(f"{COLORS['yellow']}pyperclip not installed. Try: pip install \"ngpt[clipboard]\" {COLORS['reset']}")
-            
-        except (KeyboardInterrupt, EOFError):
-            pass 
+    if not args.no_stream and response:
+        copy_to_clipboard(response) 

@@ -1,32 +1,9 @@
 from ..formatters import COLORS
 from ..renderers import prettify_markdown, prettify_streaming_markdown, has_markdown_renderer, show_available_renderers
-from ..ui import spinner
+from ..ui import spinner, copy_to_clipboard
 from ...utils import enhance_prompt_with_web_search
 import sys
 import threading
-import platform
-
-def get_terminal_input():
-    """Get input from terminal in a cross-platform way, even when stdin is redirected."""
-    if platform.system() == 'Windows':
-        # Windows-specific solution
-        try:
-            import msvcrt
-            sys.stdout.flush()
-            # Wait for a keypress
-            char = msvcrt.getch().decode('utf-8').lower()
-            print(char)  # Echo the character
-            return char
-        except ImportError:
-            # Fallback if msvcrt is not available
-            return None
-    else:
-        # Unix-like systems (Linux, macOS)
-        try:
-            with open('/dev/tty', 'r') as tty:
-                return tty.readline().strip().lower()
-        except (IOError, OSError):
-            return None
 
 # System prompt for code generation with markdown formatting
 CODE_SYSTEM_PROMPT_MARKDOWN = """Your Role: Provide only code as output without any description with proper markdown formatting.
@@ -323,25 +300,6 @@ def code_mode(client, args, logger=None):
             # Should only happen if --no-stream was used without prettify
             print(f"\nGenerated code:\n{generated_code}") 
             
-    # Offer to copy to clipboard if not in a redirected output
-    if generated_code and not args.no_stream and sys.stdout.isatty():
-        try:
-            # Make sure to flush output before asking for input
-            # Make the prompt more visible with colors and formatting
-            clipboard_prompt = f"{COLORS['cyan']}{COLORS['bold']}Copy to clipboard? (y/n){COLORS['reset']} "
-            print(clipboard_prompt, end="")
-            sys.stdout.flush()
-            
-            # Cross-platform terminal input
-            answer = get_terminal_input()
-            
-            if answer == 'y':
-                try:
-                    import pyperclip
-                    pyperclip.copy(generated_code)
-                    print(f"{COLORS['green']}Copied to clipboard.{COLORS['reset']}")
-                except ImportError:
-                    print(f"{COLORS['yellow']}pyperclip not installed. Try: pip install \"ngpt[clipboard]\" {COLORS['reset']}")
-            
-        except (KeyboardInterrupt, EOFError):
-            pass 
+    # Offer to copy to clipboard
+    if generated_code and not args.no_stream:
+        copy_to_clipboard(generated_code) 
