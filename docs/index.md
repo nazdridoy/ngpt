@@ -9,22 +9,6 @@ permalink: /
 
 Welcome to the nGPT documentation. This guide will help you get started with nGPT, a Swiss army knife for LLMs that combines a powerful CLI and interactive chatbot in one package.
 
-## Table of Contents
-
-- [Overview](overview.md)
-- [Installation](installation.md)
-- [Usage](usage/cli_usage.md)
-  - [CLI Usage](usage/cli_usage.md)
-  - [CLI Configuration](usage/cli_config.md)
-  - [Git Commit Messages](usage/gitcommsg.md)
-  - [Web Search](usage/web_search.md)
-- [Examples](examples/basic.md)
-  - [Basic Examples](examples/basic.md)
-  - [Advanced Examples](examples/advanced.md)
-- [Configuration](configuration.md)
-- [Contributing](CONTRIBUTING.md)
-- [License](LICENSE.md)
-
 
 ![ngpt-i](https://raw.githubusercontent.com/nazdridoy/ngpt/main/previews/ngpt-i.png)
 
