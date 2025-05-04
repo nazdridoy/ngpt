@@ -126,18 +126,12 @@ nGPT can be used on Android devices through Termux:
 ```bash
 pkg update && pkg upgrade
 pkg install python
-pip install uv
+pkg install uv
 ```
 
 Install nGPT using either pip or uv:
 
 ```bash
-# Using pip
-pip install ngpt
-
-# Using uv
-uv pip install ngpt
-
 # Install ngpt as a global tool
 uv tool install ngpt
 ```

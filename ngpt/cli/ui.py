@@ -117,10 +117,6 @@ def get_multiline_input():
     editor_app, has_editor = create_multiline_editor()
     
     if has_editor and editor_app:
-        print("\033[94m\033[1m" + "Multi-line Input Mode" + "\033[0m")
-        print("Press Ctrl+D to submit, Ctrl+C to exit")
-        print("Use arrow keys to navigate, Enter for new line")
-        
         try:
             prompt = editor_app.run()
             if not prompt or not prompt.strip():

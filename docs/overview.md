@@ -69,6 +69,7 @@ ngpt -s "list all files recursively"
 ### Text Rewriting Mode
 Improve the quality of text while preserving tone and meaning:
 ```bash
+ngpt --rewrite "I want to said that I think yours product is good and I like it Alot."
 cat text.txt | ngpt --rewrite
 cat text.txt | ngpt -r
 ```

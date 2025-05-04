@@ -61,4 +61,4 @@ ngpt --shell "find large files in current directory"
 ngpt --gitcommsg
 ```
 
-For more examples and detailed instructions, explore the documentation sections listed above. 
+For more examples and detailed instructions, please refer to the side panel for navigation through the documentation sections.
