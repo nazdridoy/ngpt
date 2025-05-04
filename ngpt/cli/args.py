@@ -10,7 +10,7 @@ def setup_argument_parser():
     description = f"{COLORS['cyan']}{COLORS['bold']}nGPT{COLORS['reset']} - Interact with AI language models via OpenAI-compatible APIs"
     
     # Minimalist, clean epilog design
-    epilog = f"\n{COLORS['yellow']}nGPT {COLORS['bold']}v{__version__}{COLORS['reset']}  •  {COLORS['green']}Docs: {COLORS['bold']}https://nazdridoy.github.io/ngpt/usage/cli_usage.html{COLORS['reset']}"
+    epilog = f"\n{COLORS['yellow']}nGPT {COLORS['bold']}v{__version__}{COLORS['reset']}  •  {COLORS['green']}Docs: {COLORS['bold']}https://nazdridoy.github.io/ngpt/usage/cli_usage{COLORS['reset']}"
     
     parser = argparse.ArgumentParser(description=description, formatter_class=ColoredHelpFormatter, epilog=epilog)
     

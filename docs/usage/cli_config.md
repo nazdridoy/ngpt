@@ -166,11 +166,13 @@ The CLI configuration system enforces these rules to prevent incompatible combin
 ### Mode-Specific Options
 
 #### Code Generation Mode
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `language` | string | python | Programming language for code generation |
 
 #### Git Commit Message Mode
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `rec-chunk` | bool | false | Process large diffs in chunks recursively |
