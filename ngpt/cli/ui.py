@@ -174,12 +174,13 @@ def get_terminal_input():
         except (IOError, OSError):
             return None
 
-def copy_to_clipboard(content, prompt_message=None):
+def copy_to_clipboard(content, prompt_message=None, skip_confirmation=False):
     """Copy content to clipboard with user confirmation.
     
     Args:
         content: The text content to copy to clipboard
         prompt_message: Optional custom message for the prompt (default: "Copy to clipboard? (y/n)")
+        skip_confirmation: When True, skips the confirmation prompt and copies directly
         
     Returns:
         bool: True if copied to clipboard successfully, False otherwise
@@ -189,17 +190,21 @@ def copy_to_clipboard(content, prompt_message=None):
         return False
         
     try:
-        # Default prompt message
-        if prompt_message is None:
-            prompt_message = "Copy to clipboard? (y/n)"
+        # Skip confirmation if requested
+        if skip_confirmation:
+            answer = 'y'
+        else:
+            # Default prompt message
+            if prompt_message is None:
+                prompt_message = "Copy to clipboard? (y/n)"
+                
+            # Make the prompt more visible with colors and formatting
+            clipboard_prompt = f"{COLORS['cyan']}{COLORS['bold']}{prompt_message}{COLORS['reset']} "
+            print(clipboard_prompt, end="")
+            sys.stdout.flush()
             
-        # Make the prompt more visible with colors and formatting
-        clipboard_prompt = f"{COLORS['cyan']}{COLORS['bold']}{prompt_message}{COLORS['reset']} "
-        print(clipboard_prompt, end="")
-        sys.stdout.flush()
-        
-        # Cross-platform terminal input
-        answer = get_terminal_input()
+            # Cross-platform terminal input
+            answer = get_terminal_input()
         
         if answer == 'y':
             try:
