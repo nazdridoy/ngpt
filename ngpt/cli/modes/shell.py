@@ -1,6 +1,6 @@
 from ..formatters import COLORS
 from ..ui import spinner, copy_to_clipboard, get_terminal_input
-from ..renderers import prettify_markdown, has_markdown_renderer, prettify_streaming_markdown, show_available_renderers
+from ..renderers import prettify_markdown, has_markdown_renderer, prettify_streaming_markdown, show_available_renderers, TERMINAL_RENDER_LOCK
 from ...utils import enhance_prompt_with_web_search, process_piped_input
 import subprocess
 import sys
@@ -796,19 +796,21 @@ def shell_mode(client, args, logger=None):
     ]
     prompt_text = f"\nWhat would you like to do? [{COLORS['cyan']}C{COLORS['reset']}/{COLORS['cyan']}E{COLORS['reset']}/{COLORS['cyan']}D{COLORS['reset']}/{COLORS['cyan']}A{COLORS['reset']}] "
 
-    # Print options with proper flushing to ensure display
-    print(options_text, flush=True)
-    for option in options:
-        print(option, flush=True)
+    # Make sure box rendering is complete before showing options
+    with TERMINAL_RENDER_LOCK:
+        # Add a small delay to ensure terminal rendering is complete,
+        # especially important for stream-prettify mode
+        if use_stream_prettify:
+            time.sleep(0.5)
+            
+        # Print options with proper flushing to ensure display
+        print(options_text, flush=True)
+        for option in options:
+            print(option, flush=True)
 
-    # Add a small delay to ensure terminal rendering is complete,
-    # especially important for stream-prettify mode
-    if use_stream_prettify:
-        time.sleep(0.5)
-
-    # Print prompt and flush to ensure it appears
-    sys.stdout.write(prompt_text)
-    sys.stdout.flush()
+        # Print prompt and flush to ensure it appears
+        sys.stdout.write(prompt_text)
+        sys.stdout.flush()
     
     try:
         # Use get_terminal_input which opens /dev/tty directly rather than using stdin

@@ -1,5 +1,5 @@
 from ..formatters import COLORS
-from ..renderers import prettify_markdown, prettify_streaming_markdown
+from ..renderers import prettify_markdown, prettify_streaming_markdown, TERMINAL_RENDER_LOCK
 from ..ui import get_multiline_input, spinner
 from ...utils import enhance_prompt_with_web_search
 import threading
@@ -47,9 +47,10 @@ def text_mode(client, args, logger=None):
                 stop_spinner.set()
                 spinner_thread.join()
                 # Clear the spinner line completely
-                sys.stdout.write("\r" + " " * 100 + "\r")
-                sys.stdout.flush()
-                print("Enhanced input with web search results.")
+                with TERMINAL_RENDER_LOCK:
+                    sys.stdout.write("\r" + " " * 100 + "\r")
+                    sys.stdout.flush()
+                    print("Enhanced input with web search results.")
             except Exception as e:
                 # Stop the spinner before re-raising
                 stop_spinner.set()
@@ -119,11 +120,14 @@ def text_mode(client, args, logger=None):
         # On first content, stop the spinner 
         if not first_content_received and stop_spinner_func:
             first_content_received = True
-            # Stop the spinner
-            stop_spinner_func()
-            # Ensure spinner message is cleared with an extra blank line
-            sys.stdout.write("\r" + " " * 100 + "\r")
-            sys.stdout.flush()
+            
+            # Use lock to prevent terminal rendering conflicts
+            with TERMINAL_RENDER_LOCK:
+                # Stop the spinner
+                stop_spinner_func()
+                # Ensure spinner message is cleared with an extra blank line
+                sys.stdout.write("\r" + " " * 100 + "\r")
+                sys.stdout.flush()
         
         # Call the original callback to update the display
         if original_callback:
@@ -155,7 +159,8 @@ def text_mode(client, args, logger=None):
         
     # Handle non-stream response or regular prettify
     if (args.no_stream or args.prettify) and response:
-        if args.prettify:
-            prettify_markdown(response, args.renderer)
-        else:
-            print(response) 
+        with TERMINAL_RENDER_LOCK:
+            if args.prettify:
+                prettify_markdown(response, args.renderer)
+            else:
+                print(response)

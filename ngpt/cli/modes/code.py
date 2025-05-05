@@ -1,5 +1,5 @@
 from ..formatters import COLORS
-from ..renderers import prettify_markdown, prettify_streaming_markdown, has_markdown_renderer, show_available_renderers
+from ..renderers import prettify_markdown, prettify_streaming_markdown, has_markdown_renderer, show_available_renderers, TERMINAL_RENDER_LOCK
 from ..ui import spinner, copy_to_clipboard
 from ...utils import enhance_prompt_with_web_search, process_piped_input
 import sys
@@ -126,9 +126,10 @@ def code_mode(client, args, logger=None):
                 stop_spinner.set()
                 spinner_thread.join()
                 # Clear the spinner line completely
-                sys.stdout.write("\r" + " " * 100 + "\r")
-                sys.stdout.flush()
-                print("Enhanced input with web search results.")
+                with TERMINAL_RENDER_LOCK:
+                    sys.stdout.write("\r" + " " * 100 + "\r")
+                    sys.stdout.flush()
+                    print("Enhanced input with web search results.")
             except Exception as e:
                 # Stop the spinner before re-raising
                 stop_spinner.set()
@@ -211,11 +212,14 @@ def code_mode(client, args, logger=None):
         # On first content, stop the spinner 
         if not first_content_received and stop_spinner_func:
             first_content_received = True
-            # Stop the spinner
-            stop_spinner_func()
-            # Ensure spinner message is cleared with an extra blank line
-            sys.stdout.write("\r" + " " * 100 + "\r")
-            sys.stdout.flush()
+            
+            # Use lock to prevent terminal rendering conflicts
+            with TERMINAL_RENDER_LOCK:
+                # Stop the spinner
+                stop_spinner_func()
+                # Ensure spinner message is cleared with an extra blank line
+                sys.stdout.write("\r" + " " * 100 + "\r")
+                sys.stdout.flush()
         
         # Call the original callback to update the display
         if original_callback:
@@ -297,12 +301,13 @@ def code_mode(client, args, logger=None):
         
     # Print non-streamed output if needed
     if generated_code and not should_stream:
-        if use_regular_prettify:
-            print("\nGenerated code:")
-            prettify_markdown(generated_code, args.renderer)
-        else:
-            # Should only happen if --no-stream was used without prettify
-            print(f"\nGenerated code:\n{generated_code}") 
+        with TERMINAL_RENDER_LOCK:
+            if use_regular_prettify:
+                print("\nGenerated code:")
+                prettify_markdown(generated_code, args.renderer)
+            else:
+                # Should only happen if --no-stream was used without prettify
+                print(f"\nGenerated code:\n{generated_code}")
             
     # Offer to copy to clipboard
     if generated_code and not args.no_stream:

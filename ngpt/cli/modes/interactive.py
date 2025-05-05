@@ -5,7 +5,7 @@ import threading
 import sys
 import time
 from ..formatters import COLORS
-from ..renderers import prettify_markdown, prettify_streaming_markdown
+from ..renderers import prettify_markdown, prettify_streaming_markdown, TERMINAL_RENDER_LOCK
 from ..ui import spinner
 from ...utils import enhance_prompt_with_web_search
 
@@ -78,8 +78,9 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
     def print_separator():
         # Make sure there's exactly one newline before and after
         # Use sys.stdout.write for direct control, avoiding any extra newlines
-        sys.stdout.write(f"\n{separator}\n")
-        sys.stdout.flush()
+        with TERMINAL_RENDER_LOCK:
+            sys.stdout.write(f"\n{separator}\n")
+            sys.stdout.flush()
     
     # Initialize conversation history
     system_prompt = preprompt if preprompt else "You are a helpful assistant."
@@ -111,35 +112,37 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
     
     # Function to display conversation history
     def display_history():
-        if len(conversation) <= 1:  # Only system message
-            print(f"\n{COLORS['yellow']}No conversation history yet.{COLORS['reset']}")
-            return
-            
-        print(f"\n{COLORS['cyan']}{COLORS['bold']}Conversation History:{COLORS['reset']}")
-        print(separator)
-        
-        # Skip system message
-        message_count = 0
-        for i, msg in enumerate(conversation):
-            if msg["role"] == "system":
-                continue
+        with TERMINAL_RENDER_LOCK:
+            if len(conversation) <= 1:  # Only system message
+                print(f"\n{COLORS['yellow']}No conversation history yet.{COLORS['reset']}")
+                return
                 
-            if msg["role"] == "user":
-                message_count += 1
-                print(f"\n{user_header()}")
-                print(f"{COLORS['cyan']}│ [{message_count}] {COLORS['reset']}{msg['content']}")
-            elif msg["role"] == "assistant":
-                print(f"\n{ngpt_header()}")
-                print(f"{COLORS['green']}│ {COLORS['reset']}{msg['content']}")
-        
-        print(f"\n{separator}")  # Consistent separator at the end
+            print(f"\n{COLORS['cyan']}{COLORS['bold']}Conversation History:{COLORS['reset']}")
+            print(separator)
+            
+            # Skip system message
+            message_count = 0
+            for i, msg in enumerate(conversation):
+                if msg["role"] == "system":
+                    continue
+                    
+                if msg["role"] == "user":
+                    message_count += 1
+                    print(f"\n{user_header()}")
+                    print(f"{COLORS['cyan']}│ [{message_count}] {COLORS['reset']}{msg['content']}")
+                elif msg["role"] == "assistant":
+                    print(f"\n{ngpt_header()}")
+                    print(f"{COLORS['green']}│ {COLORS['reset']}{msg['content']}")
+            
+            print(f"\n{separator}")  # Consistent separator at the end
     
     # Function to clear conversation history
     def clear_history():
         nonlocal conversation
         conversation = [{"role": "system", "content": system_prompt}]
-        print(f"\n{COLORS['yellow']}Conversation history cleared.{COLORS['reset']}")
-        print(separator)  # Add separator for consistency
+        with TERMINAL_RENDER_LOCK:
+            print(f"\n{COLORS['yellow']}Conversation history cleared.{COLORS['reset']}")
+            print(separator)  # Add separator for consistency
     
     try:
         while True:
@@ -249,10 +252,11 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
 
             # Print the header if needed
             if should_print_header:
-                if not no_stream and not stream_prettify:
-                    print(f"\n{ngpt_header()}: {COLORS['reset']}", end="", flush=True)
-                elif not stream_prettify:
-                    print(f"\n{ngpt_header()}: {COLORS['reset']}", flush=True)
+                with TERMINAL_RENDER_LOCK:
+                    if not no_stream and not stream_prettify:
+                        print(f"\n{ngpt_header()}: {COLORS['reset']}", end="", flush=True)
+                    elif not stream_prettify:
+                        print(f"\n{ngpt_header()}: {COLORS['reset']}", flush=True)
             
             # Determine streaming behavior
             if prettify and not no_stream and not stream_prettify:
@@ -294,18 +298,20 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
                         if not first_content_received:
                             first_content_received = True
                             
-                            # Stop the spinner if it's running
-                            if stop_spinner_func:
-                                stop_spinner_func()
+                            # Use lock to prevent terminal rendering conflicts
+                            with TERMINAL_RENDER_LOCK:
+                                # Stop the spinner if it's running
+                                if stop_spinner_func:
+                                    stop_spinner_func()
+                                    
+                                # Clear the spinner line completely without leaving extra newlines
+                                # Use direct terminal control to ensure consistency
+                                sys.stdout.write("\r" + " " * shutil.get_terminal_size().columns + "\r")
+                                sys.stdout.flush()
                                 
-                            # Clear the spinner line completely without leaving extra newlines
-                            # Use direct terminal control to ensure consistency
-                            sys.stdout.write("\r" + " " * shutil.get_terminal_size().columns + "\r")
-                            sys.stdout.flush()
-                            
-                            # Now start the live display
-                            if live_display:
-                                live_display.start()
+                                # Now start the live display
+                                if live_display:
+                                    live_display.start()
                         
                         # Call the original callback to update content
                         if original_callback:
@@ -351,11 +357,12 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
                 
                 # Print response if not streamed (either due to no_stream or prettify)
                 if no_stream or prettify:
-                    if prettify:
-                        # For pretty formatting with rich, don't print any header text as the rich renderer already includes it
-                        prettify_markdown(response, renderer)
-                    else:
-                        print(response)
+                    with TERMINAL_RENDER_LOCK:
+                        if prettify:
+                            # For pretty formatting with rich, don't print any header text as the rich renderer already includes it
+                            prettify_markdown(response, renderer)
+                        else:
+                            print(response)
                 
                 # Log AI response if logging is enabled
                 if logger:
