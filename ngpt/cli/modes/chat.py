@@ -1,7 +1,7 @@
 from ..formatters import COLORS
 from ..renderers import prettify_markdown, prettify_streaming_markdown
 from ..ui import spinner
-from ...utils import enhance_prompt_with_web_search
+from ...utils import enhance_prompt_with_web_search, process_piped_input
 import sys
 import threading
 
@@ -13,43 +13,20 @@ def chat_mode(client, args, logger=None):
         args: The parsed command-line arguments
         logger: Optional logger instance
     """
+    # Get the prompt
+    if args.prompt is None:
+        try:
+            print("Enter your prompt: ", end='')
+            prompt = input()
+        except KeyboardInterrupt:
+            print("\nInput cancelled by user. Exiting gracefully.")
+            sys.exit(130)
+    else:
+        prompt = args.prompt
+    
     # Handle pipe mode
     if args.pipe:
-        # Read input from stdin
-        stdin_content = sys.stdin.read().strip()
-        
-        # Get the prompt - either use provided one or ask user
-        if args.prompt is None:
-            try:
-                print("Enter your prompt (use {} as placeholder for stdin): ", end='')
-                prompt = input()
-            except KeyboardInterrupt:
-                print("\nInput cancelled by user. Exiting gracefully.")
-                sys.exit(130)
-        else:
-            prompt = args.prompt
-        
-        # Replace the placeholder in the prompt with stdin content
-        placeholder = "{}"
-        
-        # Check if the placeholder exists in the prompt
-        if placeholder not in prompt:
-            print(f"{COLORS['yellow']}Warning: Placeholder '{placeholder}' not found in prompt. Appending stdin content to the end.{COLORS['reset']}")
-            prompt = f"{prompt} {stdin_content}"
-        else:
-            prompt = prompt.replace(placeholder, stdin_content)
-    # Handle regular chat mode
-    else:
-        # Get the prompt
-        if args.prompt is None:
-            try:
-                print("Enter your prompt: ", end='')
-                prompt = input()
-            except KeyboardInterrupt:
-                print("\nInput cancelled by user. Exiting gracefully.")
-                sys.exit(130)
-        else:
-            prompt = args.prompt
+        prompt = process_piped_input(prompt, logger=logger)
     
     # Log the user message if logging is enabled
     if logger:

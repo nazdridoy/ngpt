@@ -1,7 +1,7 @@
 from ..formatters import COLORS
 from ..renderers import prettify_markdown, prettify_streaming_markdown, has_markdown_renderer, show_available_renderers
 from ..ui import spinner, copy_to_clipboard
-from ...utils import enhance_prompt_with_web_search
+from ...utils import enhance_prompt_with_web_search, process_piped_input
 import sys
 import threading
 
@@ -96,6 +96,10 @@ def code_mode(client, args, logger=None):
             sys.exit(130)
     else:
         prompt = args.prompt
+    
+    # Apply piped input if --pipe is enabled
+    if args.pipe:
+        prompt = process_piped_input(prompt, logger=logger)
     
     # Log the user prompt if logging is enabled
     if logger:

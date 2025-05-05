@@ -37,13 +37,13 @@ Where:
 You can set configuration options directly via command-line arguments:
 
 ```
-usage: ngpt [-h] [-v] [--language LANGUAGE] [--config [CONFIG]] [--config-index CONFIG_INDEX] [--provider PROVIDER] [--remove]
-            [--show-config] [--all] [--list-models] [--list-renderers] [--cli-config [COMMAND ...]] [--api-key API_KEY]
-            [--base-url BASE_URL] [--model MODEL] [--web-search] [--temperature TEMPERATURE] [--top_p TOP_P]
-            [--max_tokens MAX_TOKENS] [--log [FILE]] [--preprompt PREPROMPT] [--no-stream | --prettify | --stream-prettify]
-            [--renderer {auto,rich,glow}] [--rec-chunk] [--diff [FILE]] [--chunk-size CHUNK_SIZE]
-            [--analyses-chunk-size ANALYSES_CHUNK_SIZE] [--max-msg-lines MAX_MSG_LINES]
-            [--max-recursion-depth MAX_RECURSION_DEPTH] [-i | -s | -c | -t |-p | -r | -g]
+usage: ngpt [-h] [-v] [--language LANGUAGE] [--config [CONFIG]] [--config-index CONFIG_INDEX] [--provider PROVIDER]
+            [--remove] [--show-config] [--all] [--list-models] [--list-renderers] [--cli-config [COMMAND ...]]
+            [--api-key API_KEY] [--base-url BASE_URL] [--model MODEL] [--web-search] [--pipe]
+            [--temperature TEMPERATURE] [--top_p TOP_P] [--max_tokens MAX_TOKENS] [--log [FILE]] [--preprompt PREPROMPT]
+            [--no-stream | --prettify | --stream-prettify] [--renderer {auto,rich,glow}] [--rec-chunk] [--diff [FILE]]
+            [--chunk-size CHUNK_SIZE] [--analyses-chunk-size ANALYSES_CHUNK_SIZE] [--max-msg-lines MAX_MSG_LINES]
+            [--max-recursion-depth MAX_RECURSION_DEPTH] [-i | -s | -c | -t | -r | -g]
             [prompt]
 ```
 
@@ -103,7 +103,7 @@ usage: ngpt [-h] [-v] [--language LANGUAGE] [--config [CONFIG]] [--config-index 
 - `-s, --shell`: Generate and execute shell commands
 - `-c, --code`: Generate code
 - `-t, --text`: Enter multi-line text input (submit with Ctrl+D)
-- `-p, --pipe`: Read from stdin and use content with prompt. Use {} in prompt as placeholder for stdin content
+- `--pipe`: Read from stdin and use content with prompt. Use {} in prompt as placeholder for stdin content. Can be used with any mode option except --text and --interactive.
 - `-r, --rewrite`: Rewrite text from stdin to be more natural while preserving tone and meaning
 - `-g, --gitcommsg`: Generate AI-powered git commit messages from staged changes or diff file
 
@@ -282,6 +282,9 @@ ngpt --gitcommsg --rec-chunk
 # Use a diff file instead of staged changes
 ngpt --gitcommsg --diff path/to/diff_file
 
+# Use piped diff content from stdin
+git diff HEAD~1 | ngpt --gitcommsg --pipe
+
 # With custom context
 ngpt --gitcommsg --preprompt "type:feat"
 ```
@@ -323,9 +326,51 @@ cat script.py | ngpt --pipe "Explain what this code does and suggest improvement
 
 # Review text
 cat essay.txt | ngpt --pipe "Provide feedback on this essay: {}"
+
+# Using here-string (<<<) for quick single-line input 
+ngpt --pipe {} <<< "What is the best way to learn shell redirects?"
+
+# Using standard input redirection to process file contents
+ngpt --pipe "summarise {}" < README.md
+
+# Using here-document (<<EOF) for multiline input
+ngpt --pipe {} << EOF                                              
+What is the best way to learn Golang?
+Provide simple hello world example.
+EOF
 ```
 
 This is powerful for integrating nGPT into shell scripts and automation workflows.
+
+### Pipe Usage With Different Modes
+
+The `--pipe` flag can be combined with several modes (except `--text` and `--interactive`) for powerful workflows:
+
+```bash
+# Standard chat mode with pipe
+cat README.md | ngpt --pipe "Summarize this document in bullet points: {}"
+
+# Code generation mode with pipe
+cat algorithm.py | ngpt --code --pipe "Optimize this algorithm and add comments: {}"
+
+# Shell command generation with pipe
+cat server_logs.txt | ngpt --shell --pipe "Generate a command to extract all error messages from these logs: {}"
+
+# Rewrite mode with pipe (explicit placeholder)
+cat draft_email.txt | ngpt --rewrite --pipe "Make this email more professional while keeping key points: {}"
+
+# Rewrite mode with pipe (implicit - will use entire content)
+cat draft_email.txt | ngpt --rewrite
+
+# Git commit message generation from piped diff
+git diff HEAD~1 | ngpt --gitcommsg --pipe
+```
+
+Each mode handles piped content appropriately for that context:
+- In code mode: Uses piped code as a starting point for modification
+- In shell mode: Generates commands that process the piped content
+- In rewrite mode: Treats the piped content as the text to be rewritten
+- In gitcommsg mode: Uses piped content as the diff to analyze
 
 ## Formatting Options
 
@@ -507,7 +552,19 @@ nGPT works well with Unix pipes and redirection:
 ngpt "Write a short story about AI" > story.txt
 
 # Process file content
-cat data.csv | ngpt -p "Analyze this CSV data and provide insights: {}" > analysis.txt
+cat data.csv | ngpt --pipe "Analyze this CSV data and provide insights: {}" > analysis.txt
+
+# Using here-string (<<<) for quick single-line input 
+ngpt --pipe {} <<< "What is the best way to learn shell redirects?"
+
+# Using standard input redirection to process file contents
+ngpt --pipe "summarise {}" < README.md
+
+# Using here-document (<<EOF) for multiline input
+ngpt --pipe {} << EOF                                              
+What is the best way to learn Golang?
+Provide simple hello world example.
+EOF
 
 # Chain commands
 ngpt --code "function to parse CSV" | grep -v "#" > parse_csv.py

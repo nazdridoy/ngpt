@@ -11,6 +11,7 @@ from ..formatters import COLORS
 from ..ui import spinner, copy_to_clipboard
 from ...utils.log import create_gitcommsg_logger
 from ...utils.cli_config import get_cli_config_option
+from ...utils import process_piped_input
 
 def get_diff_content(diff_file=None):
     """Get git diff content from file or git staged changes.
@@ -964,6 +965,39 @@ REMINDER:
 
 DO NOT ask for the original diff or add explanations outside the commit message format."""
 
+def is_git_diff(content):
+    """Check if the content looks like a git diff.
+    
+    Args:
+        content: The content to check
+        
+    Returns:
+        bool: True if the content looks like a git diff, False otherwise
+    """
+    # Check for common git diff patterns
+    diff_patterns = [
+        r'diff --git a/.*? b/.*?',  # diff --git a/file b/file
+        r'index [a-f0-9]+\.\.[a-f0-9]+',  # index hash..hash
+        r'--- a/.*?',  # --- a/file
+        r'\+\+\+ b/.*?',  # +++ b/file
+        r'@@ -\d+,\d+ \+\d+,\d+ @@'  # @@ -line,count +line,count @@
+    ]
+    
+    # Check if the content contains at least one of these patterns
+    for pattern in diff_patterns:
+        if re.search(pattern, content):
+            return True
+    
+    # Check if the content contains lines starting with + or - (changes)
+    lines = content.splitlines()
+    plus_minus_lines = [line for line in lines if line.startswith('+') or line.startswith('-')]
+    
+    # If there are many +/- lines, it's likely a diff
+    if len(plus_minus_lines) > 5 and len(plus_minus_lines) / len(lines) > 0.1:
+        return True
+    
+    return False
+
 def gitcommsg_mode(client, args, logger=None):
     """Handle the Git commit message generation mode.
     
@@ -987,16 +1021,47 @@ def gitcommsg_mode(client, args, logger=None):
         active_logger.debug(f"Args: {args}")
     
     try:
+        # Process piped input as diff content when --pipe flag is set
+        piped_diff_content = None
+        if args.pipe:
+            if active_logger:
+                active_logger.info("Processing piped input as diff content")
+            
+            if not sys.stdin.isatty():
+                piped_diff_content = sys.stdin.read().strip()
+                if not piped_diff_content:
+                    print(f"{COLORS['yellow']}Warning: No diff content received from stdin.{COLORS['reset']}")
+                else:
+                    # Validate that the piped content looks like a git diff
+                    if not is_git_diff(piped_diff_content):
+                        print(f"{COLORS['red']}Error: The piped content doesn't appear to be a git diff. Exiting.{COLORS['reset']}")
+                        if active_logger:
+                            active_logger.error("Piped content doesn't appear to be a git diff. Aborting.")
+                        return
+                    elif active_logger:
+                        active_logger.info(f"Received {len(piped_diff_content.splitlines())} lines of diff content from stdin")
+            else:
+                print(f"{COLORS['yellow']}Error: --pipe was specified but no input is piped.{COLORS['reset']}")
+                return
+        
         # Check if --diff was explicitly passed on the command line
         diff_option_provided = '--diff' in sys.argv
         diff_path_provided = diff_option_provided and args.diff is not None and args.diff is not True
         
+        # If piped diff content is available, use it directly
+        if piped_diff_content:
+            diff_content = piped_diff_content
+            if active_logger:
+                active_logger.info("Using diff content from stdin")
         # If --diff wasn't explicitly provided on the command line, don't use the config value
-        if not diff_option_provided:
+        elif not diff_option_provided:
             # Even if diff is in CLI config, don't use it unless --diff flag is provided
             diff_file = None
             if active_logger:
                 active_logger.info("Not using diff file from CLI config because --diff flag was not provided")
+            
+            # Get diff content from git staged changes
+            diff_content = get_diff_content(diff_file)
         else:
             # --diff flag was provided on command line
             if args.diff is True:
@@ -1013,9 +1078,9 @@ def gitcommsg_mode(client, args, logger=None):
                 diff_file = args.diff
                 if active_logger:
                     active_logger.info(f"Using explicitly provided diff file: {diff_file}")
-        
-        # Get diff content
-        diff_content = get_diff_content(diff_file)
+            
+            # Get diff content from file
+            diff_content = get_diff_content(diff_file)
         
         if not diff_content:
             print(f"{COLORS['red']}No diff content available. Exiting.{COLORS['reset']}")

@@ -550,13 +550,6 @@ def main():
             # Text mode (multiline input)
             text_mode(client, args, logger=logger)
         
-        elif args.pipe:
-            # Apply CLI config for pipe mode (similar to chat mode)
-            args = apply_cli_config(args, "all")
-            
-            # Pipe mode (using the chat mode with stdin input)
-            chat_mode(client, args, logger=logger)
-        
         elif args.rewrite:
             # Apply CLI config for rewrite mode
             args = apply_cli_config(args, "all")
@@ -571,8 +564,8 @@ def main():
             # Git commit message generation mode
             gitcommsg_mode(client, args, logger=logger)
         
+        # Choose chat mode by default if no other specific mode is selected
         else:
-            # Default to chat mode
             # Apply CLI config for default chat mode
             args = apply_cli_config(args, "all")
             

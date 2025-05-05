@@ -145,13 +145,13 @@ The interactive configuration will prompt you for values and guide you through t
 You can set configuration options directly via command-line arguments:
 
 ```
-usage: ngpt [-h] [-v] [--language LANGUAGE] [--config [CONFIG]] [--config-index CONFIG_INDEX] [--provider PROVIDER] [--remove]
-            [--show-config] [--all] [--list-models] [--list-renderers] [--cli-config [COMMAND ...]] [--api-key API_KEY]
-            [--base-url BASE_URL] [--model MODEL] [--web-search] [--temperature TEMPERATURE] [--top_p TOP_P]
-            [--max_tokens MAX_TOKENS] [--log [FILE]] [--preprompt PREPROMPT] [--no-stream | --prettify | --stream-prettify]
-            [--renderer {auto,rich,glow}] [--rec-chunk] [--diff [FILE]] [--chunk-size CHUNK_SIZE]
-            [--analyses-chunk-size ANALYSES_CHUNK_SIZE] [--max-msg-lines MAX_MSG_LINES]
-            [--max-recursion-depth MAX_RECURSION_DEPTH] [-i | -s | -c | -t |-p | -r | -g]
+usage: ngpt [-h] [-v] [--language LANGUAGE] [--config [CONFIG]] [--config-index CONFIG_INDEX] [--provider PROVIDER]
+            [--remove] [--show-config] [--all] [--list-models] [--list-renderers] [--cli-config [COMMAND ...]]
+            [--api-key API_KEY] [--base-url BASE_URL] [--model MODEL] [--web-search] [--pipe]
+            [--temperature TEMPERATURE] [--top_p TOP_P] [--max_tokens MAX_TOKENS] [--log [FILE]] [--preprompt PREPROMPT]
+            [--no-stream | --prettify | --stream-prettify] [--renderer {auto,rich,glow}] [--rec-chunk] [--diff [FILE]]
+            [--chunk-size CHUNK_SIZE] [--analyses-chunk-size ANALYSES_CHUNK_SIZE] [--max-msg-lines MAX_MSG_LINES]
+            [--max-recursion-depth MAX_RECURSION_DEPTH] [-i | -s | -c | -t | -r | -g]
             [prompt]
 ```
 
@@ -211,7 +211,7 @@ usage: ngpt [-h] [-v] [--language LANGUAGE] [--config [CONFIG]] [--config-index 
 - `-s, --shell`: Generate and execute shell commands
 - `-c, --code`: Generate code
 - `-t, --text`: Enter multi-line text input (submit with Ctrl+D)
-- `-p, --pipe`: Read from stdin and use content with prompt. Use {} in prompt as placeholder for stdin content
+- `--pipe`: Read from stdin and use content with prompt. Use {} in prompt as placeholder for stdin content. Can be used with any mode option except --text and --interactive.
 - `-r, --rewrite`: Rewrite text from stdin to be more natural while preserving tone and meaning
 - `-g, --gitcommsg`: Generate AI-powered git commit messages from staged changes or diff file
 
@@ -240,7 +240,7 @@ ngpt --interactive --log conversation.log
 ngpt --log "Tell me about quantum computing"
 
 # Process text from stdin using the {} placeholder
-echo "What is this text about?" | ngpt -p "Analyze the following text: {}"
+echo "What is this text about?" | ngpt --pipe "Analyze the following text: {}"
 
 # Generate git commit message from staged changes
 ngpt -g

@@ -45,7 +45,7 @@ Use detailed, structured system prompts to create specific behaviors:
 
 ```bash
 # Create a detailed prompt from a file
-cat structured_prompt.txt | ngpt -i --pipe "--preprompt {}"
+cat structured_prompt.txt | ngpt --pipe "--preprompt {}"
 
 # Technical review prompt
 ngpt --preprompt "Act as a senior software engineer reviewing my code. 
@@ -190,6 +190,128 @@ cat api_docs.txt | ngpt --pipe "Enhance this API documentation with better expla
 
 # Enhance product descriptions
 cat product_descriptions.txt | ngpt --pipe "Improve these product descriptions by adding more vivid language, highlighting unique features, and addressing common customer pain points: {}"
+```
+
+## Advanced Pipe Processing Workflows
+
+The `--pipe` flag enables sophisticated data processing pipelines when combined with other tools and modes. Here are advanced workflows that leverage piped content:
+
+### Shell Redirection with Pipe
+
+nGPT works seamlessly with various shell redirection techniques for flexible input handling:
+
+```bash
+# Using here-string (<<<) for quick single-line input 
+ngpt --pipe {} <<< "What is the best way to learn shell redirects?"
+
+# Using standard input redirection to process file contents
+ngpt --pipe "summarise {}" < README.md
+
+# Using here-document (<<EOF) for multiline input
+ngpt --pipe {} << EOF                                              
+What is the best way to learn Golang?
+Provide simple hello world example.
+EOF
+```
+
+### Multi-Stage Processing Pipelines
+
+Create complex processing chains that transform data through multiple steps:
+
+```bash
+# Multi-stage code transformation
+# Extract functions, optimize them, then add tests
+grep -r "function" src/ | 
+  ngpt --pipe "Extract all JavaScript function definitions from this code: {}" | 
+  ngpt --code --pipe "Optimize these functions for performance: {}" | 
+  ngpt --code --pipe "Write comprehensive unit tests for these optimized functions: {}" > test_suite.js
+
+# Log analysis workflow
+# Extract errors, analyze patterns, then generate fix suggestions
+grep -i "error" system.log | 
+  ngpt --pipe "Extract and categorize all errors by type: {}" | 
+  ngpt --pipe "Analyze these error categories and identify common patterns: {}" | 
+  ngpt --pipe "Recommend fixes for the most common error patterns: {}" > error_remediation.md
+```
+
+### Mode-Specific Advanced Techniques
+
+#### Advanced Code Mode with Pipe
+
+```bash
+# API Integration
+# Generate wrapper code for a REST API described in documentation
+curl -s https://api.example.com/docs | 
+  ngpt --pipe "Extract all API endpoints, parameters and response formats from this documentation: {}" | 
+  ngpt --code --language typescript --pipe "Create TypeScript interface definitions for these API resources: {}" > api-types.ts
+
+# Code transformation with context
+# Refactor legacy code to modern standards with context
+cat legacy-component.js | 
+  ngpt --code --language javascript --preprompt "You are refactoring legacy React class components to modern functional components with hooks" --pipe "Refactor this legacy component, preserving all functionality: {}" > modern-component.js
+```
+
+#### Advanced Shell Mode with Pipe
+
+```bash
+# Complex data processing command generation
+# Generate a command to process a complex data structure
+jq -r '.items[] | .metadata' complex_data.json | 
+  ngpt --shell --pipe "Generate a command to extract all unique values of the 'region' field, count occurrences of each, sort by count in descending order, and save to regions.csv with headers 'Region,Count': {}"
+
+# Dynamic script generation
+# Generate a data cleanup script based on analysis
+cat messy_data.csv | 
+  ngpt --pipe "Analyze this CSV data and identify all data quality issues: {}" | 
+  ngpt --shell --pipe "Create a bash script that cleans up all these data quality issues: {}" > cleanup_data.sh
+```
+
+#### Advanced Rewrite Mode with Pipe
+
+```bash
+# Targeted content update
+# Extract, update, and replace specific sections of a document
+grep -A20 "## Installation" README.md | 
+  ngpt --rewrite --pipe "Update this installation guide to include Docker setup instructions while maintaining the existing style: {}" | 
+  sed -i '/## Installation/,+20c\' README.md
+
+# Feedback-based improvement
+# Incorporate reviewer feedback into documentation
+cat reviewer_comments.txt | 
+  ngpt --pipe "Extract all actionable feedback points: {}" | 
+  cat docs.md - | 
+  ngpt --rewrite --pipe "Update this documentation to address all the feedback points listed at the end: {}" > improved_docs.md
+```
+
+### Working with Structured Data
+
+Process and transform structured data through pipe workflows:
+
+```bash
+# JSON transformation and enhancement
+cat data.json | 
+  jq '.items' | 
+  ngpt --pipe "Convert this JSON data to a markdown table with headers from the field names: {}" > data_table.md
+
+# Log data extraction and analysis
+cat server_logs.txt | 
+  grep -i "error" | 
+  ngpt --pipe "Extract timestamp, error code, and message from each line and format as a CSV: {}" | 
+  ngpt --pipe "Analyze this error data and identify trends by time of day and error type: {}" > error_analysis.md
+```
+
+### Git-Specific Pipe Workflows
+
+Leverage git command output with pipe processing:
+
+```bash
+# Commit history analysis
+git log --author="username" --since="1 month ago" --pretty=format:"%h %s" | 
+  ngpt --pipe "Analyze this commit history and summarize this developer's work focus and productivity patterns: {}" > developer_report.md
+
+# PR summary generation
+git diff origin/main..HEAD | 
+  ngpt --pipe "Summarize the key changes in this PR, focusing on functional changes rather than styling: {}" > pr_summary.md
 ```
 
 ## Advanced Git Commit Message Generation

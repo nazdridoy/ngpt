@@ -4,7 +4,7 @@ import time
 from ..formatters import COLORS
 from ..renderers import prettify_markdown, prettify_streaming_markdown
 from ..ui import get_multiline_input, spinner, copy_to_clipboard
-from ...utils import enhance_prompt_with_web_search
+from ...utils import enhance_prompt_with_web_search, process_piped_input
 
 # System prompt for rewriting text
 REWRITE_SYSTEM_PROMPT = """You are an expert text editor and rewriter. Your task is to rewrite the user's text to improve readability and flow while carefully preserving the original meaning, tone, and style.
@@ -78,14 +78,17 @@ def rewrite_mode(client, args, logger=None):
         args: The parsed command-line arguments
         logger: Optional logger instance
     """
-    # Determine the input source (stdin pipe, command-line argument, or multiline input)
-    if not sys.stdin.isatty():
+    # Check if using --pipe flag with a specific placeholder
+    if args.pipe and args.prompt:
+        input_text = process_piped_input(args.prompt, logger=logger)
+    # Normal rewrite mode functionality (direct stdin piping without --pipe flag)
+    elif not sys.stdin.isatty():
         # Read from stdin if data is piped
         input_text = sys.stdin.read().strip()
         
-        # If stdin is empty but prompt is provided, use the prompt
-        if not input_text and args.prompt:
-            input_text = args.prompt
+        # If prompt is also provided, append it to the piped input
+        if args.prompt:
+            input_text = f"{input_text}\n\n{args.prompt}"
     elif args.prompt:
         # Use the command-line argument if provided
         input_text = args.prompt

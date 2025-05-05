@@ -165,6 +165,22 @@ cat script.py | ngpt --pipe "Explain what this code does and suggest improvement
 cat emails.txt | ngpt --pipe "Extract all company domains from these email addresses: {}"
 ```
 
+### Shell Redirection Examples
+
+```bash
+# Using here-string (<<<) for quick single-line input 
+ngpt --pipe {} <<< "What is the best way to learn shell redirects?"
+
+# Using standard input redirection to process file contents
+ngpt --pipe "summarise {}" < README.md
+
+# Using here-document (<<EOF) for multiline input
+ngpt --pipe {} << EOF                                              
+What is the best way to learn Golang?
+Provide simple hello world example.
+EOF
+```
+
 ### Content Transformation
 
 ```bash
@@ -176,6 +192,48 @@ cat spanish.txt | ngpt --pipe "Translate this Spanish text to English: {}"
 
 # Change writing style
 cat technical.txt | ngpt --pipe "Rewrite this technical content for a non-technical audience: {}"
+```
+
+## Pipe Usage With Different Modes
+
+The pipe flag can be used with several different modes for powerful combinations:
+
+### With Standard Mode (Default)
+
+```bash
+# Summarize document content
+cat README.md | ngpt --pipe "Summarize this document: {}"
+```
+
+### With Code Mode
+
+```bash
+# Generate optimized version of code
+cat slow_function.py | ngpt --code --pipe "Optimize this function for performance: {}"
+
+# Add tests to existing code
+cat module.js | ngpt --code --language javascript --pipe "Write unit tests for this code: {}"
+```
+
+### With Shell Mode
+
+```bash
+# Generate command to process file content
+cat error_logs.txt | ngpt --shell --pipe "Generate a command to count occurrences of each error type in these logs: {}"
+```
+
+### With Rewrite Mode
+
+```bash
+# Improve email drafts
+cat draft_email.txt | ngpt --rewrite --pipe "Make this email more professional while maintaining the core message: {}"
+```
+
+### With Git Commit Message Mode
+
+```bash
+# Generate message from specific diff
+git diff HEAD~1 | ngpt --gitcommsg --pipe
 ```
 
 ## Git Commit Message Examples
@@ -321,4 +379,4 @@ For more advanced examples and detailed explanations of specific features, see:
 - [Advanced Examples](advanced.md)
 - [CLI Usage Guide](../usage/cli_usage.md)
 - [CLI Configuration Guide](../usage/cli_config.md)
-- [Git Commit Message Guide](../usage/gitcommsg.md) 
+- [Git Commit Message Guide](../usage/gitcommsg.md)

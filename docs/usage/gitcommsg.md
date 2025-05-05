@@ -114,6 +114,99 @@ This is useful for:
 - Sharing change analysis across machines
 - Creating template-based workflows
 
+## Using Piped Diff Content
+
+You can also pipe git diff output directly to nGPT for immediate commit message generation:
+
+```bash
+# Generate message from current unstaged changes
+git diff | ngpt --gitcommsg --pipe
+
+# Generate message from staged changes
+git diff --staged | ngpt --gitcommsg --pipe
+
+# Generate message from specific commit
+git diff HEAD~1 HEAD | ngpt --gitcommsg --pipe
+
+# Generate message from branch comparison
+git diff main..feature-branch | ngpt --gitcommsg --pipe
+
+# Generate message from specific files
+git diff -- src/components/ | ngpt --gitcommsg --pipe
+```
+
+This approach offers several advantages:
+
+1. **Flexibility**: Generate messages for any diff without creating temporary files
+2. **Workflow Integration**: Easily incorporate into shell scripts and CI/CD pipelines
+3. **Quick Previews**: Preview commit messages before staging changes
+4. **Selective Analysis**: Focus on specific files or directories
+5. **Branch Comparisons**: Generate messages based on differences between branches
+
+### Advanced Piped Diff Examples
+
+You can apply additional git options to customize the diff content:
+
+```bash
+# Ignore whitespace changes
+git diff -w | ngpt --gitcommsg --pipe
+
+# Include function context
+git diff -W | ngpt --gitcommsg --pipe
+
+# Compare with specific revision
+git diff v1.0.0..HEAD | ngpt --gitcommsg --pipe
+
+# Filter by file type
+git diff -- "*.js" "*.jsx" | ngpt --gitcommsg --pipe
+```
+
+### Combining with Other Tools
+
+You can combine piped diff content with other Unix tools:
+
+```bash
+# Filter the diff first with grep
+git diff | grep -v "package-lock.json" | ngpt --gitcommsg --pipe
+
+# Process large diffs with head/tail
+git diff | head -n 1000 | ngpt --gitcommsg --pipe
+
+# Save the diff and the message
+git diff | tee changes.diff | ngpt --gitcommsg --pipe | tee commit_msg.txt
+```
+
+### Using with Preprompt
+
+You can combine piped diff content with preprompt directives:
+
+```bash
+# Provide type and scope
+git diff | ngpt --gitcommsg --pipe --preprompt "type:feat scope:auth"
+
+# Add context about the changes
+git diff | ngpt --gitcommsg --pipe --preprompt "This implements the user authentication flow using OAuth2"
+```
+
+### Pipe Processing in Automated Workflows
+
+You can use piped diff content in scripts and automated workflows:
+
+```bash
+#!/bin/bash
+# Example script that analyzes all pending changes
+# and suggests commit messages for each file
+
+# Get list of changed files
+changed_files=$(git status -s | awk '{print $2}')
+
+for file in $changed_files; do
+  echo "Analyzing changes in $file..."
+  git diff -- "$file" | ngpt --gitcommsg --pipe > "$file.commit_msg"
+  echo "Suggested commit message saved to $file.commit_msg"
+done
+```
+
 ## Guiding Message Generation
 
 You can use the `--preprompt` option to provide context or directives for the message generation:

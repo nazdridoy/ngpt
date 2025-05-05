@@ -69,6 +69,8 @@ def setup_argument_parser():
                               help='Model to use')
     global_group.add_argument('--web-search', action='store_true', 
                       help='Enable web search capability using DuckDuckGo to enhance prompts with relevant information')
+    global_group.add_argument('--pipe', action='store_true',
+                      help='Read from stdin and use content with prompt. Use {} in prompt as placeholder for stdin content. Can be used with any mode option except --text and --interactive')
     global_group.add_argument('--temperature', type=float, default=0.7,
                       help='Set temperature (controls randomness, default: 0.7)')
     global_group.add_argument('--top_p', type=float, default=1.0,
@@ -119,8 +121,6 @@ def setup_argument_parser():
                                       help='Generate code')
     mode_exclusive_group.add_argument('-t', '--text', action='store_true', 
                                       help='Enter multi-line text input (submit with Ctrl+D)')
-    mode_exclusive_group.add_argument('-p', '--pipe', action='store_true',
-                                      help='Read from stdin and use content with prompt. Use {} in prompt as placeholder for stdin content')
     mode_exclusive_group.add_argument('-r', '--rewrite', action='store_true',
                                       help='Rewrite text from stdin to be more natural while preserving tone and meaning')
     mode_exclusive_group.add_argument('-g', '--gitcommsg', action='store_true',
@@ -167,7 +167,11 @@ def validate_args(args):
     if args.stream_prettify and not has_markdown_renderer('rich'):
         raise ValueError("--stream-prettify requires Rich to be installed. Install with: pip install \"ngpt[full]\" or pip install rich")
     
-    # If stdin mode is used, check if input is available
+    # Check for incompatible --pipe flag with certain modes
+    if args.pipe and (args.text or args.interactive):
+        raise ValueError("--pipe flag cannot be used with --text or --interactive modes. These modes already handle input directly.")
+    
+    # If pipe flag is used, check if input is available
     if args.pipe and sys.stdin.isatty():
         raise ValueError("--pipe was specified but no input is piped. Use echo 'content' | ngpt --pipe 'prompt with {}'")
     

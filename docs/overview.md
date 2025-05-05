@@ -89,10 +89,22 @@ ngpt -t
 ```
 
 ### Stdin Processing Mode
-Process piped content using a placeholder:
+Process piped content using a placeholder (compatible with standard, code, shell, rewrite, and gitcommsg modes):
 ```bash
+# Standard mode
 cat README.md | ngpt --pipe "Summarize this document: {}"
-cat README.md | ngpt -p "Summarize this document: {}"
+
+# Code mode
+cat algorithm.py | ngpt --code --pipe "Optimize this algorithm: {}"
+
+# Shell mode
+cat logs.txt | ngpt --shell --pipe "Generate a command to analyze these logs: {}"
+
+# Rewrite mode 
+cat email.txt | ngpt --rewrite --pipe "Make this more professional: {}"
+
+# Git commit message mode
+git diff HEAD~1 | ngpt --gitcommsg --pipe
 ```
 
 ## Architecture
