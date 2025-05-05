@@ -1,5 +1,5 @@
 from ..formatters import COLORS
-from ..ui import spinner, copy_to_clipboard
+from ..ui import spinner, copy_to_clipboard, get_terminal_input
 from ..renderers import prettify_markdown, has_markdown_renderer, prettify_streaming_markdown, show_available_renderers
 from ...utils import enhance_prompt_with_web_search, process_piped_input
 import subprocess
@@ -540,10 +540,19 @@ def shell_mode(client, args, logger=None):
         time.sleep(0.2)
 
     # Print prompt and flush to ensure it appears
-    print(prompt_text, end='', flush=True)
+    sys.stdout.write(prompt_text)
+    sys.stdout.flush()
     
     try:
-        response = input().lower()
+        # Use get_terminal_input which opens /dev/tty directly rather than using stdin
+        # This allows user input even when stdin has been consumed by pipe
+        response = get_terminal_input()
+        if response:
+            response = response.lower()
+        else:
+            # If get_terminal_input fails, default to copy
+            print("\nFailed to get terminal input. Defaulting to copy option.")
+            response = 'c'
     except KeyboardInterrupt:
         print("\nCommand execution cancelled by user.")
         return

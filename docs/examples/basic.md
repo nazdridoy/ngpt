@@ -379,4 +379,4 @@ For more advanced examples and detailed explanations of specific features, see:
 - [Advanced Examples](advanced.md)
 - [CLI Usage Guide](../usage/cli_usage.md)
 - [CLI Configuration Guide](../usage/cli_config.md)
-- [Git Commit Message Guide](../usage/gitcommsg.md)
+- [Git Commit Message Guide](../usage/gitcommsg.md) 
