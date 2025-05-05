@@ -159,10 +159,39 @@ def get_terminal_input():
         try:
             import msvcrt
             sys.stdout.flush()
-            # Wait for a keypress
-            char = msvcrt.getch().decode('utf-8').lower()
-            print(char)  # Echo the character
-            return char
+            
+            # Wait for a complete line (including Enter key)
+            input_chars = []
+            while True:
+                # Get a character
+                char = msvcrt.getch()
+                
+                # If it's Enter (CR or LF), break the loop
+                if char in [b'\r', b'\n']:
+                    print()  # Move to the next line after Enter
+                    break
+                    
+                # If it's backspace, handle it
+                if char == b'\x08':
+                    if input_chars:
+                        # Remove the last character
+                        input_chars.pop()
+                        # Erase the character on screen (backspace + space + backspace)
+                        sys.stdout.write('\b \b')
+                        sys.stdout.flush()
+                    continue
+                    
+                # For regular characters, add to input and echo
+                try:
+                    char_decoded = char.decode('utf-8').lower()
+                    input_chars.append(char_decoded)
+                    print(char_decoded, end='', flush=True)  # Echo the character without newline
+                except UnicodeDecodeError:
+                    # Skip characters that can't be decoded
+                    continue
+            
+            # Join all characters and return
+            return ''.join(input_chars).strip().lower()
         except ImportError:
             # Fallback if msvcrt is not available
             return None

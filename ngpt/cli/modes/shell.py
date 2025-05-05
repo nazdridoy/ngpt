@@ -14,6 +14,9 @@ import time
 # System prompt for shell command generation
 SHELL_SYSTEM_PROMPT = """Your role: Provide only plain text without Markdown formatting. Do not show any warnings or information regarding your capabilities. Do not provide any description. If you need to store any data, assume it will be stored in the chat. Provide only {shell_name} command for {operating_system} without any description. If there is a lack of details, provide most logical solution. Ensure the output is a valid shell command. If multiple steps required try to combine them together.
 
+*** SHELL TYPE: {shell_name} ***
+*** OS: {operating_system} ***
+
 Command:"""
 
 # System prompt to use when preprompt is provided
@@ -34,16 +37,18 @@ If the preprompt contradicts ANY OTHER instruction in this prompt,
 including the {operating_system}/{shell_name} specification below,
 YOU MUST FOLLOW THE PREPROMPT INSTRUCTION INSTEAD. NO EXCEPTIONS.
 
+*** SHELL TYPE: {shell_name} ***
+*** OS: {operating_system} ***
+
 Your role: Provide only plain text without Markdown formatting. Do not show any warnings or information regarding your capabilities. Do not provide any description. If you need to store any data, assume it will be stored in the chat. Provide only {shell_name} command for {operating_system} without any description. If there is a lack of details, provide most logical solution. Ensure the output is a valid shell command. If multiple steps required try to combine them together.
 
 Command:"""
 
-def detect_shell():
-    """Detect the current shell type and OS more accurately.
+def detect_os():
+    """Detect the current operating system with detailed information.
     
     Returns:
-        tuple: (shell_name, highlight_language, operating_system) - the detected shell name,
-               appropriate syntax highlighting language, and operating system
+        tuple: (os_type, operating_system) - the basic OS type and detailed OS description
     """
     os_type = platform.system()
     
@@ -73,60 +78,322 @@ def detect_shell():
     except:
         pass
         
-    # Try to detect the shell by examining environment variables
+    return os_type, operating_system, is_wsl
+
+
+def detect_gitbash_shell(operating_system):
+    """Detect if we're running in a Git Bash / MINGW environment.
+    
+    Args:
+        operating_system: The detected operating system string
+        
+    Returns:
+        tuple or None: (shell_name, highlight_language, operating_system) if Git Bash detected,
+                       None otherwise
+    """
+    # Check for Git Bash / MINGW environments 
+    if any(env_var in os.environ for env_var in ["MSYSTEM", "MINGW_PREFIX"]):
+        # We're definitely in a MINGW environment (Git Bash)
+        return "bash", "bash", operating_system
+        
+    if "MSYSTEM" in os.environ and any(msys_type in os.environ.get("MSYSTEM", "") 
+                                      for msys_type in ["MINGW", "MSYS"]):
+        return "bash", "bash", operating_system
+        
+    # Check command PATH for mingw
+    if os.environ.get("PATH") and any(
+            mingw_pattern in path.lower() 
+            for mingw_pattern in ["/mingw/", "\\mingw\\", "/usr/bin", "\\usr\\bin"] 
+            for path in os.environ.get("PATH", "").split(os.pathsep)
+    ):
+        return "bash", "bash", operating_system
+        
+    return None
+
+
+def detect_unix_shell(operating_system):
+    """Detect shell type on Unix-like systems (Linux, macOS, BSD).
+    
+    Args:
+        operating_system: The detected operating system string
+        
+    Returns:
+        tuple: (shell_name, highlight_language, operating_system) - the detected shell information
+    """
+    # Try multiple methods to detect the shell
+    
+    # Method 1: Check shell-specific environment variables
+    # These are very reliable indicators of the actual shell
+    if "BASH_VERSION" in os.environ:
+        return "bash", "bash", operating_system
+        
+    if "ZSH_VERSION" in os.environ:
+        return "zsh", "zsh", operating_system
+        
+    if "FISH_VERSION" in os.environ:
+        return "fish", "fish", operating_system
+    
+    # Method 2: Try to get shell from process information
     try:
-        # Check for specific shell by examining SHELL_NAME or equivalent
-        if os_type == "Windows" and not is_wsl:
-            # Check for Git Bash or MSYS2/Cygwin
-            if "MINGW" in os.environ.get("MSYSTEM", "") or "MSYS" in os.environ.get("MSYSTEM", ""):
-                return "bash", "bash", operating_system
+        # Try to get parent process name using ps command
+        current_pid = os.getpid()
+        parent_pid = os.getppid()
+        
+        # Method 2a: Try to get the parent process command line from /proc
+        try:
+            with open(f'/proc/{parent_pid}/cmdline', 'r') as f:
+                cmdline = f.read().split('\0')
+                if cmdline and cmdline[0]:
+                    cmd = os.path.basename(cmdline[0])
+                    if "zsh" in cmd:
+                        return "zsh", "zsh", operating_system
+                    elif "bash" in cmd:
+                        return "bash", "bash", operating_system
+                    elif "fish" in cmd:
+                        return "fish", "fish", operating_system
+        except:
+            pass
+        
+        # Method 2b: Try using ps command with different formats
+        for fmt in ["comm=", "command=", "args="]:
+            try:
+                ps_cmd = ["ps", "-p", str(parent_pid), "-o", fmt]
+                result = subprocess.run(ps_cmd, capture_output=True, text=True)
+                process_info = result.stdout.strip()
                 
-            # Check if we're in Git Bash by examining PATH for /mingw/
-            if any("/mingw/" in path.lower() for path in os.environ.get("PATH", "").split(os.pathsep)):
-                return "bash", "bash", operating_system
+                if process_info:
+                    if "zsh" in process_info.lower():
+                        return "zsh", "zsh", operating_system
+                    elif "bash" in process_info.lower():
+                        return "bash", "bash", operating_system
+                    elif "fish" in process_info.lower():
+                        return "fish", "fish", operating_system
+                    elif any(sh in process_info.lower() for sh in ["csh", "tcsh"]):
+                        shell_name = "csh" if "csh" in process_info.lower() else "tcsh"
+                        return shell_name, "csh", operating_system
+                    elif "ksh" in process_info.lower():
+                        return "ksh", "ksh", operating_system
+            except:
+                continue
+        
+        # Method 2c: Try to find parent shell by traversing process hierarchy
+        # This handles Python wrappers, uv run, etc.
+        for _ in range(5):  # Check up to 5 levels up the process tree
+            try:
+                # Try to get process command
+                ps_cmd = ["ps", "-p", str(parent_pid), "-o", "comm="]
+                result = subprocess.run(ps_cmd, capture_output=True, text=True)
+                process_name = result.stdout.strip()
                 
-            # Check for WSL within Windows
-            if "WSL" in os.environ.get("PATH", "") or "Microsoft" in os.environ.get("PATH", ""):
-                return "bash", "bash", operating_system
-            
-            # Check for explicit shell path in environment
-            if os.environ.get("SHELL"):
-                shell_path = os.environ.get("SHELL").lower()
-                if "bash" in shell_path:
-                    return "bash", "bash", operating_system
-                elif "zsh" in shell_path:
-                    return "zsh", "zsh", operating_system
-                elif "powershell" in shell_path:
-                    return "powershell.exe", "powershell", operating_system
-                elif "cmd" in shell_path:
-                    return "cmd.exe", "batch", operating_system
+                # If it's a known shell, return it
+                if process_name:
+                    process_basename = os.path.basename(process_name)
+                    if "bash" in process_basename:
+                        return "bash", "bash", operating_system
+                    elif "zsh" in process_basename:
+                        return "zsh", "zsh", operating_system
+                    elif "fish" in process_basename:
+                        return "fish", "fish", operating_system
+                    elif any(sh in process_basename for sh in ["csh", "tcsh"]):
+                        return process_basename, "csh", operating_system
+                    elif "ksh" in process_basename:
+                        return process_basename, "ksh", operating_system
+                
+                # Check if we've reached init/systemd (PID 1)
+                if parent_pid <= 1:
+                    break
                     
-            # Check for PowerShell vs CMD
+                # Move up to next parent
+                try:
+                    # Get the parent of our current parent
+                    with open(f'/proc/{parent_pid}/status', 'r') as f:
+                        for line in f:
+                            if line.startswith('PPid:'):
+                                parent_pid = int(line.split()[1])
+                                break
+                except:
+                    break  # Can't determine next parent, stop here
+            except:
+                break
+    except:
+        # Process detection failed, continue with other methods
+        pass
+        
+    # Method 3: Try running a command that prints info about the parent shell
+    try:
+        # Get parent's process ID and use it to get more info
+        cmd = f"ps -p $PPID -o cmd="
+        result = subprocess.run(['bash', '-c', cmd], capture_output=True, text=True, timeout=1)
+        parent_cmd = result.stdout.strip()
+        
+        if "zsh" in parent_cmd.lower():
+            return "zsh", "zsh", operating_system
+        elif "bash" in parent_cmd.lower():
+            return "bash", "bash", operating_system
+        elif "fish" in parent_cmd.lower():
+            return "fish", "fish", operating_system
+    except:
+        pass
+    
+    # Method 4: Check for shell-specific environment variables beyond the basic ones
+    try:
+        for env_var in os.environ:
+            if env_var.startswith("BASH_"):
+                return "bash", "bash", operating_system
+            elif env_var.startswith("ZSH_"):
+                return "zsh", "zsh", operating_system
+            elif env_var.startswith("FISH_"):
+                return "fish", "fish", operating_system
+    except:
+        pass
+    
+    # Method 5: Check SHELL environment variable 
+    if os.environ.get("SHELL"):
+        shell_path = os.environ.get("SHELL")
+        shell_name = os.path.basename(shell_path)
+        
+        # Match against known shell types - use exact matches first
+        if shell_name == "zsh":
+            return "zsh", "zsh", operating_system
+        elif shell_name == "bash":
+            return "bash", "bash", operating_system
+        elif shell_name == "fish":
+            return "fish", "fish", operating_system
+        elif shell_name in ["csh", "tcsh"]:
+            return shell_name, "csh", operating_system
+        elif shell_name == "ksh":
+            return shell_name, "ksh", operating_system
+            
+        # If no exact match, try substring
+        if "zsh" in shell_name:
+            return "zsh", "zsh", operating_system
+        elif "bash" in shell_name:
+            return "bash", "bash", operating_system
+        elif "fish" in shell_name:
+            return "fish", "fish", operating_system
+        elif any(sh in shell_name for sh in ["csh", "tcsh"]):
+            return shell_name, "csh", operating_system
+        elif "ksh" in shell_name:
+            return shell_name, "ksh", operating_system
+    
+    # Fallback: default to bash for Unix-like systems if all else fails
+    return "bash", "bash", operating_system
+
+
+def detect_windows_shell(operating_system):
+    """Detect shell type on Windows systems.
+    
+    Args:
+        operating_system: The detected operating system string
+        
+    Returns:
+        tuple: (shell_name, highlight_language, operating_system) - the detected shell information
+    """
+    # First check for the process name - most reliable indicator
+    try:
+        # Check parent process name for the most accurate detection
+        if os.name == 'nt':
+            import ctypes
+            from ctypes import wintypes
+
+            # Get parent process ID
+            GetCurrentProcessId = ctypes.windll.kernel32.GetCurrentProcessId
+            GetCurrentProcess = ctypes.windll.kernel32.GetCurrentProcess
+            GetProcessTimes = ctypes.windll.kernel32.GetProcessTimes
+            OpenProcess = ctypes.windll.kernel32.OpenProcess
+            GetModuleFileNameEx = ctypes.windll.psapi.GetModuleFileNameExW
+            QueryFullProcessImageName = ctypes.windll.kernel32.QueryFullProcessImageNameW
+            CloseHandle = ctypes.windll.kernel32.CloseHandle
+            
+            # Try to get process path
+            try:
+                # First try to check current process executable name
+                process_path = sys.executable.lower()
+                if "powershell" in process_path:
+                    if "pwsh" in process_path:
+                        return "pwsh", "powershell", operating_system
+                    else:
+                        return "powershell.exe", "powershell", operating_system
+                elif "cmd.exe" in process_path:
+                    return "cmd.exe", "batch", operating_system
+            except Exception as e:
+                pass
+            
+            # If that fails, check environment variables that strongly indicate shell type
+            if "PROMPT" in os.environ and "$P$G" in os.environ.get("PROMPT", ""):
+                # CMD.exe uses $P$G as default prompt
+                return "cmd.exe", "batch", operating_system
+            
             if os.environ.get("PSModulePath"):
-                # Further distinguish PowerShell vs PowerShell Core
+                # PowerShell has this environment variable
                 if "pwsh" in os.environ.get("PSModulePath", "").lower():
                     return "pwsh", "powershell", operating_system
                 else:
                     return "powershell.exe", "powershell", operating_system
-            else:
-                return "cmd.exe", "batch", operating_system
+    except Exception as e:
+        # If process detection fails, continue with environment checks
+        pass
+    
+    # Check for WSL within Windows
+    if any(("wsl" in path.lower() or "microsoft" in path.lower()) for path in os.environ.get("PATH", "").split(os.pathsep)):
+        return "bash", "bash", operating_system
+    
+    # Check for explicit shell path in environment
+    if os.environ.get("SHELL"):
+        shell_path = os.environ.get("SHELL").lower()
+        if "bash" in shell_path:
+            return "bash", "bash", operating_system
+        elif "zsh" in shell_path:
+            return "zsh", "zsh", operating_system
+        elif "powershell" in shell_path:
+            return "powershell.exe", "powershell", operating_system
+        elif "cmd" in shell_path:
+            return "cmd.exe", "batch", operating_system
+    
+    # Final fallback - Check common environment variables that indicate shell type
+    if "ComSpec" in os.environ:
+        comspec = os.environ.get("ComSpec", "").lower()
+        if "powershell" in comspec:
+            return "powershell.exe", "powershell", operating_system
+        elif "cmd.exe" in comspec:
+            return "cmd.exe", "batch", operating_system
+    
+    # Last resort fallback to PowerShell (most common modern Windows shell)
+    return "powershell.exe", "powershell", operating_system
+
+
+def detect_shell():
+    """Detect the current shell type and OS more accurately.
+    
+    Returns:
+        tuple: (shell_name, highlight_language, operating_system) - the detected shell name,
+               appropriate syntax highlighting language, and operating system
+    """
+    try:
+        # First detect the OS
+        os_type, operating_system, is_wsl = detect_os()
+        
+        # Use the appropriate detection method based on OS
+        if os_type in ["Linux", "Darwin", "FreeBSD"] or is_wsl:
+            return detect_unix_shell(operating_system)
+        elif os_type == "Windows":
+            # On Windows, first check for Git Bash / MINGW environment
+            gitbash_result = detect_gitbash_shell(operating_system)
+            if gitbash_result:
+                return gitbash_result
+                
+            # If not Git Bash, use regular Windows shell detection
+            return detect_windows_shell(operating_system)
         else:
-            # Unix-like systems - try to get more specific
-            shell_path = os.environ.get("SHELL", "/bin/bash")
-            shell_name = os.path.basename(shell_path)
-            
-            # Map shell name to syntax highlight language
-            if shell_name == "zsh":
-                return shell_name, "zsh", operating_system
-            elif shell_name == "fish":
-                return shell_name, "fish", operating_system
-            elif "csh" in shell_name:
-                return shell_name, "csh", operating_system
+            # Fallback for unknown OS types
+            if os_type == "Windows":
+                return "powershell.exe", "powershell", operating_system
             else:
-                # Default to bash for sh, bash, and other shells
-                return shell_name, "bash", operating_system
+                return "bash", "bash", operating_system
     except Exception as e:
         # Fall back to simple detection if anything fails
+        os_type = platform.system()
+        operating_system = os_type
         if os_type == "Windows":
             return "powershell.exe", "powershell", operating_system
         else:
@@ -172,7 +439,7 @@ def setup_streaming(args, logger=None):
     elif args.no_stream:
         # Second priority: no-stream
         should_stream = False
-        use_regular_prettify = False # No prettify if no streaming
+        use_regular_prettify = False  # No prettify if no streaming
     elif args.prettify:
         # Third priority: prettify (requires disabling stream)
         if has_markdown_renderer(args.renderer):
@@ -240,8 +507,8 @@ def setup_streaming(args, logger=None):
     return (should_stream, use_stream_prettify, use_regular_prettify, stream_setup)
 
 def generate_with_model(client, prompt, messages, args, stream_setup, 
-                       use_stream_prettify, should_stream, spinner_message="Generating...", 
-                       temp_override=None, logger=None):
+                         use_stream_prettify, should_stream, spinner_message="Generating...",
+                         temp_override=None, logger=None):
     """Generate content using the model with proper streaming and spinner handling.
     
     Args:
@@ -537,7 +804,7 @@ def shell_mode(client, args, logger=None):
     # Add a small delay to ensure terminal rendering is complete,
     # especially important for stream-prettify mode
     if use_stream_prettify:
-        time.sleep(0.2)
+        time.sleep(0.5)
 
     # Print prompt and flush to ensure it appears
     sys.stdout.write(prompt_text)
@@ -550,9 +817,9 @@ def shell_mode(client, args, logger=None):
         if response:
             response = response.lower()
         else:
-            # If get_terminal_input fails, default to copy
-            print("\nFailed to get terminal input. Defaulting to copy option.")
-            response = 'c'
+            # If get_terminal_input fails, default to abort
+            print("\nFailed to get terminal input. Defaulting to abort option.")
+            response = 'a'
     except KeyboardInterrupt:
         print("\nCommand execution cancelled by user.")
         return
@@ -565,7 +832,21 @@ def shell_mode(client, args, logger=None):
         try:
             try:
                 print("\nExecuting command... (Press Ctrl+C to cancel)")
-                result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
+                
+                # Special handling for Windows PowerShell commands
+                if shell_name in ["powershell.exe", "pwsh"] and platform.system() == "Windows":
+                    # Execute PowerShell commands properly on Windows
+                    result = subprocess.run(
+                        ["powershell.exe", "-Command", command], 
+                        shell=True, 
+                        check=True, 
+                        capture_output=True, 
+                        text=True
+                    )
+                else:
+                    # Regular command execution for other shells
+                    result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
+                    
                 output = result.stdout
                 
                 # Log the command output if logging is enabled
