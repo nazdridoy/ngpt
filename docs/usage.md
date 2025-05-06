@@ -14,3 +14,4 @@ This section covers how to use nGPT, including detailed command-line usage, conf
 - [CLI Configuration Guide](usage/cli_config.md) - Configure nGPT for different providers and use cases
 - [Git Commit Message Generation](usage/gitcommsg.md) - Generate professional git commit messages
 - [Web Search](usage/web_search.md) - Enhance prompts with real-time information from the web
+- [Custom Roles Guide](usage/roles.md) - Create and manage specialized AI personas for different tasks

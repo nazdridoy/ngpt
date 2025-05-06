@@ -58,6 +58,10 @@ def setup_argument_parser():
                               help='Show available markdown renderers for use with --prettify')
     config_group.add_argument('--cli-config', nargs='*', metavar='COMMAND', 
                               help='Manage CLI configuration (set, get, unset, list, help)')
+    
+    # Role configuration options
+    config_group.add_argument('--role-config', nargs='*', metavar='ACTION', 
+                              help='Manage custom roles (help, create, show, edit, list, remove) [role_name]')
 
     # Global options
     global_group = parser.add_argument_group('Global Options')
@@ -79,8 +83,13 @@ def setup_argument_parser():
                       help='Set max response length in tokens')
     global_group.add_argument('--log', metavar='FILE', nargs='?', const=True,
                       help='Set filepath to log conversation to, or create a temporary log file if no path provided')
-    global_group.add_argument('--preprompt', 
+    
+    # System prompt options (mutually exclusive)
+    prompt_exclusive_group = global_group.add_mutually_exclusive_group()
+    prompt_exclusive_group.add_argument('--preprompt', 
                       help='Set custom system prompt to control AI behavior')
+    prompt_exclusive_group.add_argument('--role', 
+                      help='Use a predefined role to set system prompt (mutually exclusive with --preprompt)')
     
     # Output display options (mutually exclusive group)
     output_group = parser.add_argument_group('Output Display Options (mutually exclusive)')
@@ -226,4 +235,36 @@ def handle_cli_config_args(args):
         return (True, action, option, value)
     else:
         # Unknown action, show help
-        return (True, "help", None, None) 
+        return (True, "help", None, None)
+
+def handle_role_config_args(args):
+    """Process role configuration arguments and determine command parameters.
+    
+    Args:
+        args: The parsed command line arguments.
+        
+    Returns:
+        tuple: (should_handle, action, role_name)
+            - should_handle: True if --role-config was specified and should be handled
+            - action: The action to perform (help, create, show, edit, list, remove)
+            - role_name: The name of the role (or None for actions like list and help)
+    """
+    if args.role_config is None:
+        return (False, None, None)
+    
+    # Show help if no arguments or "help" argument
+    if len(args.role_config) == 0 or (len(args.role_config) > 0 and args.role_config[0].lower() == "help"):
+        return (True, "help", None)
+    
+    action = args.role_config[0].lower()
+    role_name = args.role_config[1] if len(args.role_config) > 1 else None
+    
+    # If action requires a role name but none is provided
+    if action in ("create", "show", "edit", "remove") and role_name is None:
+        raise ValueError(f"--role-config {action} requires a role name")
+    
+    if action in ("help", "create", "show", "edit", "list", "remove"):
+        return (True, action, role_name)
+    else:
+        # Unknown action, show help
+        return (True, "help", None) 

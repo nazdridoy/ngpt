@@ -2,7 +2,7 @@
 layout: default
 title: CLI Usage Guide
 parent: Usage
-nav_order: 1
+nav_order: 2
 permalink: /usage/cli_usage/
 ---
 
@@ -39,12 +39,15 @@ You can set configuration options directly via command-line arguments:
 ```
 usage: ngpt [-h] [-v] [--language LANGUAGE] [--config [CONFIG]] [--config-index CONFIG_INDEX] [--provider PROVIDER]
             [--remove] [--show-config] [--all] [--list-models] [--list-renderers] [--cli-config [COMMAND ...]]
-            [--api-key API_KEY] [--base-url BASE_URL] [--model MODEL] [--web-search] [--pipe]
-            [--temperature TEMPERATURE] [--top_p TOP_P] [--max_tokens MAX_TOKENS] [--log [FILE]] [--preprompt PREPROMPT]
-            [--no-stream | --prettify | --stream-prettify] [--renderer {auto,rich,glow}] [--rec-chunk] [--diff [FILE]]
-            [--chunk-size CHUNK_SIZE] [--analyses-chunk-size ANALYSES_CHUNK_SIZE] [--max-msg-lines MAX_MSG_LINES]
+            [--role-config [ACTION ...]] [--api-key API_KEY] [--base-url BASE_URL] [--model MODEL] [--web-search]
+            [--pipe] [--temperature TEMPERATURE] [--top_p TOP_P] [--max_tokens MAX_TOKENS] [--log [FILE]]
+            [--preprompt PREPROMPT | --role ROLE] [--no-stream | --prettify | --stream-prettify]
+            [--renderer {auto,rich,glow}] [--rec-chunk] [--diff [FILE]] [--chunk-size CHUNK_SIZE]
+            [--analyses-chunk-size ANALYSES_CHUNK_SIZE] [--max-msg-lines MAX_MSG_LINES]
             [--max-recursion-depth MAX_RECURSION_DEPTH] [-i | -s | -c | -t | -r | -g]
             [prompt]
+
+nGPT - Interact with AI language models via OpenAI-compatible APIs
 ```
 
 ### Positional Arguments
@@ -68,6 +71,7 @@ usage: ngpt [-h] [-v] [--language LANGUAGE] [--config [CONFIG]] [--config-index 
 - `--list-models`: List all available models for the current configuration and exit
 - `--list-renderers`: Show available markdown renderers for use with --prettify
 - `--cli-config <[COMMAND ...]>`: Manage CLI configuration (set, get, unset, list, help)
+- `--role-config <[ACTION ...]>`: Manage custom roles (help, create, show, edit, list, remove) [role_name]
 
 ### Global Options
 
@@ -75,11 +79,13 @@ usage: ngpt [-h] [-v] [--language LANGUAGE] [--config [CONFIG]] [--config-index 
 - `--base-url <BASE_URL>`: Base URL for the API
 - `--model <MODEL>`: Model to use
 - `--web-search`: Enable web search capability using DuckDuckGo to enhance prompts with relevant information
+- `--pipe`: Read from stdin and use content with prompt. Use {} in prompt as placeholder for stdin content. Can be used with any mode option except --text and --interactive
 - `--temperature <TEMPERATURE>`: Set temperature (controls randomness, default: 0.7)
 - `--top_p <TOP_P>`: Set top_p (controls diversity, default: 1.0)
 - `--max_tokens <MAX_TOKENS>`: Set max response length in tokens
 - `--log <[FILE]>`: Set filepath to log conversation to, or create a temporary log file if no path provided
 - `--preprompt <PREPROMPT>`: Set custom system prompt to control AI behavior
+- `--role <ROLE>`: Use a predefined role to set system prompt (mutually exclusive with --preprompt)
 - `--renderer <{auto,rich,glow}>`: Select which markdown renderer to use with --prettify or --stream-prettify (auto, rich, or glow)
 
 ### Output Display Options (mutually exclusive)
@@ -103,10 +109,8 @@ usage: ngpt [-h] [-v] [--language LANGUAGE] [--config [CONFIG]] [--config-index 
 - `-s, --shell`: Generate and execute shell commands
 - `-c, --code`: Generate code
 - `-t, --text`: Enter multi-line text input (submit with Ctrl+D)
-- `--pipe`: Read from stdin and use content with prompt. Use {} in prompt as placeholder for stdin content. Can be used with any mode option except --text and --interactive.
 - `-r, --rewrite`: Rewrite text from stdin to be more natural while preserving tone and meaning
 - `-g, --gitcommsg`: Generate AI-powered git commit messages from staged changes or diff file
-
 
 ## Mode Details
 
@@ -182,6 +186,21 @@ ngpt -i --prettify
 # Interactive mode with real-time markdown rendering
 ngpt -i --stream-prettify
 ```
+
+### Custom Roles
+
+nGPT supports creating and using custom roles to define specialized AI personas for different tasks. Custom roles are saved configurations that can be reused across multiple sessions.
+
+Basic usage:
+```bash
+# Create a new role
+ngpt --role-config create expert_coder
+
+# Use a role
+ngpt --role expert_coder "Write a function to validate email addresses"
+```
+
+For detailed documentation on creating and managing roles, including examples and best practices, see the [Custom Roles Guide](roles.md).
 
 ### Custom System Prompts
 
@@ -517,6 +536,9 @@ ngpt --shell --no-stream "find all large files and create a report"
 
 # Git commit message with pretty formatting
 ngpt --gitcommsg --prettify
+
+# Use a custom role with web search
+ngpt --role technical_writer --web-search "Write documentation for a REST API"
 ```
 
 ### Provider Selection
@@ -657,6 +679,7 @@ Visit the [GitHub repository](https://github.com/nazdridoy/ngpt) for:
 ## Next Steps
 
 - Learn about [CLI Configuration](cli_config.md)
+- Explore [Custom Roles Guide](roles.md)
 - Explore [Git Commit Message Generation](gitcommsg.md)
 - Try [Basic Examples](../examples/basic.md)
-- Check [Advanced Examples](../examples/advanced.md) 
+- Check [Advanced Examples](../examples/advanced.md)

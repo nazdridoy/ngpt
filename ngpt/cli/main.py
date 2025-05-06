@@ -25,7 +25,8 @@ from .modes.shell import shell_mode
 from .modes.text import text_mode
 from .modes.rewrite import rewrite_mode
 from .modes.gitcommsg import gitcommsg_mode
-from .args import parse_args, validate_args, handle_cli_config_args, setup_argument_parser, validate_markdown_renderer
+from .args import parse_args, validate_args, handle_cli_config_args, setup_argument_parser, validate_markdown_renderer, handle_role_config_args
+from .roles import handle_role_config, get_role_prompt
 
 def show_cli_config_help():
     """Display help information about CLI configuration."""
@@ -192,6 +193,12 @@ def main():
     should_handle_cli_config, action, option, value = handle_cli_config_args(args)
     if should_handle_cli_config:
         handle_cli_config(action, option, value)
+        return
+    
+    # Handle role configuration command
+    should_handle_role_config, action, role_name = handle_role_config_args(args)
+    if should_handle_role_config:
+        handle_role_config(action, role_name)
         return
     
     # Handle --renderers flag to show available markdown renderers
@@ -483,6 +490,15 @@ def main():
     has_renderer, args = validate_markdown_renderer(args)
     if not has_renderer:
         show_available_renderers()
+    
+    # Get system prompt from role if specified
+    if args.role:
+        role_prompt = get_role_prompt(args.role)
+        if role_prompt:
+            args.preprompt = role_prompt
+        else:
+            # If role doesn't exist, exit
+            return
     
     # Initialize client using the potentially overridden active_config
     client = NGPTClient(

@@ -147,12 +147,15 @@ You can set configuration options directly via command-line arguments:
 ```
 usage: ngpt [-h] [-v] [--language LANGUAGE] [--config [CONFIG]] [--config-index CONFIG_INDEX] [--provider PROVIDER]
             [--remove] [--show-config] [--all] [--list-models] [--list-renderers] [--cli-config [COMMAND ...]]
-            [--api-key API_KEY] [--base-url BASE_URL] [--model MODEL] [--web-search] [--pipe]
-            [--temperature TEMPERATURE] [--top_p TOP_P] [--max_tokens MAX_TOKENS] [--log [FILE]] [--preprompt PREPROMPT]
-            [--no-stream | --prettify | --stream-prettify] [--renderer {auto,rich,glow}] [--rec-chunk] [--diff [FILE]]
-            [--chunk-size CHUNK_SIZE] [--analyses-chunk-size ANALYSES_CHUNK_SIZE] [--max-msg-lines MAX_MSG_LINES]
+            [--role-config [ACTION ...]] [--api-key API_KEY] [--base-url BASE_URL] [--model MODEL] [--web-search]
+            [--pipe] [--temperature TEMPERATURE] [--top_p TOP_P] [--max_tokens MAX_TOKENS] [--log [FILE]]
+            [--preprompt PREPROMPT | --role ROLE] [--no-stream | --prettify | --stream-prettify]
+            [--renderer {auto,rich,glow}] [--rec-chunk] [--diff [FILE]] [--chunk-size CHUNK_SIZE]
+            [--analyses-chunk-size ANALYSES_CHUNK_SIZE] [--max-msg-lines MAX_MSG_LINES]
             [--max-recursion-depth MAX_RECURSION_DEPTH] [-i | -s | -c | -t | -r | -g]
             [prompt]
+
+nGPT - Interact with AI language models via OpenAI-compatible APIs
 ```
 
 ### Positional Arguments
@@ -176,6 +179,7 @@ usage: ngpt [-h] [-v] [--language LANGUAGE] [--config [CONFIG]] [--config-index 
 - `--list-models`: List all available models for the current configuration and exit
 - `--list-renderers`: Show available markdown renderers for use with --prettify
 - `--cli-config <[COMMAND ...]>`: Manage CLI configuration (set, get, unset, list, help)
+- `--role-config <[ACTION ...]>`: Manage custom roles (help, create, show, edit, list, remove) [role_name]
 
 ### Global Options
 
@@ -183,11 +187,13 @@ usage: ngpt [-h] [-v] [--language LANGUAGE] [--config [CONFIG]] [--config-index 
 - `--base-url <BASE_URL>`: Base URL for the API
 - `--model <MODEL>`: Model to use
 - `--web-search`: Enable web search capability using DuckDuckGo to enhance prompts with relevant information
+- `--pipe`: Read from stdin and use content with prompt. Use {} in prompt as placeholder for stdin content. Can be used with any mode option except --text and --interactive
 - `--temperature <TEMPERATURE>`: Set temperature (controls randomness, default: 0.7)
 - `--top_p <TOP_P>`: Set top_p (controls diversity, default: 1.0)
 - `--max_tokens <MAX_TOKENS>`: Set max response length in tokens
 - `--log <[FILE]>`: Set filepath to log conversation to, or create a temporary log file if no path provided
 - `--preprompt <PREPROMPT>`: Set custom system prompt to control AI behavior
+- `--role <ROLE>`: Use a predefined role to set system prompt (mutually exclusive with --preprompt)
 - `--renderer <{auto,rich,glow}>`: Select which markdown renderer to use with --prettify or --stream-prettify (auto, rich, or glow)
 
 ### Output Display Options (mutually exclusive)
@@ -211,7 +217,6 @@ usage: ngpt [-h] [-v] [--language LANGUAGE] [--config [CONFIG]] [--config-index 
 - `-s, --shell`: Generate and execute shell commands
 - `-c, --code`: Generate code
 - `-t, --text`: Enter multi-line text input (submit with Ctrl+D)
-- `--pipe`: Read from stdin and use content with prompt. Use {} in prompt as placeholder for stdin content. Can be used with any mode option except --text and --interactive.
 - `-r, --rewrite`: Rewrite text from stdin to be more natural while preserving tone and meaning
 - `-g, --gitcommsg`: Generate AI-powered git commit messages from staged changes or diff file
 
@@ -297,6 +302,64 @@ ngpt --list-models --provider OpenAI
 
 nGPT also supports a CLI configuration system for setting default parameter values. See the [CLI Configuration Guide](usage/cli_config.md) for details.
 
+## Role Configuration
+
+nGPT allows you to create and manage custom roles, which are saved system prompts that define specialized AI personas. Roles are stored in the following locations:
+
+- **Linux**: `~/.config/ngpt/ngpt_roles/`
+- **macOS**: `~/Library/Application Support/ngpt/ngpt_roles/`
+- **Windows**: `%APPDATA%\ngpt\ngpt_roles\`
+
+Each role is saved as a separate JSON file with the role name as the filename.
+
+### Managing Roles
+
+You can manage roles using the `--role-config` option:
+
+```bash
+# Show role configuration help
+ngpt --role-config help
+
+# Create a new role
+ngpt --role-config create expert_coder
+
+# List all available roles
+ngpt --role-config list
+
+# Show details of a specific role
+ngpt --role-config show expert_coder
+
+# Edit an existing role
+ngpt --role-config edit expert_coder
+
+# Remove a role
+ngpt --role-config remove expert_coder
+```
+
+When creating or editing a role, nGPT opens a multiline editor where you can enter or modify the system prompt for that role. This makes it easy to define complex instructions that guide the AI's behavior.
+
+### Using Roles
+
+To use a role, specify it with the `--role` parameter:
+
+```bash
+# Use a role in standard chat mode
+ngpt --role expert_coder "Create a function to parse JSON data"
+
+# Use a role with code generation
+ngpt --code --role python_expert "Create a class for managing user data"
+
+# Use a role with shell command generation
+ngpt --shell --role linux_expert "Find all large log files"
+
+# Use a role in interactive mode
+ngpt -i --role writing_assistant
+```
+
+The `--role` parameter is mutually exclusive with `--preprompt` since both set the system prompt.
+
+For detailed documentation on creating and managing roles, including examples and best practices, see the [Custom Roles Guide](usage/roles.md).
+
 ## Troubleshooting
 
 ### Common Configuration Issues
@@ -346,4 +409,4 @@ After configuring nGPT, explore:
 
 - [CLI Usage Guide](usage/cli_usage.md) for general usage information
 - [CLI Configuration Guide](usage/cli_config.md) for setting up default CLI options
-- [Basic Examples](examples/basic.md) for common usage patterns 
+- [Basic Examples](examples/basic.md) for common usage patterns

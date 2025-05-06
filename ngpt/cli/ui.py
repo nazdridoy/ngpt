@@ -22,8 +22,11 @@ try:
 except ImportError:
     HAS_PROMPT_TOOLKIT = False
 
-def create_multiline_editor():
+def create_multiline_editor(initial_text=None):
     """Create a multi-line editor with prompt_toolkit.
+    
+    Args:
+        initial_text: Optional initial text to prepopulate the editor with
     
     Returns:
         tuple: (app, has_prompt_toolkit) - the editor application and a boolean
@@ -62,6 +65,7 @@ def create_multiline_editor():
             scrollbar=True,
             focus_on_click=True,
             lexer=None,
+            text=initial_text or "", # Set initial text if provided
         )
         text_area.window.right_margins = [ScrollbarMargin(display_arrows=True)]
         
@@ -108,13 +112,16 @@ def create_multiline_editor():
         print(f"Error creating editor: {e}")
         return None, False
 
-def get_multiline_input():
+def get_multiline_input(initial_text=None):
     """Get multi-line input from the user using either prompt_toolkit or standard input.
+    
+    Args:
+        initial_text: Optional initial text to prepopulate the editor with
     
     Returns:
         str: The user's input text, or None if cancelled
     """
-    editor_app, has_editor = create_multiline_editor()
+    editor_app, has_editor = create_multiline_editor(initial_text)
     
     if has_editor and editor_app:
         try:
@@ -132,8 +139,14 @@ def get_multiline_input():
         if not HAS_PROMPT_TOOLKIT:
             print("Note: Install 'prompt_toolkit' package for an enhanced input experience")
         
+        # Show initial text if provided
+        if initial_text:
+            print(initial_text)
+            lines = initial_text.splitlines()
+        else:
+            lines = []
+        
         # Use a more robust approach for multiline input without prompt_toolkit
-        lines = []
         try:
             while True:
                 try:
