@@ -1,0 +1,53 @@
+name: Repository Mirroring
+
+on:
+  push:
+    branches: [ "main" ]
+  delete:
+    branches: [ "main" ]
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  mirror_to_gitlab:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Configure Git
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+      - name: Mirror to GitLab
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.GITLAB_SSH_PRIVATE_KEY }}
+          TARGET_URL: ${{ secrets.GITLAB_REPO_URL }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan gitlab.com >> ~/.ssh/known_hosts
+          # Push local branches and tags, excluding remote refs
+          git push --force ${TARGET_URL} 'refs/heads/*:refs/heads/*' 'refs/tags/*:refs/tags/*'
+  
+  mirror_to_gitea:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Configure Git
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+      - name: Mirror to Gitea
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.GITEA_SSH_PRIVATE_KEY }}
+          TARGET_URL: ${{ secrets.GITEA_REPO_URL }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -t rsa $(echo ${TARGET_URL} | cut -d '@' -f 2 | cut -d ':' -f 1) >> ~/.ssh/known_hosts
+          # Push local branches and tags, excluding remote refs
+          git push --force ${TARGET_URL} 'refs/heads/*:refs/heads/*' 'refs/tags/*:refs/tags/*' 
