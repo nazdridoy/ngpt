@@ -10,11 +10,20 @@ ROLE_DIR_NAME = "ngpt_roles"
 
 def get_role_directory():
     """Get the path to the role directory, creating it if it doesn't exist."""
-    # Use XDG Base Directory specification if possible
-    if os.environ.get("XDG_CONFIG_HOME"):
-        config_dir = Path(os.environ["XDG_CONFIG_HOME"]) / "ngpt"
+    # Use OS-specific paths
+    if sys.platform == "win32":
+        # Windows
+        config_dir = Path(os.environ.get("APPDATA", "")) / "ngpt"
+    elif sys.platform == "darwin":
+        # macOS
+        config_dir = Path.home() / "Library" / "Application Support" / "ngpt"
     else:
-        config_dir = Path.home() / ".config" / "ngpt"
+        # Linux and other Unix-like systems
+        xdg_config_home = os.environ.get("XDG_CONFIG_HOME")
+        if xdg_config_home:
+            config_dir = Path(xdg_config_home) / "ngpt"
+        else:
+            config_dir = Path.home() / ".config" / "ngpt"
     
     # Create role directory if it doesn't exist
     role_dir = config_dir / ROLE_DIR_NAME
