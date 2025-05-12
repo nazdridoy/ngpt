@@ -148,6 +148,10 @@ def validate_args(args):
     if args.all and not args.show_config:
         raise ValueError("--all can only be used with --show-config")
     
+    # Validate --remove usage
+    if args.remove and (not args.config or (args.config_index == 0 and not args.provider)):
+        raise ValueError("--remove requires --config and either --config-index or --provider")
+    
     # These three options are mutually exclusive rendering modes
     provided_modes = []
     if '--no-stream' in sys.argv:
