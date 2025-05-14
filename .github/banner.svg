@@ -1,0 +1,29 @@
+<svg width="800" height="200" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .terminal-text {
+      font-family: 'Consolas', 'Monaco', 'Menlo', monospace;
+      font-size: 72px;
+      font-weight: bold;
+      fill: #32CD32; /* Terminal green */
+    }
+    .cursor {
+      fill: #32CD32;
+      animation: blink 1.2s infinite;
+    }
+    @keyframes blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+    .background {
+      fill: #1E1E1E; /* Dark background */
+    }
+  </style>
+  
+  <rect class="background" x="0" y="0" width="800" height="200" rx="10" ry="10" />
+  
+  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" class="terminal-text">
+    >_ngpt
+  </text>
+  
+  <rect x="650" y="92" width="20" height="4" class="cursor" />
+</svg> 
