@@ -2,7 +2,7 @@
 pkgname=ngpt
 pkgver=0.0.0  # Automatically updated by CI on release
 pkgrel=1
-pkgdesc="A Swiss army knife for LLMs: A fast, lightweight CLI and interactive chat tool that brings the power of any OpenAI-compatible LLM (OpenAI, Ollama, Groq, Claude, Gemini, etc.) straight to your terminal. rewrite texts or refine code, craft git commit messages, generate and run OS-aware shell commands"
+pkgdesc="A Swiss army knife for LLMs: A fast, lightweight CLI and interactive chat tool that brings the power of any OpenAI-compatible LLMs straight to your terminal. rewrite texts or refine code, craft git commit messages, generate and run OS-aware shell commands"
 arch=('any')
 url="https://github.com/nazdridoy/ngpt"
 license=('MIT')
