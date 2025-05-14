@@ -1,7 +1,7 @@
 # nGPT
 
 <p align="center">
-  <img src=".github/banner.svg" alt="nGPT Banner">
+  <img src="https://raw.githubusercontent.com/nazdridoy/ngpt/main/.github/banner.svg" alt="nGPT Banner">
 </p>
 
 <p align="center">

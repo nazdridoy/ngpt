@@ -22,8 +22,8 @@
   <rect class="background" x="0" y="0" width="800" height="200" rx="10" ry="10" />
   
   <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" class="terminal-text">
-    >_ngpt
+    >_🤖 ngpt
   </text>
   
-  <rect x="650" y="92" width="20" height="4" class="cursor" />
+  <rect x="600" y="130" width="40" height="10" class="cursor" />
 </svg> 
