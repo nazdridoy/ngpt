@@ -998,6 +998,23 @@ def is_git_diff(content):
     
     return False
 
+def strip_code_block_formatting(text):
+    """Strip code block formatting from the text if present.
+    
+    Args:
+        text: Text to strip code block formatting from
+        
+    Returns:
+        str: Text without code block formatting
+    """
+    # Check if the text starts with ``` and ends with ```
+    pattern = r'^```(?:.*?)\n(.*?)```$'
+    match = re.search(pattern, text, re.DOTALL)
+    if match:
+        # Extract content between backticks and remove any trailing whitespace
+        return match.group(1).rstrip()
+    return text
+
 def gitcommsg_mode(client, args, logger=None):
     """Handle the Git commit message generation mode.
     
@@ -1182,6 +1199,9 @@ def gitcommsg_mode(client, args, logger=None):
         if not result:
             print(f"{COLORS['red']}Failed to generate commit message.{COLORS['reset']}")
             return
+        
+        # Strip any code block formatting
+        result = strip_code_block_formatting(result)
         
         # Display the result
         print(f"\n{COLORS['green']}✨ Generated Commit Message:{COLORS['reset']}\n")
