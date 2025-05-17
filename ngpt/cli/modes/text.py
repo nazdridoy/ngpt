@@ -1,9 +1,10 @@
 from ..formatters import COLORS
 from ..renderers import prettify_markdown, prettify_streaming_markdown, TERMINAL_RENDER_LOCK
-from ..ui import get_multiline_input, spinner
+from ..ui import get_multiline_input, spinner, copy_to_clipboard
 from ...utils import enhance_prompt_with_web_search
 import threading
 import sys
+import time
 
 def text_mode(client, args, logger=None):
     """Handle the multi-line text input mode.
@@ -152,6 +153,8 @@ def text_mode(client, args, logger=None):
         # Before stopping the live display, update with complete=True to show final formatted content
         if stream_callback and response:
             stream_callback(response, complete=True)
+        # Add a small delay to ensure terminal stability
+        time.sleep(0.2)
         
     # Log the AI response if logging is enabled
     if logger and response:
@@ -164,3 +167,8 @@ def text_mode(client, args, logger=None):
                 prettify_markdown(response, args.renderer)
             else:
                 print(response)
+                
+    # Offer to copy to clipboard if not in a redirected output
+    if not args.no_stream and response:
+        with TERMINAL_RENDER_LOCK:
+            copy_to_clipboard(response)
