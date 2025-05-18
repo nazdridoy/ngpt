@@ -582,7 +582,7 @@ def process_with_chunking(client, diff_content, preprompt, chunk_size=200, recur
             
             # If the commit message is too long, we need to condense it
             if len(commit_message.splitlines()) > max_msg_lines:
-                return condense_commit_message(
+                commit_message = condense_commit_message(
                     client,
                     commit_message,
                     commit_system_prompt,
@@ -591,6 +591,10 @@ def process_with_chunking(client, diff_content, preprompt, chunk_size=200, recur
                     1,  # Start at depth 1
                     logger
                 )
+                
+            # Format the final commit message to eliminate path repetition and improve readability
+            commit_message = optimize_file_references(client, commit_message, commit_system_prompt, logger)
+                
             return commit_message
         except Exception as e:
             # Stop the spinner
@@ -672,7 +676,7 @@ DO NOT include any explanation or commentary outside the commit message format."
         
         # If the commit message is too long, we need to condense it
         if len(commit_message.splitlines()) > max_msg_lines:
-            return condense_commit_message(
+            commit_message = condense_commit_message(
                 client,
                 commit_message,
                 commit_system_prompt,
@@ -681,6 +685,10 @@ DO NOT include any explanation or commentary outside the commit message format."
                 1,  # Start at depth 1
                 logger
             )
+        
+        # Format the final commit message to eliminate path repetition and improve readability
+        commit_message = optimize_file_references(client, commit_message, commit_system_prompt, logger)
+        
         return commit_message
     
     # Analysis is still too large, need to chunk it
@@ -1015,6 +1023,105 @@ def strip_code_block_formatting(text):
         return match.group(1).rstrip()
     return text
 
+def optimize_file_references(client, commit_message, system_prompt=None, logger=None):
+    """Optimize the file references in the commit message by eliminating path repetition and improving readability.
+    
+    Args:
+        client: The NGPTClient instance
+        commit_message: The commit message to format
+        system_prompt: Optional system prompt for formatting
+        logger: Optional logger instance
+        
+    Returns:
+        str: Commit message with optimized file references
+    """
+    # If no system prompt provided, use a minimalist one
+    if not system_prompt:
+        system_prompt = """You are an expert Git commit message formatter."""
+    
+    format_prompt = f"""TASK: Reformat file paths in this commit message to make it more readable while preserving the standard format
+
+COMMIT MESSAGE TO OPTIMIZE:
+{commit_message}
+
+MAINTAIN THIS EXACT FORMAT FOR EACH BULLET:
+- [type] Description with file references (filepath:line/function)
+
+FILE PATH OPTIMIZATION RULES (CRITICAL PRIORITY):
+1. PRESERVE PROPER PARENTHESES FORMAT - File references go in parentheses at the end of each bullet:
+   • "- [add] Add components (src/components/Button.jsx, Card.jsx)"
+   • Always keep references in parentheses at the end
+
+2. ELIMINATE PATH REPETITION in file lists:
+   • "- [add] Add components (src/components/Button.jsx, src/components/Card.jsx)" - BAD
+   • "- [add] Add components (src/components/*.jsx)" - Use wildcard when appropriate
+   • "- [add] Add 5 component files (src/components/)" - Use count for many files
+
+3. AVOID REDUNDANT FILENAMES:
+   • Don't repeat filenames in both description and parentheses
+   • Group files by category in the description
+
+EXAMPLES THAT FOLLOW THE PROPER FORMAT:
+
+❌ BEFORE (POOR FORMATTING):
+- [docs] Add documentation for tawhid, names_of_allah, transcendence (islam/beliefs/tawhid.md, islam/beliefs/names_of_allah.md, islam/beliefs/transcendence.md)
+
+✅ AFTER (GOOD FORMATTING):
+- [docs] Add documentation for theological concepts (islam/beliefs/tawhid.md, names_of_allah.md, transcendence.md)
+
+❌ BEFORE (POOR FORMATTING):
+- [fix] Update error handling in app/utils/errors.js, app/utils/validation.js, app/utils/formatting.js
+
+✅ AFTER (GOOD FORMATTING):
+- [fix] Update error handling (app/utils/errors.js, validation.js, formatting.js)
+
+RULES FOR OUTPUT:
+1. PRESERVE proper format with parentheses at the end
+2. Keep the same bullet structure and number of bullets
+3. DO NOT change type tags or summary line
+4. Mention common paths ONCE, then list files
+
+THE STANDARD FORMAT FOR COMMIT MESSAGES IS:
+type[(scope)]: concise summary
+
+- [type] Description (filepath:line/function)
+- [type] Another description (filepath:line/function)"""
+    
+    # Log formatting template
+    if logger:
+        logger.log_template("DEBUG", "OPTIMIZE_FILE_REFS", format_prompt)
+    
+    # Start spinner for formatting
+    stop_spinner = threading.Event()
+    spinner_thread = threading.Thread(
+        target=spinner, 
+        args=("Optimizing file references...",), 
+        kwargs={"stop_event": stop_spinner, "color": COLORS['green']}
+    )
+    spinner_thread.daemon = True
+    spinner_thread.start()
+    
+    try:
+        formatted_message = handle_api_call(client, format_prompt, system_prompt, logger)
+        # Stop the spinner
+        stop_spinner.set()
+        spinner_thread.join()
+        
+        if logger:
+            logger.log_content("DEBUG", "OPTIMIZED_FILE_REFS", formatted_message)
+        
+        return formatted_message
+    except Exception as e:
+        # Stop the spinner
+        stop_spinner.set()
+        spinner_thread.join()
+        
+        print(f"{COLORS['red']}Error optimizing file references: {str(e)}{COLORS['reset']}")
+        if logger:
+            logger.error(f"Error optimizing file references: {str(e)}")
+        # Return the original message if formatting fails
+        return commit_message
+
 def gitcommsg_mode(client, args, logger=None):
     """Handle the Git commit message generation mode.
     
@@ -1195,6 +1302,9 @@ def gitcommsg_mode(client, args, logger=None):
                     1,  # Start at depth 1
                     active_logger
                 )
+                
+            # Format the final commit message to eliminate path repetition and improve readability
+            result = optimize_file_references(client, result, commit_system_prompt, active_logger)
         
         if not result:
             print(f"{COLORS['red']}Failed to generate commit message.{COLORS['reset']}")
