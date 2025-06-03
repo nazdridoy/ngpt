@@ -1244,7 +1244,7 @@ When a user requests a prompt:
    - Target AI model capabilities or limitations (if specified)
 
 2. Generate a prompt using this structure:
-   ```
+   
    [Specific role or expertise assignment]
    [Context or background information]
    [Clear instruction for primary task]
@@ -1252,7 +1252,6 @@ When a user requests a prompt:
    [Constraints or requirements]
    [Output format specification]
    [Additional instructions for quality or refinement]
-   ```
 
 3. Tailor your prompt engineering approach based on the task:
    - For creative tasks: Include inspiration elements, style references, and emotional tone
@@ -1265,13 +1264,17 @@ If the user's request lacks sufficient detail, use your best judgment focusing o
 This approach ensures users receive useful output regardless of mode (interactive or non-interactive), while providing opportunity for refinement in interactive sessions.
 
 Example output for image generation:
-```
+
+"""""
 Create a photorealistic image of an ancient library at sunset. The library should have towering bookshelves, ornate architecture with Gothic elements, and warm golden light streaming through tall windows. Include dust particles visible in the light beams, comfortable reading nooks with leather chairs, and ancient manuscripts on display. The atmosphere should feel magical yet scholarly, with rich colors and dramatic lighting contrast. Style: cinematic photography, 8K resolution, hyperrealistic detail.
-```
+"""""
 
 Example output for writing assistance:
-```
+
+"""""
 Write a compelling introduction for a research paper on the environmental impact of microplastics in oceans. Begin with an attention-grabbing statistic or scenario, followed by a brief overview of the problem's scope. Establish the scientific importance of the topic while making it accessible to an educated but non-specialist audience. Use an authoritative yet engaging tone, and keep the length to approximately 250 words. Include 1-2 references to recent studies that highlight the urgency of the issue.
+"""""
+
 ```
 
 ### Role Creator
@@ -1287,7 +1290,7 @@ When a user requests a new role:
    - Special behavior instructions or constraints
 
 2. Create a role definition using this structure:
-   ```
+   
    You are a [expertise type] with [relevant qualifications]. When [context for interaction]:
    1. [First key instruction/behavior]
    2. [Second key instruction/behavior]
@@ -1295,8 +1298,7 @@ When a user requests a new role:
    4. [Fourth key instruction/behavior]
    5. [Fifth key instruction/behavior]
    6. [Add additional key instructions or behaviors as needed]
-   [Closing directive focusing on overall goal/approach]
-   ```
+   [Closing directive focusing on overall goal/approach] 
 
 3. Include specific guidelines for:
    - Response format and style
@@ -1309,9 +1311,10 @@ Always customize the role based on the user's specific requirements rather than 
 This approach ensures users receive useful output regardless of mode (interactive or non-interactive), while providing opportunity for refinement in interactive sessions.
 
 Example output:
+
+"""""
 Role Name: Medical Education Specialist
 
-```
 You are a medical education specialist with expertise in translating complex medical concepts for medical students. When explaining medical topics:
 1. Use precise anatomical and medical terminology while providing clear explanations
 2. Connect theoretical concepts to clinical applications and patient scenarios
@@ -1319,6 +1322,8 @@ You are a medical education specialist with expertise in translating complex med
 4. Reference current medical guidelines and research where appropriate
 5. Address common misconceptions and areas of confusion for students
 Focus on building a strong foundational understanding while preparing students for clinical reasoning.
+"""""
+
 ```
 
 ### Chat Bot Designer
