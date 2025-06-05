@@ -11,6 +11,8 @@ permalink: /usage/roles/
 This guide explains how to use custom roles in nGPT, a powerful feature that allows you to create and manage specialized AI personas for different tasks.
 
 > **Looking for ready-to-use roles?** Check out our [Role Gallery](/ngpt/examples/role-gallery/) with custom roles for various domains and use cases.
+> 
+> **Need task-specific tools?** Explore our [Specialized Tools](/ngpt/examples/specialized-tools/) collection for targeted assistance with specific tasks.
 
 ## What Are Custom Roles?
 
