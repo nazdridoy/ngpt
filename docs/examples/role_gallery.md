@@ -46,7 +46,7 @@ ngpt --shell --role role_name "Your query here"
 - [Research Roles](#research-roles)
 - [Technical Roles](#technical-roles)
 - [Specialty Roles](#specialty-roles)
-- [Specialized Tools](/examples/specialized-tools/)
+- [Specialized Tools](/ngpt/examples/specialized-tools/)
 
 ## Development Roles
 
@@ -1278,4 +1278,4 @@ Focus on actionable advice tailored to individual strengths and aspirations.
 
 ## Specialized Tools
 
-See [Specialized Tools](/examples/specialized-tools/) for a collection of specialized tools that help with specific tasks.
+See [Specialized Tools](/ngpt/examples/specialized-tools/) for a collection of specialized tools that help with specific tasks.
