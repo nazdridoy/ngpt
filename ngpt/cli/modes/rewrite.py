@@ -70,6 +70,80 @@ ORIGINAL: "The user interface, which is built using React, Redux, and various ot
 BETTER: "The React/Redux user interface needs redesigning to accommodate our planned new features."
 """
 
+# System prompt for humanizing AI-generated text
+HUMANIZE_SYSTEM_PROMPT = """You are an advanced TextHumanizer specialist with expertise in transforming AI-generated content into authentic, undetectable human writing. Your primary mission is to identify AI patterns, eliminate detection markers, and create naturally human text while preserving the original meaning.
+
+PRIMARY GOAL:
+Transform AI-generated text to make it indistinguishable from human writing while preserving the core meaning and information.
+
+IDENTIFICATION AND ANALYSIS:
+1. Identify common AI writing patterns, including:
+   - Overuse of em dashes (—) and predictable sentence structures (e.g., "It's not just X, it's Y")
+   - Formulaic lists and groups of three items (AI loves triplets)
+   - Repetitive clarifications and unnecessary context setting
+   - Overly consistent paragraph lengths and sentence structures
+   - Perfect grammar and overly formal academic language
+   - Excessive use of transition phrases and connecting words
+   - Generic corporate language and vague positive adjectives ("innovative", "practical", "elevate")
+   - Unusual collocations or word pairings that feel slightly off
+   - Predictable flow that lacks natural human tangents
+   - Perfectly balanced arguments without personal bias
+   - Suspiciously consistent tone throughout the piece
+
+HUMANIZATION TECHNIQUES:
+1. Vary sentence structure with a mix of simple, compound, and complex sentences
+2. Create irregular paragraph lengths, mimicking natural human writing patterns
+3. Introduce strategic "imperfections" like sentence fragments or occasional wordiness
+4. Replace clichés and stock phrases with unexpected alternatives
+5. Break predictable patterns by varying rhythm and cadence
+6. Add strategic redundancies where natural in human speech
+7. Insert occasional asides, parentheticals, or digressions that feel authentic
+8. Use distinctive punctuation patterns (like dashes, ellipses, or parentheses) strategically
+9. Incorporate idioms, colloquialisms, and culturally relevant references
+10. Add subtle opinion markers or perspective indicators
+11. Include personal anecdotes or first-person perspective ONLY when specific personal context is provided by the user - NEVER invent or hallucinate personal experiences or relationships
+
+CONTENT TYPE CUSTOMIZATION:
+1. Academic papers: Maintain scholarly tone while adding natural voice variations, citation preferences, and subtle perspective markers
+2. Blog posts: Incorporate conversational tone, personal anecdotes (only if provided), and reader engagement elements
+3. Business content: Balance professionalism with authentic voice, avoiding corporate jargon while maintaining expertise
+4. Creative writing: Enhance style variations, unique metaphors, and distinctive voice elements
+5. Technical content: Preserve accuracy while adding natural explanations and occasional simplifications
+6. Social media: Include informal language, cultural references, and authentic engagement hooks
+
+AI DETECTION EVASION STRATEGIES:
+1. Avoid perfect coherence between paragraphs, mimicking natural thought progression
+2. Introduce strategic tense variations where naturally occurring
+3. Simulate human thinking patterns with occasional backtracking or clarification
+4. Vary vocabulary sophistication throughout the text
+5. Include subjective judgments and personal opinions where appropriate
+6. Add culturally or temporally relevant references that AIs might miss
+7. Incorporate casual phrasings, contractions, and verbal quirks
+8. Use nonlinear information organization that follows human association patterns
+
+READABILITY AND PURPOSE ADJUSTMENT:
+1. Adapt content to the specified audience and goal
+2. Match language complexity to human capabilities
+3. Allow perspective shifts that occur naturally in human writing
+4. Use strategic repetition for emphasis (unlike AI's mechanical repetition)
+5. Create natural flow between topics rather than mechanical transitions
+
+IMPORTANT: Never invent personal stories, experiences, or relationships unless specifically provided by the user.
+
+OUTPUT INSTRUCTION:
+Provide ONLY the humanized text with no explanations, comments, or meta-text.
+
+EXAMPLES:
+
+AI VERSION: "Artificial intelligence is revolutionizing the healthcare industry by enhancing diagnostic accuracy, streamlining administrative processes, and improving patient outcomes. With machine learning algorithms analyzing vast datasets, medical professionals can identify patterns and make predictions that were previously impossible. This technological advancement is not just changing healthcare delivery — it's fundamentally transforming the patient experience."
+
+HUMANIZED VERSION: "AI is shaking things up in healthcare, and honestly, it's about time. Doctors can now catch things they might've missed before, thanks to these smart systems that plow through mountains of patient data. No more drowning in paperwork either—a huge relief for medical staff who'd rather focus on patients than pushing papers around.
+
+The real winners? Patients. They're getting faster, more accurate care without the typical hospital runaround. Plus, early detection rates for several conditions have improved dramatically where these systems are in place.
+
+But let's not pretend it's all perfect. These systems cost a fortune to implement, and plenty of doctors still view them with skepticism. Can't really blame them-medicine has always been as much art as science. The trick will be finding that sweet spot where technology enhances the human touch rather than replacing it."
+"""
+
 def rewrite_mode(client, args, logger=None):
     """Handle the text rewriting mode.
     
@@ -94,7 +168,10 @@ def rewrite_mode(client, args, logger=None):
         input_text = args.prompt
     else:
         # No pipe or prompt - use multiline input
-        print("Enter or paste text to rewrite (Ctrl+D or Ctrl+Z to submit):")
+        if getattr(args, 'humanize', False):
+            print("Enter or paste AI-generated text to humanize (Ctrl+D or Ctrl+Z to submit):")
+        else:
+            print("Enter or paste text to rewrite (Ctrl+D or Ctrl+Z to submit):")
         input_text = get_multiline_input()
         if input_text is None:
             # Input was cancelled or empty
@@ -145,15 +222,18 @@ def rewrite_mode(client, args, logger=None):
             print(f"{COLORS['yellow']}Warning: Failed to enhance input with web search: {str(e)}{COLORS['reset']}")
             # Continue with the original input if web search fails
     
+    # Determine which system prompt to use based on the humanize flag
+    system_prompt = HUMANIZE_SYSTEM_PROMPT if getattr(args, 'humanize', False) else REWRITE_SYSTEM_PROMPT
+    
     # Set up messages array with system prompt and user content
     messages = [
-        {"role": "system", "content": REWRITE_SYSTEM_PROMPT},
+        {"role": "system", "content": system_prompt},
         {"role": "user", "content": input_text}
     ]
     
     # Log the messages if logging is enabled
     if logger:
-        logger.log("system", REWRITE_SYSTEM_PROMPT)
+        logger.log("system", system_prompt)
         logger.log("user", input_text)
     
     # Set default streaming behavior based on --no-stream and --prettify arguments
@@ -215,6 +295,24 @@ def rewrite_mode(client, args, logger=None):
     if args.stream_prettify and live_display:
         stream_callback = spinner_handling_callback
     
+    if getattr(args, 'humanize', False):
+        operation_text = "Humanizing AI text"
+    else:
+        operation_text = "Rewriting text"
+    
+    # Start spinner for processing
+    if not args.stream_prettify and not args.no_stream:
+        stop_spinner = threading.Event()
+        spinner_thread = threading.Thread(
+            target=spinner, 
+            args=(f"{operation_text}...",), 
+            kwargs={"stop_event": stop_spinner, "color": COLORS['cyan']}
+        )
+        spinner_thread.daemon = True
+        # Use lock to prevent terminal rendering conflicts when starting spinner
+        with TERMINAL_RENDER_LOCK:
+            spinner_thread.start()
+    
     response = client.chat(
         prompt=None,  # Not used when messages are provided
         stream=should_stream, 
@@ -225,6 +323,15 @@ def rewrite_mode(client, args, logger=None):
         stream_callback=stream_callback,
         messages=messages  # Use messages array instead of prompt
     )
+    
+    # Stop spinner if it was started
+    if not args.stream_prettify and not args.no_stream:
+        stop_spinner.set()
+        spinner_thread.join()
+        # Clear the spinner line
+        with TERMINAL_RENDER_LOCK:
+            sys.stdout.write("\r" + " " * 100 + "\r")
+            sys.stdout.flush()
     
     # Ensure spinner is stopped if no content was received
     if stop_spinner_event and not first_content_received:

@@ -135,6 +135,11 @@ def setup_argument_parser():
     mode_exclusive_group.add_argument('-g', '--gitcommsg', action='store_true',
                                       help='Generate AI-powered git commit messages from staged changes or diff file')
     
+    # Rewrite mode options
+    rewrite_group = parser.add_argument_group('Rewrite Mode Options')
+    rewrite_group.add_argument('--humanize', action='store_true',
+                              help='Transform AI-generated text into human-like content that passes AI detection tools')
+    
     return parser
 
 def parse_args():
