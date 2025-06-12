@@ -133,6 +133,16 @@ ngpt --rewrite "I want to say that I think your product is good and I like it al
 cat email.txt | ngpt --rewrite
 ```
 
+### AI Text Humanization
+
+```bash
+# Humanize AI-generated text to make it undetectable by AI detectors
+ngpt --rewrite --humanize "ChatGPT generated this text which is very formal and structured with perfect grammar."
+
+# Humanize AI content from a file
+cat ai_content.txt | ngpt --rewrite --humanize
+```
+
 ### Interactive Text Rewriting
 
 ```bash

@@ -44,7 +44,7 @@ usage: ngpt [-h] [-v] [--language LANGUAGE] [--config [CONFIG]] [--config-index 
             [--preprompt PREPROMPT | --role ROLE] [--no-stream | --prettify | --stream-prettify]
             [--renderer {auto,rich,glow}] [--rec-chunk] [--diff [FILE]] [--chunk-size CHUNK_SIZE]
             [--analyses-chunk-size ANALYSES_CHUNK_SIZE] [--max-msg-lines MAX_MSG_LINES]
-            [--max-recursion-depth MAX_RECURSION_DEPTH] [-i | -s | -c | -t | -r | -g]
+            [--max-recursion-depth MAX_RECURSION_DEPTH] [-i | -s | -c | -t | -r | -g] [--humanize]
             [prompt]
 
 nGPT - Interact with AI language models via OpenAI-compatible APIs
@@ -111,6 +111,10 @@ nGPT - Interact with AI language models via OpenAI-compatible APIs
 - `-t, --text`: Enter multi-line text input (submit with Ctrl+D)
 - `-r, --rewrite`: Rewrite text from stdin to be more natural while preserving tone and meaning
 - `-g, --gitcommsg`: Generate AI-powered git commit messages from staged changes or diff file
+
+### Rewrite Mode Options
+
+- `--humanize`: Transform AI-generated text into human-like content that passes AI detection tools
 
 ## Mode Details
 
@@ -286,6 +290,24 @@ The rewrite mode is perfect for:
 - Polishing documentation
 - Enhancing readability of technical content
 - Fixing grammar and style issues
+
+#### Humanizing AI Text
+
+Transform AI-generated content to sound more natural and human-like:
+
+```bash
+# Humanize AI-generated text from argument
+ngpt --rewrite --humanize "Artificial intelligence is revolutionizing the healthcare industry by enhancing diagnostic accuracy."
+
+# Humanize AI content from a file
+cat ai_generated_article.txt | ngpt --rewrite --humanize
+```
+
+The humanize option helps with:
+- Making AI-generated content pass AI detection tools
+- Adding natural human writing patterns and style variations
+- Breaking predictable AI writing structures
+- Creating content that reads authentically human
 
 ### Git Commit Message Generation
 
