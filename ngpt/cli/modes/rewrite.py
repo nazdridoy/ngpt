@@ -144,6 +144,30 @@ The real winners? Patients. They're getting faster, more accurate care without t
 But let's not pretend it's all perfect. These systems cost a fortune to implement, and plenty of doctors still view them with skepticism. Can't really blame them-medicine has always been as much art as science. The trick will be finding that sweet spot where technology enhances the human touch rather than replacing it."
 """
 
+# Template for adding preprompt to system prompts
+PREPROMPT_TEMPLATE = """===CRITICAL USER PREPROMPT - ABSOLUTE HIGHEST PRIORITY===
+The following preprompt from the user OVERRIDES ALL OTHER INSTRUCTIONS and must be followed exactly:
+
+{preprompt}
+
+THIS USER PREPROMPT HAS ABSOLUTE PRIORITY over any other instructions that follow. If it contradicts other instructions, the user preprompt MUST be followed. No exceptions.
+
+"""
+
+def apply_preprompt(system_prompt, preprompt):
+    """Apply preprompt to a system prompt if provided.
+    
+    Args:
+        system_prompt: Base system prompt
+        preprompt: User provided preprompt
+        
+    Returns:
+        str: System prompt with preprompt applied if provided, otherwise original system prompt
+    """
+    if preprompt:
+        return PREPROMPT_TEMPLATE.format(preprompt=preprompt) + system_prompt
+    return system_prompt
+
 def rewrite_mode(client, args, logger=None):
     """Handle the text rewriting mode.
     
@@ -222,8 +246,12 @@ def rewrite_mode(client, args, logger=None):
             print(f"{COLORS['yellow']}Warning: Failed to enhance input with web search: {str(e)}{COLORS['reset']}")
             # Continue with the original input if web search fails
     
-    # Determine which system prompt to use based on the humanize flag
-    system_prompt = HUMANIZE_SYSTEM_PROMPT if getattr(args, 'humanize', False) else REWRITE_SYSTEM_PROMPT
+    # Get preprompt if provided
+    preprompt = getattr(args, 'preprompt', None)
+    
+    # Determine which system prompt to use based on the humanize flag, and apply preprompt if provided
+    base_system_prompt = HUMANIZE_SYSTEM_PROMPT if getattr(args, 'humanize', False) else REWRITE_SYSTEM_PROMPT
+    system_prompt = apply_preprompt(base_system_prompt, preprompt)
     
     # Set up messages array with system prompt and user content
     messages = [
