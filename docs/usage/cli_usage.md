@@ -309,6 +309,41 @@ The humanize option helps with:
 - Breaking predictable AI writing structures
 - Creating content that reads authentically human
 
+
+#### Customized Text Rewriting
+
+```bash
+# Rewrite text with a specific style guide
+ngpt --rewrite --preprompt "You are a technical documentation expert. Follow these guidelines: 1) Use active voice, 2) Keep sentences under 20 words, 3) Use clear headings, 4) Include examples" "The system processes data through multiple stages. First, it validates input. Then it transforms data. Finally, it stores results."
+
+# Rewrite text for a specific audience
+ngpt --rewrite --preprompt "You are a teacher explaining complex topics to 8th graders. Use simple language, relatable examples, and avoid jargon" "Quantum entanglement is a physical phenomenon where particles become correlated in such a way that the quantum state of each particle cannot be described independently."
+
+# Humanize text while maintaining academic tone
+ngpt --rewrite --humanize --preprompt "You are an academic writer. Maintain scholarly language while making the text sound more natural and less AI-generated" "The implementation of machine learning algorithms in healthcare diagnostics has demonstrated significant improvements in accuracy rates across multiple studies."
+
+# Humanize text for a specific writing style
+ngpt --rewrite --humanize --preprompt "You are a creative blogger. Make the text engaging and conversational while preserving the technical accuracy" "Artificial intelligence is revolutionizing the healthcare industry by enhancing diagnostic accuracy and streamlining administrative processes."
+
+# Rewrite text with specific formatting requirements
+ngpt --rewrite --preprompt "You are a professional email writer. Format the text as a formal business email with proper greeting and closing" "I want to say that I think your product is good and I like it alot. Can you tell me more about the pricing?"
+
+# Rewrite text in a journalistic style
+ngpt --rewrite --preprompt "You are an investigative journalist. Write in a clear, objective style with a focus on facts and evidence" "The new AI system has shown promising results in early testing, with accuracy rates exceeding 95% in controlled environments."
+
+# Humanize text while maintaining technical accuracy
+ngpt --rewrite --humanize --preprompt "You are a senior software engineer explaining complex concepts to junior developers. Use analogies and real-world examples while keeping technical details precise" "The microservices architecture pattern involves breaking down applications into smaller, independent services that communicate through well-defined APIs."
+
+# Rewrite text in a persuasive style
+ngpt --rewrite --preprompt "You are a marketing copywriter. Write compelling, persuasive content that highlights benefits and creates urgency" "Our new product offers several features that can help improve productivity and save time."
+
+# Humanize text for social media
+ngpt --rewrite --humanize --preprompt "You are a social media influencer. Write engaging, authentic content that resonates with your audience while maintaining credibility" "The latest research shows that regular exercise can significantly improve mental health and cognitive function."
+
+# Rewrite text for a specific industry
+ngpt --rewrite --preprompt "You are a healthcare professional writing for medical journals. Use appropriate medical terminology while ensuring clarity for a general medical audience" "The patient presented with symptoms consistent with acute respiratory distress syndrome, including dyspnea and hypoxemia."
+```
+
 ### Git Commit Message Generation
 
 Generate conventional, detailed commit messages from git diffs:

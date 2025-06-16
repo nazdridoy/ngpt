@@ -143,6 +143,25 @@ ngpt --rewrite --humanize "ChatGPT generated this text which is very formal and 
 cat ai_content.txt | ngpt --rewrite --humanize
 ```
 
+### Customized Text Rewriting
+
+```bash
+# Rewrite text with a specific style guide
+ngpt --rewrite --preprompt "You are a technical documentation expert. Follow these guidelines: 1) Use active voice, 2) Keep sentences under 20 words, 3) Use clear headings, 4) Include examples" "The system processes data through multiple stages. First, it validates input. Then it transforms data. Finally, it stores results."
+
+# Rewrite text for a specific audience
+ngpt --rewrite --preprompt "You are a teacher explaining complex topics to 8th graders. Use simple language, relatable examples, and avoid jargon" "Quantum entanglement is a physical phenomenon where particles become correlated in such a way that the quantum state of each particle cannot be described independently."
+
+# Humanize text while maintaining academic tone
+ngpt --rewrite --humanize --preprompt "You are an academic writer. Maintain scholarly language while making the text sound more natural and less AI-generated" "The implementation of machine learning algorithms in healthcare diagnostics has demonstrated significant improvements in accuracy rates across multiple studies."
+
+# Humanize text for a specific writing style
+ngpt --rewrite --humanize --preprompt "You are a creative blogger. Make the text engaging and conversational while preserving the technical accuracy" "Artificial intelligence is revolutionizing the healthcare industry by enhancing diagnostic accuracy and streamlining administrative processes."
+
+# Rewrite text with specific formatting requirements
+ngpt --rewrite --preprompt "You are a professional email writer. Format the text as a formal business email with proper greeting and closing" "I want to say that I think your product is good and I like it alot. Can you tell me more about the pricing?"
+```
+
 ### Interactive Text Rewriting
 
 ```bash
