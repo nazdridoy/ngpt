@@ -124,6 +124,11 @@ def setup_argument_parser():
     rewrite_group.add_argument('--humanize', action='store_true',
                               help='Transform AI-generated text into human-like content that passes AI detection tools')
     
+    # Interactive mode options
+    interactive_group = parser.add_argument_group('Interactive Mode Options')
+    interactive_group.add_argument('--multiline', action='store_true',
+                              help='Enable multiline text input with the "ml" command in interactive mode')
+    
     # Mode flags (mutually exclusive)
     mode_group = parser.add_argument_group('Modes (mutually exclusive)')
     mode_exclusive_group = mode_group.add_mutually_exclusive_group()

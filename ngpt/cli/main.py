@@ -63,29 +63,25 @@ def show_cli_config_help():
     # Print general options (available in all contexts)
     print(f"    {COLORS['yellow']}General options (all modes):{COLORS['reset']}")
     for option in sorted(context_groups["all"]):
-        meta = CLI_CONFIG_OPTIONS[option]
-        default = f"(default: {meta['default']})" if meta['default'] is not None else ""
-        exclusive = f" [exclusive with: {', '.join(meta['exclusive'])}]" if "exclusive" in meta else ""
-        print(f"      {COLORS['green']}{option}{COLORS['reset']} - {meta['type']} {default}{exclusive}")
+        print(f"      {option}")
     
-    # Print mode-specific options
-    for mode, options in [
-        ("code", "Code generation mode"),
-        ("interactive", "Interactive mode"),
-        ("text", "Text mode"),
-        ("shell", "Shell mode"),
-        ("gitcommsg", "Git commit message mode")  # Add gitcommsg mode
-    ]:
-        if context_groups[mode]:
-            print(f"\n    {COLORS['yellow']}Options for {options}:{COLORS['reset']}")
-            for option in sorted(context_groups[mode]):
-                # Skip if already listed in general options
-                if option in context_groups["all"]:
-                    continue
-                meta = CLI_CONFIG_OPTIONS[option]
-                default = f"(default: {meta['default']})" if meta['default'] is not None else ""
-                exclusive = f" [exclusive with: {', '.join(meta['exclusive'])}]" if "exclusive" in meta else ""
-                print(f"      {COLORS['green']}{option}{COLORS['reset']} - {meta['type']} {default}{exclusive}")
+    # Print code options
+    if context_groups["code"]:
+        print(f"\n    {COLORS['yellow']}Code mode options (-c/--code):{COLORS['reset']}")
+        for option in sorted(context_groups["code"]):
+            print(f"      {option}")
+    
+    # Print interactive mode options
+    if context_groups["interactive"]:
+        print(f"\n    {COLORS['yellow']}Interactive mode options (-i/--interactive):{COLORS['reset']}")
+        for option in sorted(context_groups["interactive"]):
+            print(f"      {option}")
+    
+    # Print gitcommsg options
+    if context_groups["gitcommsg"]:
+        print(f"\n    {COLORS['yellow']}Git commit message options (-g/--gitcommsg):{COLORS['reset']}")
+        for option in sorted(context_groups["gitcommsg"]):
+            print(f"      {option}")
     
     print(f"\n  {COLORS['cyan']}Example usage:{COLORS['reset']}")
     print(f"    {COLORS['yellow']}ngpt --cli-config set language java{COLORS['reset']}        - Set default language to java for code generation")
@@ -543,7 +539,8 @@ def main():
                 prettify=args.prettify,
                 renderer=args.renderer,
                 stream_prettify=args.stream_prettify,
-                logger=logger
+                logger=logger,
+                multiline_enabled=args.multiline
             )
         elif args.shell:
             # Apply CLI config for shell mode

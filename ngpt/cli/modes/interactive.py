@@ -6,7 +6,7 @@ import sys
 import time
 from ..formatters import COLORS
 from ..renderers import prettify_markdown, prettify_streaming_markdown, TERMINAL_RENDER_LOCK
-from ..ui import spinner
+from ..ui import spinner, get_multiline_input
 from ...utils import enhance_prompt_with_web_search
 
 # Optional imports for enhanced UI
@@ -20,7 +20,7 @@ try:
 except ImportError:
     HAS_PROMPT_TOOLKIT = False
 
-def interactive_chat_session(client, web_search=False, no_stream=False, temperature=0.7, top_p=1.0, max_tokens=None, preprompt=None, prettify=False, renderer='auto', stream_prettify=False, logger=None):
+def interactive_chat_session(client, web_search=False, no_stream=False, temperature=0.7, top_p=1.0, max_tokens=None, preprompt=None, prettify=False, renderer='auto', stream_prettify=False, logger=None, multiline_enabled=False):
     """Start an interactive chat session with the AI.
     
     Args:
@@ -35,6 +35,7 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
         renderer: Which markdown renderer to use
         stream_prettify: Whether to enable streaming with prettify
         logger: Logger instance for logging the conversation
+        multiline_enabled: Whether to enable the multiline input command
     """
     # Get terminal width for better formatting
     try:
@@ -59,6 +60,9 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
     print(f"  {COLORS['yellow']}history{COLORS['reset']} : Show conversation history")
     print(f"  {COLORS['yellow']}clear{COLORS['reset']}   : Reset conversation")
     print(f"  {COLORS['yellow']}exit{COLORS['reset']}    : End session")
+    
+    if multiline_enabled:
+        print(f"  {COLORS['yellow']}ml{COLORS['reset']}      : Open multiline editor")
     
     print(f"\n{separator}\n")
     
@@ -184,6 +188,22 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
             if user_input.lower() == 'clear':
                 clear_history()
                 continue
+                
+            if multiline_enabled and user_input.lower() == 'ml':
+                print(f"{COLORS['cyan']}Opening multiline editor. Press Ctrl+D to submit.{COLORS['reset']}")
+                multiline_input = get_multiline_input()
+                if multiline_input is None:
+                    # Input was cancelled
+                    print(f"{COLORS['yellow']}Multiline input cancelled.{COLORS['reset']}")
+                    continue
+                elif not multiline_input.strip():
+                    print(f"{COLORS['yellow']}Empty message skipped.{COLORS['reset']}")
+                    continue
+                else:
+                    # Use the multiline input as user_input
+                    user_input = multiline_input
+                    print(f"{user_header()}")
+                    print(f"{COLORS['cyan']}│ {COLORS['reset']}{user_input}")
             
             # Skip empty messages but don't raise an error
             if not user_input.strip():
