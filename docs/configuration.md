@@ -144,85 +144,108 @@ The interactive configuration will prompt you for values and guide you through t
 
 You can set configuration options directly via command-line arguments:
 
-```
-usage: ngpt [-h] [-v] [--language LANGUAGE] [--config [CONFIG]] [--config-index CONFIG_INDEX] [--provider PROVIDER]
-            [--remove] [--show-config] [--all] [--list-models] [--list-renderers] [--cli-config [COMMAND ...]]
-            [--role-config [ACTION ...]] [--api-key API_KEY] [--base-url BASE_URL] [--model MODEL] [--web-search]
-            [--pipe] [--temperature TEMPERATURE] [--top_p TOP_P] [--max_tokens MAX_TOKENS] [--log [FILE]]
+
+```console
+❯ ngpt -h
+
+usage: ngpt [-h] [-v] [--config [CONFIG]] [--config-index CONFIG_INDEX] [--provider PROVIDER] [--remove] [--show-config]
+            [--all] [--list-models] [--list-renderers] [--cli-config [COMMAND ...]] [--role-config [ACTION ...]]
+            [--api-key API_KEY] [--base-url BASE_URL] [--model MODEL] [--web-search] [--pipe]
+            [--temperature TEMPERATURE] [--top_p TOP_P] [--max_tokens MAX_TOKENS] [--log [FILE]]
             [--preprompt PREPROMPT | --role ROLE] [--no-stream | --prettify | --stream-prettify]
-            [--renderer {auto,rich,glow}] [--rec-chunk] [--diff [FILE]] [--chunk-size CHUNK_SIZE]
+            [--renderer {auto,rich,glow}] [--language LANGUAGE] [--rec-chunk] [--diff [FILE]] [--chunk-size CHUNK_SIZE]
             [--analyses-chunk-size ANALYSES_CHUNK_SIZE] [--max-msg-lines MAX_MSG_LINES]
-            [--max-recursion-depth MAX_RECURSION_DEPTH] [-i | -s | -c | -t | -r | -g] [--humanize]
+            [--max-recursion-depth MAX_RECURSION_DEPTH] [--humanize] [--multiline] [-i | -s | -c | -t | -r | -g]
             [prompt]
 
 nGPT - Interact with AI language models via OpenAI-compatible APIs
+
+positional arguments::
+
+[PROMPT]                            The prompt to send
+
+options::
+
+-h, --help                          show this help message and exit
+-v, --version                       Show version information and exit
+
+Configuration Options::
+
+--config [CONFIG]                   Path to a custom config file or, if no value provided, enter interactive
+                                    configuration mode to create a new config
+--config-index CONFIG_INDEX         Index of the configuration to use or edit (default: 0)
+--provider PROVIDER                 Provider name to identify the configuration to use
+--remove                            Remove the configuration at the specified index (requires --config and
+                                    --config-index or --provider)
+--show-config                       Show the current configuration(s) and exit
+--all                               Show details for all configurations (requires --show-config)
+--list-models                       List all available models for the current configuration and exit
+--list-renderers                    Show available markdown renderers for use with --prettify
+--cli-config [COMMAND ...]          Manage CLI configuration (set, get, unset, list, help)
+--role-config [ACTION ...]          Manage custom roles (help, create, show, edit, list, remove) [role_name]
+
+Global Options::
+
+--api-key API_KEY                   API key for the service
+--base-url BASE_URL                 Base URL for the API
+--model MODEL                       Model to use
+--web-search                        Enable web search capability using DuckDuckGo to enhance prompts with relevant
+                                    information
+--pipe                              Read from stdin and use content with prompt. Use {} in prompt as placeholder
+                                    for stdin content. Can be used with any mode option except --text and
+                                    --interactive
+--temperature TEMPERATURE           Set temperature (controls randomness, default: 0.7)
+--top_p TOP_P                       Set top_p (controls diversity, default: 1.0)
+--max_tokens MAX_TOKENS             Set max response length in tokens
+--log [FILE]                        Set filepath to log conversation to, or create a temporary log file if no path
+                                    provided
+--preprompt PREPROMPT               Set custom system prompt to control AI behavior
+--role ROLE                         Use a predefined role to set system prompt (mutually exclusive with
+                                    --preprompt)
+--renderer {auto,rich,glow}         Select which markdown renderer to use with --prettify or --stream-prettify
+                                    (auto, rich, or glow)
+
+Output Display Options (mutually exclusive)::
+
+--no-stream                         Return the whole response without streaming or formatting
+--prettify                          Render complete response with markdown and code formatting (non-streaming)
+--stream-prettify                   Stream response with real-time markdown rendering (default)
+
+Code Mode Options::
+
+--language LANGUAGE                 Programming language to generate code in (for code mode)
+
+Git Commit Message Options::
+
+--rec-chunk                         Process large diffs in chunks with recursive analysis if needed
+--diff [FILE]                       Use diff from specified file instead of staged changes. If used without a path,
+                                    uses the path from CLI config.
+--chunk-size CHUNK_SIZE             Number of lines per chunk when chunking is enabled (default: 200)
+--analyses-chunk-size ANALYSES_CHUNK_SIZE
+                                    Number of lines per chunk when recursively chunking analyses (default: 200)
+--max-msg-lines MAX_MSG_LINES       Maximum number of lines in commit message before condensing (default: 20)
+--max-recursion-depth MAX_RECURSION_DEPTH
+                                    Maximum recursion depth for commit message condensing (default: 3)
+
+Rewrite Mode Options::
+
+--humanize                          Transform AI-generated text into human-like content that passes AI detection
+                                    tools
+
+Interactive Mode Options::
+
+--multiline                         Enable multiline text input with the "ml" command in interactive mode
+
+Modes (mutually exclusive)::
+
+-i, --interactive                   Start an interactive chat session
+-s, --shell                         Generate and execute shell commands
+-c, --code                          Generate code
+-t, --text                          Enter multi-line text input (submit with Ctrl+D)
+-r, --rewrite                       Rewrite text from stdin to be more natural while preserving tone and meaning
+-g, --gitcommsg                     Generate AI-powered git commit messages from staged changes or diff file
+
 ```
-
-### Positional Arguments
-
-- `[PROMPT]`: The prompt to send
-
-### General Options
-
-- `-h, --help`: Show help message and exit
-- `-v, --version`: Show version information and exit
-- `--language <LANGUAGE>`: Programming language to generate code in (for code mode)
-
-### Configuration Options
-
-- `--config <[CONFIG]>`: Path to a custom config file or, if no value provided, enter interactive configuration mode to create a new config
-- `--config-index <CONFIG_INDEX>`: Index of the configuration to use or edit (default: 0)
-- `--provider <PROVIDER>`: Provider name to identify the configuration to use
-- `--remove`: Remove the configuration at the specified index (requires --config and --config-index or --provider)
-- `--show-config`: Show the current configuration(s) and exit
-- `--all`: Show details for all configurations (requires --show-config)
-- `--list-models`: List all available models for the current configuration and exit
-- `--list-renderers`: Show available markdown renderers for use with --prettify
-- `--cli-config <[COMMAND ...]>`: Manage CLI configuration (set, get, unset, list, help)
-- `--role-config <[ACTION ...]>`: Manage custom roles (help, create, show, edit, list, remove) [role_name]
-
-### Global Options
-
-- `--api-key <API_KEY>`: API key for the service
-- `--base-url <BASE_URL>`: Base URL for the API
-- `--model <MODEL>`: Model to use
-- `--web-search`: Enable web search capability using DuckDuckGo to enhance prompts with relevant information
-- `--pipe`: Read from stdin and use content with prompt. Use {} in prompt as placeholder for stdin content. Can be used with any mode option except --text and --interactive
-- `--temperature <TEMPERATURE>`: Set temperature (controls randomness, default: 0.7)
-- `--top_p <TOP_P>`: Set top_p (controls diversity, default: 1.0)
-- `--max_tokens <MAX_TOKENS>`: Set max response length in tokens
-- `--log <[FILE]>`: Set filepath to log conversation to, or create a temporary log file if no path provided
-- `--preprompt <PREPROMPT>`: Set custom system prompt to control AI behavior
-- `--role <ROLE>`: Use a predefined role to set system prompt (mutually exclusive with --preprompt)
-- `--renderer <{auto,rich,glow}>`: Select which markdown renderer to use with --prettify or --stream-prettify (auto, rich, or glow)
-
-### Output Display Options (mutually exclusive)
-
-- `--no-stream`: Return the whole response without streaming or formatting
-- `--prettify`: Render complete response with markdown and code formatting (non-streaming)
-- `--stream-prettify`: Stream response with real-time markdown rendering (default)
-
-### Git Commit Message Options
-
-- `--rec-chunk`: Process large diffs in chunks with recursive analysis if needed
-- `--diff <[FILE]>`: Use diff from specified file instead of staged changes. If used without a path, uses the path from CLI config.
-- `--chunk-size <CHUNK_SIZE>`: Number of lines per chunk when chunking is enabled (default: 200)
-- `--analyses-chunk-size <ANALYSES_CHUNK_SIZE>`: Number of lines per chunk when recursively chunking analyses (default: 200)
-- `--max-msg-lines <MAX_MSG_LINES>`: Maximum number of lines in commit message before condensing (default: 20)
-- `--max-recursion-depth <MAX_RECURSION_DEPTH>`: Maximum recursion depth for commit message condensing (default: 3)
-
-### Modes (mutually exclusive)
-
-- `-i, --interactive`: Start an interactive chat session
-- `-s, --shell`: Generate and execute shell commands
-- `-c, --code`: Generate code
-- `-t, --text`: Enter multi-line text input (submit with Ctrl+D)
-- `-r, --rewrite`: Rewrite text from stdin to be more natural while preserving tone and meaning
-- `-g, --gitcommsg`: Generate AI-powered git commit messages from staged changes or diff file
-
-### Rewrite Mode Options
-
-- `--humanize`: Transform AI-generated text into human-like content that passes AI detection tools
 
 ### Command Examples
 
