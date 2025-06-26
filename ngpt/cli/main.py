@@ -37,7 +37,7 @@ def show_cli_config_help():
     print(f"    {COLORS['yellow']}ngpt --cli-config get OPTION{COLORS['reset']}          - Get the current value of OPTION")
     print(f"    {COLORS['yellow']}ngpt --cli-config get{COLORS['reset']}                 - Show all CLI configuration settings")
     print(f"    {COLORS['yellow']}ngpt --cli-config unset OPTION{COLORS['reset']}        - Remove OPTION from configuration")
-    print(f"    {COLORS['yellow']}ngpt --cli-config list{COLORS['reset']}                - List all available options")
+    print(f"    {COLORS['yellow']}ngpt --cli-config list{COLORS['reset']}                - List all available options with types and defaults")
     
     print(f"\n  {COLORS['cyan']}Available options:{COLORS['reset']}")
     
@@ -51,8 +51,10 @@ def show_cli_config_help():
         "gitcommsg": []  # Add gitcommsg context
     }
     
-    for option, meta in CLI_CONFIG_OPTIONS.items():
-        for context in meta["context"]:
+    # Get option details from list_cli_config_options instead of CLI_CONFIG_OPTIONS
+    for option_details in list_cli_config_options():
+        option = option_details["name"]
+        for context in option_details["context"]:
             if context in context_groups:
                 if context == "all":
                     context_groups[context].append(option)
@@ -63,25 +65,57 @@ def show_cli_config_help():
     # Print general options (available in all contexts)
     print(f"    {COLORS['yellow']}General options (all modes):{COLORS['reset']}")
     for option in sorted(context_groups["all"]):
-        print(f"      {option}")
+        # Get option details
+        option_detail = next((o for o in list_cli_config_options() if o["name"] == option), None)
+        if option_detail:
+            option_type = option_detail["type"]
+            default = option_detail["default"]
+            default_str = f"(default: {default})" if default is not None else "(default: None)"
+            print(f"      {option} - {COLORS['cyan']}Type: {option_type}{COLORS['reset']} {default_str}")
+        else:
+            print(f"      {option}")
     
     # Print code options
     if context_groups["code"]:
         print(f"\n    {COLORS['yellow']}Code mode options (-c/--code):{COLORS['reset']}")
         for option in sorted(context_groups["code"]):
-            print(f"      {option}")
+            # Get option details
+            option_detail = next((o for o in list_cli_config_options() if o["name"] == option), None)
+            if option_detail:
+                option_type = option_detail["type"]
+                default = option_detail["default"]
+                default_str = f"(default: {default})" if default is not None else "(default: None)"
+                print(f"      {option} - {COLORS['cyan']}Type: {option_type}{COLORS['reset']} {default_str}")
+            else:
+                print(f"      {option}")
     
     # Print interactive mode options
     if context_groups["interactive"]:
         print(f"\n    {COLORS['yellow']}Interactive mode options (-i/--interactive):{COLORS['reset']}")
         for option in sorted(context_groups["interactive"]):
-            print(f"      {option}")
+            # Get option details
+            option_detail = next((o for o in list_cli_config_options() if o["name"] == option), None)
+            if option_detail:
+                option_type = option_detail["type"]
+                default = option_detail["default"]
+                default_str = f"(default: {default})" if default is not None else "(default: None)"
+                print(f"      {option} - {COLORS['cyan']}Type: {option_type}{COLORS['reset']} {default_str}")
+            else:
+                print(f"      {option}")
     
     # Print gitcommsg options
     if context_groups["gitcommsg"]:
         print(f"\n    {COLORS['yellow']}Git commit message options (-g/--gitcommsg):{COLORS['reset']}")
         for option in sorted(context_groups["gitcommsg"]):
-            print(f"      {option}")
+            # Get option details
+            option_detail = next((o for o in list_cli_config_options() if o["name"] == option), None)
+            if option_detail:
+                option_type = option_detail["type"]
+                default = option_detail["default"]
+                default_str = f"(default: {default})" if default is not None else "(default: None)"
+                print(f"      {option} - {COLORS['cyan']}Type: {option_type}{COLORS['reset']} {default_str}")
+            else:
+                print(f"      {option}")
     
     print(f"\n  {COLORS['cyan']}Example usage:{COLORS['reset']}")
     print(f"    {COLORS['yellow']}ngpt --cli-config set language java{COLORS['reset']}        - Set default language to java for code generation")
@@ -111,13 +145,18 @@ def handle_cli_config(action, option=None, value=None):
     if action == "list":
         # List all available options
         print(f"{COLORS['green']}{COLORS['bold']}Available CLI configuration options:{COLORS['reset']}")
-        for option in list_cli_config_options():
-            meta = CLI_CONFIG_OPTIONS[option]
-            default = f"(default: {meta['default']})" if meta['default'] is not None else ""
-            contexts = ', '.join(meta['context'])
-            if "all" in meta['context']:
-                contexts = "all modes"
-            print(f"  {COLORS['cyan']}{option}{COLORS['reset']} - {meta['type']} {default} - Available in: {contexts}")
+        for option_details in list_cli_config_options():
+            option = option_details["name"]
+            option_type = option_details["type"]
+            default = option_details["default"]
+            contexts = option_details["context"]
+            
+            default_str = f"(default: {default})" if default is not None else "(default: None)"
+            contexts_str = ', '.join(contexts)
+            if "all" in contexts:
+                contexts_str = "all modes"
+            
+            print(f"  {COLORS['cyan']}{option}{COLORS['reset']} - {COLORS['yellow']}Type: {option_type}{COLORS['reset']} {default_str} - Available in: {contexts_str}")
         return
     
     if action == "get":

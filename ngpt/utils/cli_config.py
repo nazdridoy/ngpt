@@ -288,6 +288,19 @@ def apply_cli_config(args: Any, mode: str) -> Any:
     
     return args
 
-def list_cli_config_options() -> List[str]:
-    """List all available CLI configuration options."""
-    return sorted(CLI_CONFIG_OPTIONS.keys()) 
+def list_cli_config_options() -> List[Dict[str, Any]]:
+    """List all available CLI configuration options with their types and default values.
+    
+    Returns:
+        List of dictionaries containing option details
+    """
+    options_list = []
+    for option, details in sorted(CLI_CONFIG_OPTIONS.items()):
+        options_list.append({
+            "name": option,
+            "type": details["type"],
+            "default": details["default"],
+            "context": details["context"],
+            "exclusive": details.get("exclusive", [])
+        })
+    return options_list 
