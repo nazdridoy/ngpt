@@ -30,9 +30,6 @@ def setup_argument_parser():
     # Version flag
     parser.add_argument('-v', '--version', action=ColoredVersionAction, nargs=0, 
                         help='Show version information and exit')
-    # Language option for code mode
-    parser.add_argument('--language', default="python", 
-                        help='Programming language to generate code in (for code mode)')
     
     # Prompt argument
     parser.add_argument('prompt', nargs='?', default=None, 
@@ -103,6 +100,11 @@ def setup_argument_parser():
     
     global_group.add_argument('--renderer', choices=['auto', 'rich', 'glow'], default='auto',
                       help='Select which markdown renderer to use with --prettify or --stream-prettify (auto, rich, or glow)')
+    
+    # Code Mode Options
+    code_group = parser.add_argument_group('Code Mode Options')
+    code_group.add_argument('--language', default="python", 
+                      help='Programming language to generate code in (for code mode)')
     
     # GitCommit message options
     gitcommsg_group = parser.add_argument_group('Git Commit Message Options')
