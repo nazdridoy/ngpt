@@ -119,6 +119,11 @@ def setup_argument_parser():
     gitcommsg_group.add_argument('--max-recursion-depth', type=int, default=3,
                       help='Maximum recursion depth for commit message condensing (default: 3)')
     
+    # Rewrite mode options
+    rewrite_group = parser.add_argument_group('Rewrite Mode Options')
+    rewrite_group.add_argument('--humanize', action='store_true',
+                              help='Transform AI-generated text into human-like content that passes AI detection tools')
+    
     # Mode flags (mutually exclusive)
     mode_group = parser.add_argument_group('Modes (mutually exclusive)')
     mode_exclusive_group = mode_group.add_mutually_exclusive_group()
@@ -134,11 +139,6 @@ def setup_argument_parser():
                                       help='Rewrite text from stdin to be more natural while preserving tone and meaning')
     mode_exclusive_group.add_argument('-g', '--gitcommsg', action='store_true',
                                       help='Generate AI-powered git commit messages from staged changes or diff file')
-    
-    # Rewrite mode options
-    rewrite_group = parser.add_argument_group('Rewrite Mode Options')
-    rewrite_group.add_argument('--humanize', action='store_true',
-                              help='Transform AI-generated text into human-like content that passes AI detection tools')
     
     return parser
 
