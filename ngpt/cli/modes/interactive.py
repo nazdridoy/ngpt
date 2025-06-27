@@ -20,7 +20,7 @@ try:
 except ImportError:
     HAS_PROMPT_TOOLKIT = False
 
-def interactive_chat_session(client, web_search=False, no_stream=False, temperature=0.7, top_p=1.0, max_tokens=None, preprompt=None, prettify=False, renderer='auto', stream_prettify=False, logger=None, multiline_enabled=False):
+def interactive_chat_session(client, web_search=False, no_stream=False, temperature=0.7, top_p=1.0, max_tokens=None, preprompt=None, prettify=False, renderer='auto', stream_prettify=False, logger=None, multiline_enabled=True):
     """Start an interactive chat session with the AI.
     
     Args:

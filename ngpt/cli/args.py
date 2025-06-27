@@ -12,7 +12,8 @@ def setup_argument_parser():
     # Minimalist, clean epilog design
     epilog = f"\n{COLORS['yellow']}nGPT {COLORS['bold']}v{__version__}{COLORS['reset']}  •  {COLORS['green']}Docs: {COLORS['bold']}https://nazdridoy.github.io/ngpt/usage/cli_usage{COLORS['reset']}"
     
-    parser = argparse.ArgumentParser(description=description, formatter_class=ColoredHelpFormatter, epilog=epilog)
+    parser = argparse.ArgumentParser(description=description, formatter_class=ColoredHelpFormatter, 
+                                    epilog=epilog, add_help=False)
     
     # Add custom error method with color
     original_error = parser.error
@@ -27,41 +28,16 @@ def setup_argument_parser():
             print(f"{COLORS['green']}{COLORS['bold']}nGPT{COLORS['reset']} version {COLORS['yellow']}{__version__}{COLORS['reset']}")
             parser.exit()
     
-    # Version flag
-    parser.add_argument('-v', '--version', action=ColoredVersionAction, nargs=0, 
-                        help='Show version information and exit')
-    
-    # Prompt argument
-    parser.add_argument('prompt', nargs='?', default=None, 
-                        help='The prompt to send')
-
-    # Config options
-    config_group = parser.add_argument_group('Configuration Options')
-    config_group.add_argument('--config', nargs='?', const=True, 
-                              help='Path to a custom config file or, if no value provided, enter interactive configuration mode to create a new config')
-    config_group.add_argument('--config-index', type=int, default=0, 
-                              help='Index of the configuration to use or edit (default: 0)')
-    config_group.add_argument('--provider', 
-                              help='Provider name to identify the configuration to use')
-    config_group.add_argument('--remove', action='store_true', 
-                              help='Remove the configuration at the specified index (requires --config and --config-index or --provider)')
-    config_group.add_argument('--show-config', action='store_true', 
-                              help='Show the current configuration(s) and exit')
-    config_group.add_argument('--all', action='store_true', 
-                              help='Show details for all configurations (requires --show-config)')
-    config_group.add_argument('--list-models', action='store_true', 
-                              help='List all available models for the current configuration and exit')
-    config_group.add_argument('--list-renderers', action='store_true', 
-                              help='Show available markdown renderers for use with --prettify')
-    config_group.add_argument('--cli-config', nargs='*', metavar='COMMAND', 
-                              help='Manage CLI configuration (set, get, unset, list, help)')
-    
-    # Role configuration options
-    config_group.add_argument('--role-config', nargs='*', metavar='ACTION', 
-                              help='Manage custom roles (help, create, show, edit, list, remove) [role_name]')
-
     # Global options
     global_group = parser.add_argument_group('Global Options')
+    
+    # Add help and version to the global group
+    global_group.add_argument('-h', '--help', action='help',
+                             help='show this help message and exit')
+    global_group.add_argument('-v', '--version', action=ColoredVersionAction, nargs=0, 
+                             help='Show version information and exit')
+    
+    # Then add the other global options
     global_group.add_argument('--api-key', 
                               help='API key for the service')
     global_group.add_argument('--base-url', 
@@ -88,6 +64,29 @@ def setup_argument_parser():
     prompt_exclusive_group.add_argument('--role', 
                       help='Use a predefined role to set system prompt (mutually exclusive with --preprompt)')
     
+    # Config options
+    config_group = parser.add_argument_group('Configuration Options')
+    config_group.add_argument('--config', nargs='?', const=True, 
+                              help='Path to a custom config file or, if no value provided, enter interactive configuration mode to create a new config')
+    config_group.add_argument('--config-index', type=int, default=0, 
+                              help='Index of the configuration to use or edit (default: 0)')
+    config_group.add_argument('--provider', 
+                              help='Provider name to identify the configuration to use')
+    config_group.add_argument('--remove', action='store_true', 
+                              help='Remove the configuration at the specified index (requires --config and --config-index or --provider)')
+    config_group.add_argument('--show-config', action='store_true', 
+                              help='Show the current configuration(s) and exit')
+    config_group.add_argument('--all', action='store_true', 
+                              help='Show details for all configurations (requires --show-config)')
+    config_group.add_argument('--list-models', action='store_true', 
+                              help='List all available models for the current configuration and exit')
+    config_group.add_argument('--list-renderers', action='store_true', 
+                              help='Show available markdown renderers for use with --prettify')
+    config_group.add_argument('--cli-config', nargs='*', metavar='COMMAND', 
+                              help='Manage CLI configuration (set, get, unset, list, help)')
+    config_group.add_argument('--role-config', nargs='*', metavar='ACTION', 
+                              help='Manage custom roles (help, create, show, edit, list, remove) [role_name]')
+
     # Output display options (mutually exclusive group)
     output_group = parser.add_argument_group('Output Display Options (mutually exclusive)')
     output_exclusive_group = output_group.add_mutually_exclusive_group()
@@ -128,8 +127,6 @@ def setup_argument_parser():
     
     # Interactive mode options
     interactive_group = parser.add_argument_group('Interactive Mode Options')
-    interactive_group.add_argument('--multiline', action='store_true',
-                              help='Enable multiline text input with the "ml" command in interactive mode')
     
     # Mode flags (mutually exclusive)
     mode_group = parser.add_argument_group('Modes (mutually exclusive)')

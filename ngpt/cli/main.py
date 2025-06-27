@@ -578,8 +578,7 @@ def main():
                 prettify=args.prettify,
                 renderer=args.renderer,
                 stream_prettify=args.stream_prettify,
-                logger=logger,
-                multiline_enabled=args.multiline
+                logger=logger
             )
         elif args.shell:
             # Apply CLI config for shell mode

@@ -19,8 +19,6 @@ CLI_CONFIG_OPTIONS = {
     "renderer": {"type": "str", "default": "auto", "context": ["all"]},
     "config-index": {"type": "int", "default": 0, "context": ["all"], "exclusive": ["provider"]},
     "web-search": {"type": "bool", "default": False, "context": ["all"]},
-    # Interactive mode options
-    "interactive-multiline": {"type": "bool", "default": False, "context": ["interactive"]},
     # GitCommit message options
     "rec-chunk": {"type": "bool", "default": False, "context": ["gitcommsg"]},
     "diff": {"type": "str", "default": None, "context": ["gitcommsg"]},
@@ -244,10 +242,6 @@ def apply_cli_config(args: Any, mode: str) -> Any:
             
         # Convert dashes to underscores for argparse compatibility
         arg_name = option.replace("-", "_")
-        
-        # Special case for interactive-multiline which maps to multiline argument
-        if option == "interactive-multiline":
-            arg_name = "multiline"
         
         # Skip if explicitly set via command line
         cli_option = f"--{option}"
