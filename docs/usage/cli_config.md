@@ -171,6 +171,12 @@ The CLI configuration system enforces these rules to prevent incompatible combin
 |--------|------|---------|-------------|
 | `language` | string | python | Programming language for code generation |
 
+#### Interactive Mode
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `interactive-multiline` | bool | false | Enable multiline text input with the "ml" command in interactive mode |
+
 #### Git Commit Message Mode
 
 | Option | Type | Default | Description |
@@ -195,6 +201,16 @@ ngpt --cli-config set prettify true
 
 # Set temperature for more deterministic responses
 ngpt --cli-config set temperature 0.3
+```
+
+### Setting Up for Interactive Chat
+
+```bash
+# Enable multiline input in interactive mode by default
+ngpt --cli-config set interactive-multiline true
+
+# Set a custom system prompt for interactive sessions
+ngpt --cli-config set preprompt "You are a helpful coding assistant specializing in Python"
 ```
 
 ### Setting Up a Creative Writing Environment

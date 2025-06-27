@@ -195,6 +195,40 @@ ngpt --code --log "function to calculate prime numbers"
 ngpt --shell --log "find large files in current directory"
 ```
 
+#### Multiline Text Input in Interactive Mode
+
+Enable multiline input in interactive chat mode:
+
+```bash
+ngpt -i --multiline
+```
+
+With this option enabled, you can:
+- Use the "ml" command to enter multiline text mode
+- Type or paste complex, multi-paragraph prompts
+- Press Ctrl+D (or Ctrl+Z on Windows) to submit the multiline input
+- Exit multiline mode anytime by typing ".exit" on a new line
+
+This is especially useful when:
+- Providing code samples for the AI to analyze
+- Entering complex contexts or scenarios
+- Pasting error logs or output for debugging help
+- Composing detailed questions with multiple parts
+
+Example usage:
+```
+> ml
+(multiline mode - press Ctrl+D to submit)
+Here's the error I'm getting:
+
+TypeError: cannot convert 'NoneType' object to int
+  File "app.py", line 45, in process_data
+    result = data['count'] + 5
+
+Can you help me understand what's wrong?
+^D
+```
+
 #### Combining with Other Options
 
 Interactive mode can be combined with other options for enhanced functionality:
