@@ -510,7 +510,7 @@ def main():
         return
     
     # For interactive mode, we'll allow continuing without a specific prompt
-    if not args.prompt and not (args.shell or args.code or args.text or args.interactive or args.show_config or args.list_models or args.rewrite or args.gitcommsg):
+    if not getattr(args, 'prompt', None) and not (args.shell or args.code or args.text or args.interactive or args.show_config or args.list_models or args.rewrite or args.gitcommsg):
         # Simply use the parser's help
         parser = setup_argument_parser()
         parser.print_help()
