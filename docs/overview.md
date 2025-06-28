@@ -54,12 +54,12 @@ Start an ongoing conversation with memory:
 ngpt -i
 ngpt --interactive
 # Inside interactive mode, you can use commands like:
-# help     - Show help menu
-# save     - Save the current session
-# load     - Load a previous session
-# sessions - List saved sessions
-# clear    - Clear the conversation
-# exit     - Exit the session
+# /help     - Show help menu
+# /save     - Save the current session
+# /load     - Load a previous session
+# /sessions - List saved sessions
+# /clear    - Clear the conversation
+# /exit     - Exit the session (also 'exit', 'quit', 'bye' without '/')
 ```
 
 ### Code Generation Mode

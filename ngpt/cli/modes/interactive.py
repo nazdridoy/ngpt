@@ -5,6 +5,7 @@ import threading
 import sys
 import time
 import json
+import uuid
 from datetime import datetime
 from ...utils.config import get_config_dir
 from ..formatters import COLORS
@@ -61,17 +62,17 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
         print(f"\n{COLORS['cyan']}Navigation:{COLORS['reset']}")
         print(f"  {COLORS['yellow']}↑/↓{COLORS['reset']} : Browse input history")
         
-        print(f"\n{COLORS['cyan']}Session Commands:{COLORS['reset']}")
-        print(f"  {COLORS['yellow']}history{COLORS['reset']} : Show conversation history")
-        print(f"  {COLORS['yellow']}clear{COLORS['reset']}   : Reset conversation")
-        print(f"  {COLORS['yellow']}exit{COLORS['reset']}    : End session")
-        print(f"  {COLORS['yellow']}save{COLORS['reset']}    : Save current session")
-        print(f"  {COLORS['yellow']}load{COLORS['reset']}    : Load a previous session")
-        print(f"  {COLORS['yellow']}sessions{COLORS['reset']}: List saved sessions")
-        print(f"  {COLORS['yellow']}help{COLORS['reset']}    : Show this help message")
+        print(f"\n{COLORS['cyan']}Session Commands (prefix with '/'):{COLORS['reset']}")
+        print(f"  {COLORS['yellow']}/history{COLORS['reset']} : Show conversation history")
+        print(f"  {COLORS['yellow']}/clear{COLORS['reset']}   : Reset conversation")
+        print(f"  {COLORS['yellow']}/exit{COLORS['reset']}    : End session")
+        print(f"  {COLORS['yellow']}/save{COLORS['reset']}    : Save current session")
+        print(f"  {COLORS['yellow']}/load{COLORS['reset']}    : Load a previous session")
+        print(f"  {COLORS['yellow']}/sessions{COLORS['reset']}: List saved sessions")
+        print(f"  {COLORS['yellow']}/help{COLORS['reset']}    : Show this help message")
         
         if multiline_enabled:
-            print(f"  {COLORS['yellow']}ml{COLORS['reset']}      : Open multiline editor")
+            print(f"  {COLORS['yellow']}/ml{COLORS['reset']}      : Open multiline editor")
         
         print(f"\n{separator}\n")
 
@@ -110,6 +111,10 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
     conversation = []
     system_message = {"role": "system", "content": system_prompt}
     conversation.append(system_message)
+
+    # Initialize current session tracking
+    current_session_id = None
+    current_session_filepath = None
     
     # Log system prompt if logging is enabled
     if logger and preprompt:
@@ -153,11 +158,13 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
     
     # Function to clear conversation history
     def clear_history():
-        nonlocal conversation
+        nonlocal conversation, current_session_id, current_session_filepath
         conversation = [{"role": "system", "content": system_prompt}]
+        current_session_id = None
+        current_session_filepath = None
         with TERMINAL_RENDER_LOCK:
-            print(f"\n{COLORS['yellow']}Conversation history cleared.{COLORS['reset']}")
-            print(separator)  # Add separator for consistency
+            print(f"\n{COLORS['yellow']}Conversation history cleared. A new session will be created on next save.{COLORS['reset']}")
+            print(separator)
     
     # --- Session Management Functions ---
 
@@ -168,15 +175,20 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
         return history_dir
 
     def save_session():
-        """Save the current conversation to a JSON file."""
+        """Save the current conversation to a JSON file, creating a new session or updating the current one."""
+        nonlocal current_session_id, current_session_filepath
         history_dir = get_history_dir()
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        filename = history_dir / f"session_{timestamp}.json"
+
+        if current_session_id is None:
+            # Generate a new session ID if not already set (new session or cleared)
+            current_session_id = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{uuid.uuid4().hex[:8]}"
+            current_session_filepath = history_dir / f"session_{current_session_id}.json"
+            print(f"\n{COLORS['green']}Starting new session: {current_session_id}{COLORS['reset']}")
         
-        with open(filename, "w") as f:
+        with open(current_session_filepath, "w") as f:
             json.dump(conversation, f, indent=2)
         
-        print(f"\n{COLORS['green']}Session saved to {filename}{COLORS['reset']}")
+        print(f"\n{COLORS['green']}Session saved to {current_session_filepath.name}{COLORS['reset']}")
 
     def list_sessions():
         """List all saved sessions."""
@@ -215,6 +227,8 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
                 # Basic validation
                 if isinstance(loaded_conversation, list) and all(isinstance(item, dict) for item in loaded_conversation):
                     conversation = loaded_conversation
+                    current_session_filepath = session_file # Store the Path object
+                    current_session_id = session_file.stem.replace("session_", "") # Extract ID from filename
                     print(f"\n{COLORS['green']}Session loaded from {session_file.name}{COLORS['reset']}")
                     display_history()
                 else:
@@ -251,37 +265,37 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
             else:
                 user_input = input(f"{user_header()}: {COLORS['reset']}")
             
-            # Check for exit commands
-            if user_input.lower() in ('exit', 'quit', 'bye'):
+            # Check for exit commands (no prefix for these for convenience)
+            if user_input.lower() in ('/exit', '/quit', '/bye', 'exit', 'quit', 'bye'):
                 print(f"\n{COLORS['green']}Ending chat session. Goodbye!{COLORS['reset']}")
                 break
             
-            # Check for special commands
-            if user_input.lower() == 'history':
+            # Check for special commands (now require a '/' prefix)
+            if user_input.lower() == '/history':
                 display_history()
                 continue
             
-            if user_input.lower() == 'clear':
+            if user_input.lower() == '/clear':
                 clear_history()
                 continue
             
-            if user_input.lower() == 'save':
+            if user_input.lower() == '/save':
                 save_session()
                 continue
 
-            if user_input.lower() == 'sessions':
+            if user_input.lower() == '/sessions':
                 list_sessions()
                 continue
 
-            if user_input.lower() == 'load':
+            if user_input.lower() == '/load':
                 load_session()
                 continue
 
-            if user_input.lower() == 'help':
+            if user_input.lower() == '/help':
                 show_help()
                 continue
                 
-            if multiline_enabled and user_input.lower() == 'ml':
+            if multiline_enabled and user_input.lower() == '/ml':
                 print(f"{COLORS['cyan']}Opening multiline editor. Press Ctrl+D to submit.{COLORS['reset']}")
                 multiline_input = get_multiline_input()
                 if multiline_input is None:
