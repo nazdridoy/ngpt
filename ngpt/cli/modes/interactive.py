@@ -20,6 +20,7 @@ try:
     from prompt_toolkit.key_binding import KeyBindings
     from prompt_toolkit.formatted_text import HTML
     from prompt_toolkit.history import InMemoryHistory
+    from prompt_toolkit.completion import WordCompleter # Import WordCompleter
     HAS_PROMPT_TOOLKIT = True
 except ImportError:
     HAS_PROMPT_TOOLKIT = False
@@ -260,7 +261,12 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
                     HTML("<ansicyan><b>╭─ 👤 You:</b></ansicyan> "),
                     style=style,
                     key_bindings=kb,
-                    history=prompt_history
+                    history=prompt_history,
+                    # Add completer for fuzzy suggestions
+                    completer=WordCompleter([
+                        '/history', '/clear', '/save', '/load', '/sessions', '/help', '/ml',
+                        '/exit', '/quit', '/bye' # Include exit commands for completeness in suggestions
+                    ], ignore_case=True, sentence=True)
                 )
             else:
                 user_input = input(f"{user_header()}: {COLORS['reset']}")
