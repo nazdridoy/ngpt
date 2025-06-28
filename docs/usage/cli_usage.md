@@ -48,7 +48,7 @@ usage: ngpt [-h] [-v] [--api-key API_KEY] [--base-url BASE_URL] [--model MODEL] 
             [--analyses-chunk-size ANALYSES_CHUNK_SIZE] [--max-msg-lines MAX_MSG_LINES]
             [--max-recursion-depth MAX_RECURSION_DEPTH] [--humanize] [-i | -s | -c | -t | -r | -g]
 
-nGPT - Interact with AI language models via OpenAI-compatible APIs
+nGPT - AI-powered terminal toolkit for code, commits, commands & chat
 
 Global Options::
 

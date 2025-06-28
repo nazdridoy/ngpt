@@ -7,7 +7,7 @@ from .renderers import has_markdown_renderer, warn_if_no_markdown_renderer, show
 def setup_argument_parser():
     """Set up and return a fully configured argument parser for nGPT CLI."""
     # Colorize description - use a shorter description to avoid line wrapping issues
-    description = f"{COLORS['cyan']}{COLORS['bold']}nGPT{COLORS['reset']} - Interact with AI language models via OpenAI-compatible APIs"
+    description = f"{COLORS['cyan']}{COLORS['bold']}nGPT{COLORS['reset']} - AI-powered terminal toolkit for code, commits, commands & chat"
     
     # Minimalist, clean epilog design
     epilog = f"\n{COLORS['yellow']}nGPT {COLORS['bold']}v{__version__}{COLORS['reset']}  •  {COLORS['green']}Docs: {COLORS['bold']}https://nazdridoy.github.io/ngpt/usage/cli_usage{COLORS['reset']}"
