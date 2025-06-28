@@ -144,6 +144,10 @@ def setup_argument_parser():
     mode_exclusive_group.add_argument('-g', '--gitcommsg', action='store_true',
                                       help='Generate AI-powered git commit messages from staged changes or diff file')
     
+    # Add positional argument for the prompt (optional)
+    parser.add_argument('prompt', nargs='?', default=None,
+                        help='The prompt to send to the language model')
+    
     return parser
 
 def parse_args():
