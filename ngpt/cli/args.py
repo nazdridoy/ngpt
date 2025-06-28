@@ -2,7 +2,7 @@ import argparse
 import sys
 from .. import __version__
 from .formatters import COLORS, ColoredHelpFormatter
-from .renderers import has_markdown_renderer, warn_if_no_markdown_renderer
+from .renderers import has_markdown_renderer, warn_if_no_markdown_renderer, show_available_renderers
 
 def setup_argument_parser():
     """Set up and return a fully configured argument parser for nGPT CLI."""
@@ -94,7 +94,7 @@ def setup_argument_parser():
                       help='Return the whole response without streaming or formatting')
     output_exclusive_group.add_argument('--prettify', action='store_const', const='auto',
                       help='Render complete response with markdown and code formatting (non-streaming)')
-    output_exclusive_group.add_argument('--stream-prettify', action='store_true', default=True,
+    output_exclusive_group.add_argument('--stream-prettify', action='store_true', default=None,
                       help='Stream response with real-time markdown rendering (default)')
     
     global_group.add_argument('--renderer', choices=['auto', 'rich', 'glow'], default='auto',
@@ -157,6 +157,11 @@ def parse_args():
 
 def validate_args(args):
     """Validate parsed arguments for correctness and compatibility."""
+    # Special case: always allow listing renderers, even if no renderers are installed
+    if args.list_renderers:
+        show_available_renderers()
+        sys.exit(0)
+    
     # Validate --all usage
     if args.all and not args.show_config:
         raise ValueError("--all can only be used with --show-config")
@@ -165,7 +170,8 @@ def validate_args(args):
     if args.remove and (not args.config or (args.config_index == 0 and not args.provider)):
         raise ValueError("--remove requires --config and either --config-index or --provider")
     
-    # These three options are mutually exclusive rendering modes
+    # Determine which rendering mode is specified (either directly or from config)
+    # Use explicit flags from command line, not the parsed args object that might have defaults
     provided_modes = []
     if '--no-stream' in sys.argv:
         provided_modes.append('--no-stream')
@@ -185,13 +191,14 @@ def validate_args(args):
     elif args.prettify:
         args.stream_prettify = False
         args.no_stream = False
-    elif args.stream_prettify:
-        args.no_stream = False
-        args.prettify = False
+    # If no rendering mode was explicitly set, default to stream-prettify
+    elif args.stream_prettify is None and args.no_stream is False and args.prettify is False:
+        args.stream_prettify = True
     
     # Check if --stream-prettify is used but Rich is not available
-    if args.stream_prettify and not has_markdown_renderer('rich'):
-        raise ValueError("--stream-prettify requires Rich to be installed. Install with: pip install \"ngpt[full]\" or pip install rich")
+    if args.stream_prettify:
+        if not has_markdown_renderer('rich'):
+            raise ValueError("--stream-prettify requires Rich to be installed. Install with: pip install rich")
     
     # Check for incompatible --pipe flag with certain modes
     if args.pipe and (args.text or args.interactive):
@@ -200,6 +207,13 @@ def validate_args(args):
     # If pipe flag is used, check if input is available
     if args.pipe and sys.stdin.isatty():
         raise ValueError("--pipe was specified but no input is piped. Use echo 'content' | ngpt --pipe 'prompt with {}'")
+    
+    # Check if web search is enabled but BeautifulSoup isn't installed
+    if args.web_search:
+        try:
+            import bs4
+        except ImportError:
+            raise ValueError("--web-search requires BeautifulSoup4 to be installed. Install with: pip install beautifulsoup4")
     
     return args
 

@@ -218,8 +218,12 @@ def apply_cli_config(args: Any, mode: str) -> Any:
     for arg in sys.argv[1:]:
         if arg.startswith('--'):
             explicit_args.add(arg)
-        # We've removed -n, but this pattern would handle other short options
-
+    
+    # Special handling for rendering modes (--no-stream, --prettify, --stream-prettify)
+    # Check if any of them are explicitly provided in command line
+    rendering_mode_specified = any(mode in explicit_args for mode in 
+                                  ['--no-stream', '--prettify', '--stream-prettify'])
+    
     # Keep track of applied exclusive options
     applied_exclusives = set()
 
@@ -228,6 +232,16 @@ def apply_cli_config(args: Any, mode: str) -> Any:
         cli_option = f"--{option}"
         if cli_option in explicit_args and "exclusive" in CLI_CONFIG_OPTIONS[option]:
             applied_exclusives.update(CLI_CONFIG_OPTIONS[option]["exclusive"])
+
+    # Special handling for rendering modes - if none specified in CLI but set in config
+    rendering_modes = ['no-stream', 'prettify', 'stream-prettify']
+    if not rendering_mode_specified:
+        has_rendering_mode_in_config = any(mode in cli_config for mode in rendering_modes)
+        if has_rendering_mode_in_config:
+            # Since command line didn't specify a rendering mode, disable default stream-prettify
+            # so the config value can be properly applied
+            if hasattr(args, 'stream_prettify'):
+                args.stream_prettify = None
 
     # Second pass: Apply CLI config options
     for option, value in cli_config.items():

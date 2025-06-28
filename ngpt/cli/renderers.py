@@ -59,11 +59,11 @@ def show_available_renderers():
     if HAS_RICH:
         print(f"  {COLORS['green']}✓ Rich{COLORS['reset']} - Python library for terminal formatting (Recommended)")
     else:
-        print(f"  {COLORS['yellow']}✗ Rich{COLORS['reset']} - Not installed (pip install \"ngpt[full]\" or pip install rich)")
+        print(f"  {COLORS['yellow']}✗ Rich{COLORS['reset']} - Not installed (pip install rich)")
         
     if not HAS_GLOW and not HAS_RICH:
         print(f"\n{COLORS['yellow']}To enable prettified markdown output, install one of the above renderers.{COLORS['reset']}")
-        print(f"{COLORS['yellow']}For Rich: pip install \"ngpt[full]\" or pip install rich{COLORS['reset']}")
+        print(f"{COLORS['yellow']}For Rich: pip install rich{COLORS['reset']}")
     else:
         renderers = []
         if HAS_RICH:
@@ -93,11 +93,11 @@ def warn_if_no_markdown_renderer(renderer='auto'):
     
     if renderer == 'auto':
         print(f"{COLORS['yellow']}Warning: No markdown rendering library available.{COLORS['reset']}")
-        print(f"{COLORS['yellow']}Install with: pip install \"ngpt[full]\"{COLORS['reset']}")
+        print(f"{COLORS['yellow']}Install with: pip install rich{COLORS['reset']}")
         print(f"{COLORS['yellow']}Or install 'glow' from https://github.com/charmbracelet/glow{COLORS['reset']}")
     elif renderer == 'rich':
         print(f"{COLORS['yellow']}Warning: Rich is not available.{COLORS['reset']}")
-        print(f"{COLORS['yellow']}Install with: pip install \"ngpt[full]\" or pip install rich{COLORS['reset']}")
+        print(f"{COLORS['yellow']}Install with: pip install rich{COLORS['reset']}")
     elif renderer == 'glow':
         print(f"{COLORS['yellow']}Warning: Glow is not available.{COLORS['reset']}")
         print(f"{COLORS['yellow']}Install from https://github.com/charmbracelet/glow{COLORS['reset']}")
@@ -162,7 +162,7 @@ def prettify_markdown(text, renderer='auto'):
     elif renderer == 'rich':
         if not HAS_RICH:
             print(f"{COLORS['yellow']}Warning: Rich is not available.{COLORS['reset']}")
-            print(f"{COLORS['yellow']}Install with: pip install \"ngpt[full]\" or pip install rich{COLORS['reset']}")
+            print(f"{COLORS['yellow']}Install with: pip install rich{COLORS['reset']}")
             # Fall back to glow if available
             if HAS_GLOW:
                 print(f"{COLORS['yellow']}Falling back to Glow renderer.{COLORS['reset']}")
@@ -232,7 +232,7 @@ def prettify_streaming_markdown(renderer='rich', is_interactive=False, header_te
     
     if not HAS_RICH:
         print(f"{COLORS['yellow']}Warning: Rich is not available for streaming prettify.{COLORS['reset']}")
-        print(f"{COLORS['yellow']}Install with: pip install \"ngpt[full]\" or pip install rich{COLORS['reset']}")
+        print(f"{COLORS['yellow']}Install with: pip install rich{COLORS['reset']}")
         return None, None, None
         
     try:
