@@ -4,6 +4,9 @@ import traceback
 import threading
 import sys
 import time
+import json
+from datetime import datetime
+from ...utils.config import get_config_dir
 from ..formatters import COLORS
 from ..renderers import prettify_markdown, prettify_streaming_markdown, TERMINAL_RENDER_LOCK
 from ..ui import spinner, get_multiline_input
@@ -50,21 +53,29 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
     # Create a separator line - use a consistent separator length for all lines
     separator_length = min(40, term_width - 10)
     separator = f"{COLORS['gray']}{'─' * separator_length}{COLORS['reset']}"
-    print(separator)
-    
-    # Group commands into categories with better formatting
-    print(f"\n{COLORS['cyan']}Navigation:{COLORS['reset']}")
-    print(f"  {COLORS['yellow']}↑/↓{COLORS['reset']} : Browse input history")
-    
-    print(f"\n{COLORS['cyan']}Session Commands:{COLORS['reset']}")
-    print(f"  {COLORS['yellow']}history{COLORS['reset']} : Show conversation history")
-    print(f"  {COLORS['yellow']}clear{COLORS['reset']}   : Reset conversation")
-    print(f"  {COLORS['yellow']}exit{COLORS['reset']}    : End session")
-    
-    if multiline_enabled:
-        print(f"  {COLORS['yellow']}ml{COLORS['reset']}      : Open multiline editor")
-    
-    print(f"\n{separator}\n")
+
+    def show_help():
+        """Displays the help menu."""
+        print(separator)
+        # Group commands into categories with better formatting
+        print(f"\n{COLORS['cyan']}Navigation:{COLORS['reset']}")
+        print(f"  {COLORS['yellow']}↑/↓{COLORS['reset']} : Browse input history")
+        
+        print(f"\n{COLORS['cyan']}Session Commands:{COLORS['reset']}")
+        print(f"  {COLORS['yellow']}history{COLORS['reset']} : Show conversation history")
+        print(f"  {COLORS['yellow']}clear{COLORS['reset']}   : Reset conversation")
+        print(f"  {COLORS['yellow']}exit{COLORS['reset']}    : End session")
+        print(f"  {COLORS['yellow']}save{COLORS['reset']}    : Save current session")
+        print(f"  {COLORS['yellow']}load{COLORS['reset']}    : Load a previous session")
+        print(f"  {COLORS['yellow']}sessions{COLORS['reset']}: List saved sessions")
+        print(f"  {COLORS['yellow']}help{COLORS['reset']}    : Show this help message")
+        
+        if multiline_enabled:
+            print(f"  {COLORS['yellow']}ml{COLORS['reset']}      : Open multiline editor")
+        
+        print(f"\n{separator}\n")
+
+    show_help()
     
     # Show logging info if logger is available
     if logger:
@@ -148,6 +159,71 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
             print(f"\n{COLORS['yellow']}Conversation history cleared.{COLORS['reset']}")
             print(separator)  # Add separator for consistency
     
+    # --- Session Management Functions ---
+
+    def get_history_dir():
+        """Get the history directory, creating it if it doesn't exist."""
+        history_dir = get_config_dir() / "history"
+        history_dir.mkdir(parents=True, exist_ok=True)
+        return history_dir
+
+    def save_session():
+        """Save the current conversation to a JSON file."""
+        history_dir = get_history_dir()
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        filename = history_dir / f"session_{timestamp}.json"
+        
+        with open(filename, "w") as f:
+            json.dump(conversation, f, indent=2)
+        
+        print(f"\n{COLORS['green']}Session saved to {filename}{COLORS['reset']}")
+
+    def list_sessions():
+        """List all saved sessions."""
+        history_dir = get_history_dir()
+        sessions = sorted(history_dir.glob("session_*.json"), reverse=True)
+        
+        if not sessions:
+            print(f"\n{COLORS['yellow']}No saved sessions found.{COLORS['reset']}")
+            return
+            
+        print(f"\n{COLORS['cyan']}{COLORS['bold']}Saved Sessions:{COLORS['reset']}")
+        for i, session_file in enumerate(sessions):
+            print(f"  [{i}] {session_file.name}")
+
+    def load_session():
+        """Load a conversation from a saved session file."""
+        nonlocal conversation
+        history_dir = get_history_dir()
+        sessions = sorted(history_dir.glob("session_*.json"), reverse=True)
+
+        if not sessions:
+            print(f"\n{COLORS['yellow']}No saved sessions to load.{COLORS['reset']}")
+            return
+
+        list_sessions()
+        
+        try:
+            choice = input("Enter the number of the session to load: ")
+            choice_index = int(choice)
+            
+            if 0 <= choice_index < len(sessions):
+                session_file = sessions[choice_index]
+                with open(session_file, "r") as f:
+                    loaded_conversation = json.load(f)
+                
+                # Basic validation
+                if isinstance(loaded_conversation, list) and all(isinstance(item, dict) for item in loaded_conversation):
+                    conversation = loaded_conversation
+                    print(f"\n{COLORS['green']}Session loaded from {session_file.name}{COLORS['reset']}")
+                    display_history()
+                else:
+                    print(f"\n{COLORS['red']}Error: Invalid session file format.{COLORS['reset']}")
+            else:
+                print(f"\n{COLORS['red']}Error: Invalid selection.{COLORS['reset']}")
+        except (ValueError, IndexError):
+            print(f"\n{COLORS['red']}Error: Invalid input. Please enter a number from the list.{COLORS['reset']}")
+
     try:
         while True:
             # Get user input
@@ -187,6 +263,22 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
             
             if user_input.lower() == 'clear':
                 clear_history()
+                continue
+            
+            if user_input.lower() == 'save':
+                save_session()
+                continue
+
+            if user_input.lower() == 'sessions':
+                list_sessions()
+                continue
+
+            if user_input.lower() == 'load':
+                load_session()
+                continue
+
+            if user_input.lower() == 'help':
+                show_help()
                 continue
                 
             if multiline_enabled and user_input.lower() == 'ml':

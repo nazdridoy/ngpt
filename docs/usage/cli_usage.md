@@ -151,6 +151,32 @@ This opens a continuous chat session where the AI remembers previous exchanges. 
 - Type your messages and press Enter to send
 - Use arrow keys to navigate message history
 - Press Ctrl+C to exit the session
+- Use `help` to see a list of available commands.
+
+#### Session Management
+
+In interactive mode, you can manage your chat sessions with the following commands:
+
+- **`save`**: Saves the current conversation to a timestamped JSON file in the `history` subdirectory of your configuration folder.
+- **`load`**: Lists recent sessions and prompts you to select one to load, restoring the conversation history.
+- **`sessions`**: Displays a list of all saved sessions.
+- **`clear`**: Clears the current conversation history.
+- **`history`**: Shows the full history of the current conversation.
+- **`exit`**: Exits the interactive session.
+- **`help`**: Shows the help menu with all available commands.
+
+Example:
+```
+> save
+Session saved to /home/user/.config/ngpt/history/session_2024-10-26_12-30-00.json
+
+> load
+Saved Sessions:
+  [0] session_2024-10-26_12-30-00.json
+  [1] session_2024-10-25_18-00-00.json
+Enter the number of the session to load: 0
+Session loaded from ...
+```
 
 #### Conversation Logging
 
