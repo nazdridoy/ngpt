@@ -1,9 +1,8 @@
 name: Publish AUR Package
 
 on:
-  push:
-    tags:
-      - 'v*'  # Trigger on version tags
+  release:
+    types: [published]  # Trigger when a release is published
   workflow_dispatch:
     inputs:
       version:
@@ -35,8 +34,10 @@ jobs:
             # Extract version from pyproject.toml when manually triggered without version
             VERSION=$(grep -m 1 'version = ' pyproject.toml | cut -d '"' -f 2)
           else
-            # Extract version from tag (remove 'v' prefix)
-            VERSION=${GITHUB_REF#refs/tags/v}
+            # Extract version from release (remove 'v' prefix if present)
+            VERSION=${{ github.event.release.tag_name }}
+            # Remove 'v' prefix if it exists
+            VERSION=${VERSION#v}
           fi
           
           echo "Package version: $VERSION"
@@ -63,7 +64,7 @@ jobs:
           commit_username: ${{ secrets.AUR_USERNAME }}
           commit_email: ${{ secrets.AUR_EMAIL }}
           ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
-          commit_message: "${{ github.event_name == 'workflow_dispatch' && 'Manual update to version' || 'Update to version' }} ${{ steps.extract_version.outputs.version }}${{ github.event.inputs.pkgrel && format(' with pkgrel={0}', github.event.inputs.pkgrel) || '' }}"
+          commit_message: "${{ github.event_name == 'workflow_dispatch' && 'Manual update to version' || 'Update from release' }} ${{ steps.extract_version.outputs.version }}${{ github.event.inputs.pkgrel && format(' with pkgrel={0}', github.event.inputs.pkgrel) || '' }}"
           ssh_keyscan_types: rsa,ecdsa,ed25519
           updpkgsums: true  # Let the action update checksums automatically
           test: false  # Disable testing since the environment doesn't have necessary tools
