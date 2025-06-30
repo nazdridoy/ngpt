@@ -43,12 +43,18 @@ usage: ngpt [-h] [-v] [--api-key API_KEY] [--base-url BASE_URL] [--model MODEL] 
             [--temperature TEMPERATURE] [--top_p TOP_P] [--max_tokens MAX_TOKENS] [--log [FILE]]
             [--preprompt PREPROMPT | --role ROLE] [--config [CONFIG]] [--config-index CONFIG_INDEX]
             [--provider PROVIDER] [--remove] [--show-config] [--all] [--list-models] [--list-renderers]
-            [--cli-config [COMMAND ...]] [--role-config [ACTION ...]] [--no-stream | --prettify | --stream-prettify]
-            [--renderer {auto,rich,glow}] [--language LANGUAGE] [--rec-chunk] [--diff [FILE]] [--chunk-size CHUNK_SIZE]
-            [--analyses-chunk-size ANALYSES_CHUNK_SIZE] [--max-msg-lines MAX_MSG_LINES]
-            [--max-recursion-depth MAX_RECURSION_DEPTH] [--humanize] [-i | -s | -c | -t | -r | -g]
+            [--cli-config [COMMAND ...]] [--role-config [ACTION ...]]
+            [--display-mode {no-stream,prettify,stream-prettify}] [--renderer {auto,rich,glow}] [--language LANGUAGE]
+            [--rec-chunk] [--diff [FILE]] [--chunk-size CHUNK_SIZE] [--analyses-chunk-size ANALYSES_CHUNK_SIZE]
+            [--max-msg-lines MAX_MSG_LINES] [--max-recursion-depth MAX_RECURSION_DEPTH] [--humanize] [-i | -s | -c |
+            -t | -r | -g]
+            [prompt]
 
 nGPT - AI-powered terminal toolkit for code, commits, commands & chat
+
+positional arguments::
+
+[PROMPT]                            The prompt to send to the language model
 
 Global Options::
 
@@ -70,8 +76,7 @@ Global Options::
 --preprompt PREPROMPT               Set custom system prompt to control AI behavior
 --role ROLE                         Use a predefined role to set system prompt (mutually exclusive with
                                     --preprompt)
---renderer {auto,rich,glow}         Select which markdown renderer to use with --prettify or --stream-prettify
-                                    (auto, rich, or glow)
+--renderer {auto,rich,glow}         Select which markdown renderer to use with display modes that support markdown
 
 Configuration Options::
 
@@ -84,15 +89,15 @@ Configuration Options::
 --show-config                       Show the current configuration(s) and exit
 --all                               Show details for all configurations (requires --show-config)
 --list-models                       List all available models for the current configuration and exit
---list-renderers                    Show available markdown renderers for use with --prettify
+--list-renderers                    Show available markdown renderers for use with --display-mode prettify
 --cli-config [COMMAND ...]          Manage CLI configuration (set, get, unset, list, help)
 --role-config [ACTION ...]          Manage custom roles (help, create, show, edit, list, remove) [role_name]
 
-Output Display Options (mutually exclusive)::
+Output Display Options::
 
---no-stream                         Return the whole response without streaming or formatting
---prettify                          Render complete response with markdown and code formatting (non-streaming)
---stream-prettify                   Stream response with real-time markdown rendering (default)
+--display-mode {no-stream,prettify,stream-prettify}
+                                    Set display mode: no-stream (plain text), prettify (formatted non-streaming),
+                                    stream-prettify (live markdown)
 
 Code Mode Options::
 
@@ -254,11 +259,11 @@ ngpt -i --preprompt "You are a Python programming tutor"
 # Interactive mode with web search
 ngpt -i --web-search
 
-# Interactive mode with pretty markdown rendering
-ngpt -i --prettify
+# Interactive mode with markdown formatting
+ngpt -i --display-mode prettify
 
-# Interactive mode with real-time markdown rendering
-ngpt -i --stream-prettify
+# Interactive mode with real-time markdown formatting
+ngpt -i --display-mode stream-prettify
 ```
 
 ### Custom Roles
@@ -331,13 +336,13 @@ ngpt --code --language javascript "create a function that calculates prime numbe
 You can combine code generation with pretty formatting:
 
 ```bash
-ngpt --code --prettify "create a sorting algorithm"
+ngpt --code --display-mode prettify "create a sorting algorithm"
 ```
 
 Or with real-time syntax highlighting:
 
 ```bash
-ngpt --code --stream-prettify "create a binary search tree implementation"
+ngpt --code --display-mode stream-prettify "create a binary search tree implementation"
 ```
 
 ### Text Rewriting
@@ -525,7 +530,7 @@ Each mode handles piped content appropriately for that context:
 By default, responses are streamed in real-time. To receive the complete response at once:
 
 ```bash
-ngpt --no-stream "Explain quantum computing"
+ngpt --display-mode no-stream "Explain quantum computing"
 ```
 
 This is useful for:
@@ -538,24 +543,36 @@ This is useful for:
 Enable beautiful markdown formatting and syntax highlighting:
 
 ```bash
-# Regular markdown rendering (disables streaming)
-ngpt --prettify "Create a markdown table showing top 5 programming languages"
+# Disable streaming (get complete response at once)
+ngpt --display-mode no-stream "Explain quantum computing"
 
-# Real-time markdown rendering (streams with live formatting)
-ngpt --stream-prettify "Explain Big O notation with code examples"
+# Enable markdown formatting
+ngpt --display-mode prettify "Create a markdown table showing top 5 programming languages"
+
+# Enable real-time markdown formatting
+ngpt --display-mode stream-prettify "Explain Big O notation with code examples"
+
+# Use specific renderer with markdown formatting
+ngpt --display-mode prettify --renderer=rich "Create a markdown tutorial"
+
+# Use Glow renderer for markdown formatting
+ngpt --display-mode prettify --renderer=glow "Explain markdown syntax"
+
+# Use auto-detected renderer for markdown formatting
+ngpt --display-mode prettify --renderer=auto "Create a technical document outline"
 ```
 
 You can select different renderers:
 
 ```bash
 # Use Rich renderer (default)
-ngpt --prettify --renderer=rich "Create a markdown tutorial"
+ngpt --display-mode prettify --renderer=rich "Create a markdown tutorial"
 
 # Use Glow renderer (if installed)
-ngpt --prettify --renderer=glow "Explain markdown syntax"
+ngpt --display-mode prettify --renderer=glow "Explain markdown syntax"
 
 # Let ngpt select the best available (auto)
-ngpt --prettify --renderer=auto "Create a technical document outline"
+ngpt --display-mode prettify --renderer=auto "Create a technical document outline"
 ```
 
 ## Configuration Management
@@ -659,10 +676,10 @@ ngpt --code --web-search --preprompt "You are an expert Python developer" "creat
 ngpt -i --log chat.log --temperature 0.9
 
 # Shell command with no streaming
-ngpt --shell --no-stream "find all large files and create a report"
+ngpt --shell --display-mode no-stream "find all large files and create a report"
 
 # Git commit message with pretty formatting
-ngpt --gitcommsg --prettify
+ngpt --gitcommsg --display-mode prettify
 
 # Use a custom role with web search
 ngpt --role technical_writer --web-search "Write documentation for a REST API"
@@ -686,10 +703,10 @@ ngpt --provider Ollama "Explain quantum computing"
 You can compare responses by saving to files:
 
 ```bash
-ngpt --provider OpenAI --no-stream "Explain quantum computing" > openai.txt
-ngpt --provider Groq --no-stream "Explain quantum computing" > groq.txt
-ngpt --provider Ollama --no-stream "Explain quantum computing" > ollama.txt
-diff -y openai.txt groq.txt | less
+# Compare outputs from different providers
+ngpt --provider OpenAI --display-mode no-stream "Explain quantum computing" > openai.txt
+ngpt --provider Groq --display-mode no-stream "Explain quantum computing" > groq.txt
+ngpt --provider Ollama --display-mode no-stream "Explain quantum computing" > ollama.txt
 ```
 
 ### Piping and Redirection

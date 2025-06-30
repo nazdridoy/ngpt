@@ -84,11 +84,11 @@ ngpt --code "create a UserManager class with methods for add, remove, update, an
 ### Rendering Code with Syntax Highlighting
 
 ```bash
-# Generate code with pretty formatting
-ngpt --code --prettify "create a binary search tree implementation"
+# Generate code with syntax highlighting
+ngpt --code --display-mode prettify "create a binary search tree implementation"
 
 # Generate code with real-time syntax highlighting
-ngpt --code --stream-prettify "create a function to download a file from a URL"
+ngpt --code --display-mode stream-prettify "create a function to download a file from a URL"
 ```
 
 ## Shell Command Generation Examples
@@ -300,21 +300,27 @@ ngpt --gitcommsg --preprompt "This refactors the payment processing module"
 ### Markdown Rendering
 
 ```bash
-# Render markdown with syntax highlighting
-ngpt --prettify "Create a markdown table showing the top 5 programming languages and their key features"
+# Enable markdown formatting
+ngpt --display-mode prettify "Create a markdown table showing the top 5 programming languages and their key features"
 
-# Real-time markdown rendering
-ngpt --stream-prettify "Explain the main Git commands with examples"
+# Enable real-time markdown formatting
+ngpt --display-mode stream-prettify "Explain the main Git commands with examples"
+
+# Use specific renderer with markdown formatting
+ngpt --display-mode prettify --renderer=rich "Create a tutorial for Docker basics"
+
+# Use Glow renderer for markdown formatting
+ngpt --display-mode prettify --renderer=glow "Explain REST API design principles"
 ```
 
 ### Renderer Selection
 
 ```bash
 # Use Rich renderer (default)
-ngpt --prettify --renderer=rich "Create a tutorial for Docker basics"
+ngpt --display-mode prettify --renderer=rich "Create a tutorial for Docker basics"
 
 # Use Glow renderer (if installed)
-ngpt --prettify --renderer=glow "Explain REST API design principles"
+ngpt --display-mode prettify --renderer=glow "Explain REST API design principles"
 ```
 
 ## Provider Selection Examples
@@ -335,77 +341,13 @@ ngpt --provider Ollama "What are the advantages of transformer models?"
 ### Provider Comparison
 
 ```bash
-# Compare responses by redirecting to files
-ngpt --provider OpenAI --no-stream "Explain quantum computing" > openai.txt
-ngpt --provider Groq --no-stream "Explain quantum computing" > groq.txt
-diff -y openai.txt groq.txt | less
+# Compare outputs from different providers
+ngpt --provider OpenAI --display-mode no-stream "Explain quantum computing" > openai.txt
+ngpt --provider Groq --display-mode no-stream "Explain quantum computing" > groq.txt
 ```
 
 ## Configuration Examples
 
 ### Interactive Configuration
 
-```bash
-# Add new configuration
-ngpt --config
-
-# Edit configuration at index 1
-ngpt --config --config-index 1
-
-# Edit configuration by provider name
-ngpt --config --provider Groq
 ```
-
-### CLI Configuration
-
-```bash
-# Set default temperature
-ngpt --cli-config set temperature 0.8
-
-# Set default language for code generation
-ngpt --cli-config set language javascript
-
-# Enable web search by default
-ngpt --cli-config set web-search true
-```
-
-## Combining Options
-
-### Chat with Web Search
-
-```bash
-# Get up-to-date information
-ngpt --web-search "What are the latest developments in quantum computing?"
-
-# Research with custom system prompt
-ngpt --web-search --preprompt "You are a financial advisor" "How has inflation affected the housing market this year?"
-```
-
-### Advanced Code Generation
-
-```bash
-# Generate code with web search and custom temperature
-ngpt --code --web-search --temperature 0.2 "create a function to convert a CSV file to JSON"
-
-# Generate code with specific instructions
-ngpt --code --language typescript --preprompt "You are an expert in TypeScript and React" "create a custom hook for form validation"
-```
-
-### Advanced Shell Command Generation
-
-```bash
-# Generate complex command with custom system prompt
-ngpt --shell --preprompt "You are a Linux sysadmin expert" "find all files modified in the last 24 hours and create a report of their sizes"
-
-# Generate and log the command and output
-ngpt --shell --log commands.log "create a backup of all configuration files in /etc"
-```
-
-## Next Steps
-
-For more advanced examples and detailed explanations of specific features, see:
-
-- [Advanced Examples](advanced.md)
-- [CLI Usage Guide](../usage/cli_usage.md)
-- [CLI Configuration Guide](../usage/cli_config.md)
-- [Git Commit Message Guide](../usage/gitcommsg.md) 

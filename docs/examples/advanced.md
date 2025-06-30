@@ -355,7 +355,7 @@ git diff --staged | less
 ngpt --gitcommsg --log commit_process.log
 
 # Create a draft commit message for team review
-ngpt --gitcommsg --no-stream > draft_commit.txt
+ngpt --gitcommsg --display-mode no-stream > draft_commit.txt
 vim draft_commit.txt
 git commit -F draft_commit.txt
 ```

@@ -263,7 +263,7 @@ choco install glow
 
 Once installed, you can use it with nGPT:
 ```bash
-ngpt --prettify --renderer=glow "Explain markdown tables"
+ngpt --display-mode prettify --renderer=glow "Explain markdown tables"
 ```
 
 ## Next Steps
