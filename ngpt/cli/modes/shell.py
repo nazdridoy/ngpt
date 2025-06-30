@@ -537,7 +537,7 @@ def generate_with_model(client, prompt, messages, args, stream_setup,
     if should_stream:
         # Two possible spinner types:
         # 1. Rich spinner for stream_prettify
-        # 2. Regular spinner for all other modes (including --prettify)
+        # 2. Regular spinner for all other modes (including --display-mode prettify)
         
         if use_stream_prettify and stop_spinner_func:
             # Rich spinner is handled by callbacks

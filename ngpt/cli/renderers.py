@@ -71,11 +71,11 @@ def show_available_renderers():
         if HAS_GLOW:
             renderers.append("glow")
         print(f"\n{COLORS['green']}Usage examples:{COLORS['reset']}")
-        print(f"  ngpt --prettify \"Your prompt here\"                {COLORS['gray']}# Beautify markdown responses{COLORS['reset']}")
-        print(f"  ngpt -c --prettify \"Write a sort function\"        {COLORS['gray']}# Syntax highlight generated code{COLORS['reset']}")
+        print(f"  ngpt --display-mode prettify \"Your prompt here\"                {COLORS['gray']}# Beautify markdown responses{COLORS['reset']}")
+        print(f"  ngpt -c --display-mode prettify \"Write a sort function\"        {COLORS['gray']}# Syntax highlight generated code{COLORS['reset']}")
         if renderers:
             renderer = renderers[0]
-            print(f"  ngpt --prettify --renderer={renderer} \"Your prompt\"  {COLORS['gray']}# Specify renderer{COLORS['reset']}")
+            print(f"  ngpt --display-mode prettify --renderer={renderer} \"Your prompt\"  {COLORS['gray']}# Specify renderer{COLORS['reset']}")
     
     print("")
 

@@ -120,7 +120,8 @@ def show_cli_config_help():
     print(f"\n  {COLORS['cyan']}Example usage:{COLORS['reset']}")
     print(f"    {COLORS['yellow']}ngpt --cli-config set language java{COLORS['reset']}        - Set default language to java for code generation")
     print(f"    {COLORS['yellow']}ngpt --cli-config set temperature 0.9{COLORS['reset']}      - Set default temperature to 0.9")
-    print(f"    {COLORS['yellow']}ngpt --cli-config set no-stream true{COLORS['reset']}       - Disable streaming by default")
+    print(f"    {COLORS['yellow']}ngpt --cli-config set display-mode no-stream{COLORS['reset']} - Disable streaming by default")
+    print(f"    {COLORS['yellow']}ngpt --cli-config set display-mode prettify{COLORS['reset']}  - Enable markdown formatting by default")
     print(f"    {COLORS['yellow']}ngpt --cli-config set recursive-chunk true{COLORS['reset']} - Enable recursive chunking for git commit messages")
     print(f"    {COLORS['yellow']}ngpt --cli-config set diff /path/to/file.diff{COLORS['reset']} - Set default diff file for git commit messages")
     print(f"    {COLORS['yellow']}ngpt --cli-config get temperature{COLORS['reset']}          - Check the current temperature setting")
@@ -520,7 +521,7 @@ def main():
     if not args.show_config and not args.list_models and not check_config(active_config):
         return
     
-    # Check if --prettify is used but no markdown renderer is available
+    # Check if --display-mode prettify is used but no markdown renderer is available
     # This will warn the user immediately if they request prettify but don't have the tools
     has_renderer, args = validate_markdown_renderer(args)
     if not has_renderer:

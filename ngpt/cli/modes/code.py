@@ -286,7 +286,7 @@ def code_mode(client, args, logger=None):
                 print("\nGenerated code:")
                 prettify_markdown(generated_code, args.renderer)
             else:
-                # Should only happen if --no-stream was used without prettify
+                # Should only happen if --display-mode no-stream was used without prettify
                 print(f"\nGenerated code:\n{generated_code}")
             
     # Offer to copy to clipboard

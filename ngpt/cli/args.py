@@ -81,7 +81,7 @@ def setup_argument_parser():
     config_group.add_argument('--list-models', action='store_true', 
                               help='List all available models for the current configuration and exit')
     config_group.add_argument('--list-renderers', action='store_true', 
-                              help='Show available markdown renderers for use with --prettify')
+                              help='Show available markdown renderers for use with --display-mode prettify')
     config_group.add_argument('--cli-config', nargs='*', metavar='COMMAND', 
                               help='Manage CLI configuration (set, get, unset, list, help)')
     config_group.add_argument('--role-config', nargs='*', metavar='ACTION', 
