@@ -26,20 +26,18 @@ try:
 except ImportError:
     HAS_PROMPT_TOOLKIT = False
 
-def interactive_chat_session(client, web_search=False, no_stream=False, temperature=0.7, top_p=1.0, max_tokens=None, preprompt=None, prettify=False, renderer='auto', stream_prettify=False, logger=None, multiline_enabled=True):
-    """Start an interactive chat session with the AI.
+def interactive_chat_session(client, web_search=False, temperature=0.7, top_p=1.0, max_tokens=None, preprompt=None, renderer='auto', display_mode='stream-prettify', logger=None, multiline_enabled=True):
+    """Start an interactive chat session with the client.
     
     Args:
         client: The NGPTClient instance
         web_search: Whether to enable web search capability
-        no_stream: Whether to disable streaming
         temperature: Controls randomness in the response
         top_p: Controls diversity via nucleus sampling
         max_tokens: Maximum number of tokens to generate in each response
         preprompt: Custom system prompt to control AI behavior
-        prettify: Whether to enable markdown rendering
-        renderer: Which markdown renderer to use
-        stream_prettify: Whether to enable streaming with prettify
+        renderer: Which markdown renderer to use ('auto', 'rich', or 'glow')
+        display_mode: Display mode to use ('no-stream', 'prettify', 'stream-prettify')
         logger: Logger instance for logging the conversation
         multiline_enabled: Whether to enable the multiline input command
     """
@@ -89,8 +87,8 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
         print(f"{COLORS['green']}Web search capability is enabled.{COLORS['reset']}")
     
     # Display a note about markdown rendering only once at the beginning
-    if prettify and not no_stream and not stream_prettify:
-        print(f"{COLORS['yellow']}Note: Using standard markdown rendering (--prettify). For streaming markdown rendering, use --stream-prettify instead.{COLORS['reset']}")
+    if display_mode == 'prettify':
+        print(f"{COLORS['yellow']}Note: Using standard markdown rendering (--display-mode prettify). For streaming markdown rendering, use --display-mode stream-prettify.{COLORS['reset']}")
     
     # Custom separator - use the same length for consistency
     def print_separator():
@@ -103,8 +101,8 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
     # Initialize conversation history
     system_prompt = preprompt if preprompt else "You are a helpful assistant."
     
-    # Add markdown formatting instruction to system prompt if prettify is enabled
-    if prettify:
+    # Add markdown formatting instruction to system prompt if display mode supports markdown
+    if display_mode in ['prettify', 'stream-prettify']:
         if system_prompt:
             system_prompt += " You can use markdown formatting in your responses where appropriate."
         else:
@@ -475,23 +473,20 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
             should_print_header = True
 
             # Determine if we should print a header based on formatting options
-            if prettify and renderer != 'glow':
-                # Don't print header for Rich prettify
+            if display_mode == 'stream-prettify' and (renderer == 'rich' or renderer == 'auto'):
+                # Don't print header for Rich stream-prettify
                 should_print_header = False
-
+            
             # Print the header if needed
             if should_print_header:
                 with TERMINAL_RENDER_LOCK:
-                    if not no_stream and not stream_prettify:
+                    if display_mode != 'no-stream':
                         print(f"\n{ngpt_header()}: {COLORS['reset']}", end="", flush=True)
-                    elif not stream_prettify:
+                    else:
                         print(f"\n{ngpt_header()}: {COLORS['reset']}", flush=True)
             
             # Determine streaming behavior
-            if prettify and not no_stream and not stream_prettify:
-                should_stream = False
-            else:
-                should_stream = not no_stream
+            should_stream = display_mode != 'no-stream'
             
             # Setup for stream-prettify
             stream_callback = None
@@ -500,7 +495,7 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
             stop_spinner_event = None
             first_content_received = False
             
-            if stream_prettify and should_stream:
+            if display_mode == 'stream-prettify' and should_stream:
                 # Don't pass the header_text for rich renderer as it already creates its own header,
                 # but pass it for other renderers like glow
                 if renderer == 'rich' or renderer == 'auto':
@@ -512,8 +507,7 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
                 
                 if not live_display:
                     # Fallback to normal prettify if live display setup failed
-                    prettify = True
-                    stream_prettify = False
+                    display_mode = 'prettify'
                     should_stream = False
                     print(f"{COLORS['yellow']}Falling back to regular prettify mode.{COLORS['reset']}")
                 else:
@@ -561,7 +555,7 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
                 temperature=temperature,
                 top_p=top_p,
                 max_tokens=max_tokens,
-                markdown_format=prettify or stream_prettify,
+                markdown_format=display_mode in ['prettify', 'stream-prettify'],
                 stream_callback=stream_callback
             )
             
@@ -574,7 +568,7 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
                 sys.stdout.flush()
             
             # Stop live display if using stream-prettify
-            if stream_prettify and live_display and first_content_received:
+            if display_mode == 'stream-prettify' and live_display and first_content_received:
                 # Before stopping the live display, update with complete=True to show final formatted content
                 if stream_callback and response:
                     stream_callback(response, complete=True)
@@ -584,11 +578,11 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
                 assistant_message = {"role": "assistant", "content": response}
                 conversation.append(assistant_message)
                 
-                # Print response if not streamed (either due to no_stream or prettify)
-                if no_stream or prettify:
+                # Print response if not streamed or using prettify without streaming
+                if display_mode in ['no-stream', 'prettify']:
                     with TERMINAL_RENDER_LOCK:
-                        if prettify:
-                            # For pretty formatting with rich, don't print any header text as the rich renderer already includes it
+                        if display_mode == 'prettify':
+                            # For pretty formatting with rich, don't print any header text
                             prettify_markdown(response, renderer)
                         else:
                             print(response)

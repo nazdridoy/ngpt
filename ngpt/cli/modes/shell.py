@@ -417,9 +417,26 @@ def setup_streaming(args, logger=None):
     use_stream_prettify = use_regular_prettify = False
     first_content_received = False
     
-    # Determine final behavior based on flag priority
-    if args.stream_prettify:
-        # Highest priority: stream-prettify
+    # Determine final behavior based on display_mode
+    if args.display_mode == 'no-stream':
+        # No streaming mode
+        should_stream = False
+        use_regular_prettify = False
+    elif args.display_mode == 'prettify':
+        # Regular prettify mode - no streaming, format afterwards
+        if has_markdown_renderer(args.renderer):
+            should_stream = False
+            use_regular_prettify = True
+            print(f"{COLORS['yellow']}Note: Using standard markdown rendering (--display-mode prettify). For streaming markdown rendering, use --display-mode stream-prettify instead.{COLORS['reset']}")
+        else:
+            # Renderer not available for prettify
+            print(f"{COLORS['yellow']}Warning: Renderer '{args.renderer}' not available for --display-mode prettify.{COLORS['reset']}")
+            show_available_renderers()
+            print(f"{COLORS['yellow']}Falling back to default streaming without prettify.{COLORS['reset']}")
+            should_stream = True 
+            use_regular_prettify = False
+    elif args.display_mode == 'stream-prettify':
+        # Stream prettify mode - stream with live markdown rendering
         if has_markdown_renderer('rich'):
             should_stream = True
             use_stream_prettify = True
@@ -432,27 +449,10 @@ def setup_streaming(args, logger=None):
                 print(f"{COLORS['yellow']}Live display setup failed. Falling back to regular prettify mode.{COLORS['reset']}")
         else:
             # Rich not available for stream-prettify
-            print(f"{COLORS['yellow']}Warning: Rich is not available for --stream-prettify. Install with: pip install \"ngpt[full]\".{COLORS['reset']}")
+            print(f"{COLORS['yellow']}Warning: Rich is not available for --display-mode stream-prettify. Install with: pip install \"ngpt[full]\".{COLORS['reset']}")
             print(f"{COLORS['yellow']}Falling back to default streaming without prettify.{COLORS['reset']}")
             should_stream = True
             use_stream_prettify = False
-    elif args.no_stream:
-        # Second priority: no-stream
-        should_stream = False
-        use_regular_prettify = False  # No prettify if no streaming
-    elif args.prettify:
-        # Third priority: prettify (requires disabling stream)
-        if has_markdown_renderer(args.renderer):
-            should_stream = False
-            use_regular_prettify = True
-            print(f"{COLORS['yellow']}Note: Using standard markdown rendering (--prettify). For streaming markdown rendering, use --stream-prettify instead.{COLORS['reset']}")
-        else:
-            # Renderer not available for prettify
-            print(f"{COLORS['yellow']}Warning: Renderer '{args.renderer}' not available for --prettify.{COLORS['reset']}")
-            show_available_renderers()
-            print(f"{COLORS['yellow']}Falling back to default streaming without prettify.{COLORS['reset']}")
-            should_stream = True 
-            use_regular_prettify = False
     
     # Create a wrapper for the stream callback that will stop the spinner on first content
     if stream_callback:
@@ -483,7 +483,7 @@ def setup_streaming(args, logger=None):
             stop_spinner_func = setup_spinner(stop_spinner_event, color=COLORS['cyan'])
     
     # Create spinner for non-stream-prettify modes EXCEPT no-stream
-    if not use_stream_prettify and not args.no_stream:
+    if not use_stream_prettify and should_stream:
         # Prepare spinner (but don't start it yet - will be started in generate_with_model)
         stop_spinner = threading.Event()
         spinner_thread = threading.Thread(
@@ -534,7 +534,7 @@ def generate_with_model(client, prompt, messages, args, stream_setup,
     stop_spinner_func = stream_setup['stop_spinner_func']
     
     # Show spinner for all modes except no-stream
-    if not args.no_stream:
+    if should_stream:
         # Two possible spinner types:
         # 1. Rich spinner for stream_prettify
         # 2. Regular spinner for all other modes (including --prettify)
@@ -563,6 +563,7 @@ def generate_with_model(client, prompt, messages, args, stream_setup,
             temperature=temp,
             top_p=args.top_p,
             max_tokens=args.max_tokens,
+            markdown_format=args.display_mode in ['prettify', 'stream-prettify'],
             stream_callback=stream_callback
         )
     except KeyboardInterrupt:
@@ -620,7 +621,7 @@ def display_content(content, content_type, highlight_lang, args, use_stream_pret
         if use_regular_prettify and has_markdown_renderer(args.renderer):
             # Use rich renderer for pretty output
             prettify_markdown(formatted_content, args.renderer)
-        elif args.no_stream:
+        elif args.display_mode == 'no-stream':
             # Simple output for no-stream mode (no box)
             if content_type == 'command':
                 print(f"\n{title}:\n{COLORS['green']}{content}{COLORS['reset']}\n")
