@@ -6,6 +6,7 @@ import sys
 import time
 import json
 import uuid
+import re
 from datetime import datetime
 from ...utils.config import get_config_dir
 from ..formatters import COLORS
@@ -67,7 +68,7 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
         print(f"  {COLORS['yellow']}/history{COLORS['reset']} : Show conversation history")
         print(f"  {COLORS['yellow']}/clear{COLORS['reset']}   : Reset conversation")
         print(f"  {COLORS['yellow']}/exit{COLORS['reset']}    : End session")
-        print(f"  {COLORS['yellow']}/save{COLORS['reset']}    : Save current session")
+        print(f"  {COLORS['yellow']}/save [name]{COLORS['reset']} : Save session (with optional custom name)")
         print(f"  {COLORS['yellow']}/load{COLORS['reset']}    : Load a previous session")
         print(f"  {COLORS['yellow']}/sessions{COLORS['reset']}: List saved sessions")
         print(f"  {COLORS['yellow']}/help{COLORS['reset']}    : Show this help message")
@@ -116,6 +117,8 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
     # Initialize current session tracking
     current_session_id = None
     current_session_filepath = None
+    current_session_name = None
+    first_user_prompt = None
     
     # Log system prompt if logging is enabled
     if logger and preprompt:
@@ -159,10 +162,11 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
     
     # Function to clear conversation history
     def clear_history():
-        nonlocal conversation, current_session_id, current_session_filepath
+        nonlocal conversation, current_session_id, current_session_filepath, current_session_name
         conversation = [{"role": "system", "content": system_prompt}]
         current_session_id = None
         current_session_filepath = None
+        current_session_name = None
         with TERMINAL_RENDER_LOCK:
             print(f"\n{COLORS['yellow']}Conversation history cleared. A new session will be created on next save.{COLORS['reset']}")
             print(separator)
@@ -174,43 +178,119 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
         history_dir = get_config_dir() / "history"
         history_dir.mkdir(parents=True, exist_ok=True)
         return history_dir
+    
+    def get_session_index():
+        """Get the session index from session-index.json, or create if it doesn't exist."""
+        history_dir = get_history_dir()
+        index_path = history_dir / "session-index.json"
+        
+        if index_path.exists():
+            try:
+                with open(index_path, "r") as f:
+                    return json.load(f)
+            except json.JSONDecodeError:
+                # If index is corrupted, create a new one
+                return {"sessions": []}
+        else:
+            return {"sessions": []}
+    
+    def save_session_index(index):
+        """Save the session index to session-index.json."""
+        history_dir = get_history_dir()
+        index_path = history_dir / "session-index.json"
+        
+        with open(index_path, "w") as f:
+            json.dump(index, f, indent=2)
+    
+    def generate_session_name(content):
+        """Generate a session name from the first user prompt."""
+        # Extract the first 30 characters, removing special characters
+        if not content:
+            return "Untitled Session"
+        
+        # Remove special characters and limit to 30 chars
+        name = re.sub(r'[^\w\s]', '', content).strip()
+        name = re.sub(r'\s+', ' ', name)  # Replace multiple spaces with a single space
+        
+        if len(name) > 30:
+            name = name[:30].strip() + "..."
+        
+        return name or "Untitled Session"
+    
+    def update_session_in_index(session_id, session_name, update_existing=False):
+        """Add or update a session in the index."""
+        index = get_session_index()
+        
+        # Check if session already exists in index
+        session_exists = False
+        for session in index["sessions"]:
+            if session["id"] == session_id:
+                session["name"] = session_name
+                session_exists = True
+                break
+        
+        # If session doesn't exist and we're not just updating, add it
+        if not session_exists and not update_existing:
+            index["sessions"].append({
+                "id": session_id,
+                "name": session_name,
+                "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            })
+        
+        save_session_index(index)
 
-    def save_session():
+    def save_session(session_name=None):
         """Save the current conversation to a JSON file, creating a new session or updating the current one."""
-        nonlocal current_session_id, current_session_filepath
+        nonlocal current_session_id, current_session_filepath, current_session_name, first_user_prompt
         history_dir = get_history_dir()
 
         if current_session_id is None:
             # Generate a new session ID if not already set (new session or cleared)
             current_session_id = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{uuid.uuid4().hex[:8]}"
             current_session_filepath = history_dir / f"session_{current_session_id}.json"
-            print(f"\n{COLORS['green']}Starting new session: {current_session_id}{COLORS['reset']}")
+            
+            # Generate a session name if none provided
+            if not session_name:
+                # Use first user prompt to generate name
+                if first_user_prompt:
+                    current_session_name = generate_session_name(first_user_prompt)
+                else:
+                    current_session_name = "Untitled Session"
+            else:
+                current_session_name = session_name
+                
+            # Add to index
+            update_session_in_index(current_session_id, current_session_name)
+            
+            print(f"\n{COLORS['green']}Starting new session: {current_session_name}{COLORS['reset']}")
+        elif session_name:
+            # Update existing session name
+            current_session_name = session_name
+            update_session_in_index(current_session_id, current_session_name, update_existing=True)
         
         with open(current_session_filepath, "w") as f:
             json.dump(conversation, f, indent=2)
         
-        print(f"\n{COLORS['green']}Session saved to {current_session_filepath.name}{COLORS['reset']}")
+        print(f"\n{COLORS['green']}Session saved as: {current_session_name}{COLORS['reset']}")
 
     def list_sessions():
         """List all saved sessions."""
-        history_dir = get_history_dir()
-        sessions = sorted(history_dir.glob("session_*.json"), reverse=True)
+        index = get_session_index()
         
-        if not sessions:
+        if not index["sessions"]:
             print(f"\n{COLORS['yellow']}No saved sessions found.{COLORS['reset']}")
             return
             
         print(f"\n{COLORS['cyan']}{COLORS['bold']}Saved Sessions:{COLORS['reset']}")
-        for i, session_file in enumerate(sessions):
-            print(f"  [{i}] {session_file.name}")
+        for i, session in enumerate(index["sessions"]):
+            print(f"  [{i}] {session['name']} (created: {session['created_at']})")
 
     def load_session():
         """Load a conversation from a saved session file."""
-        nonlocal conversation
-        history_dir = get_history_dir()
-        sessions = sorted(history_dir.glob("session_*.json"), reverse=True)
+        nonlocal conversation, current_session_id, current_session_filepath, current_session_name
+        index = get_session_index()
 
-        if not sessions:
+        if not index["sessions"]:
             print(f"\n{COLORS['yellow']}No saved sessions to load.{COLORS['reset']}")
             return
 
@@ -220,17 +300,25 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
             choice = input("Enter the number of the session to load: ")
             choice_index = int(choice)
             
-            if 0 <= choice_index < len(sessions):
-                session_file = sessions[choice_index]
+            if 0 <= choice_index < len(index["sessions"]):
+                session = index["sessions"][choice_index]
+                history_dir = get_history_dir()
+                session_file = history_dir / f"session_{session['id']}.json"
+                
+                if not session_file.exists():
+                    print(f"\n{COLORS['red']}Error: Session file not found. The index may be out of sync.{COLORS['reset']}")
+                    return
+                
                 with open(session_file, "r") as f:
                     loaded_conversation = json.load(f)
                 
                 # Basic validation
                 if isinstance(loaded_conversation, list) and all(isinstance(item, dict) for item in loaded_conversation):
                     conversation = loaded_conversation
-                    current_session_filepath = session_file # Store the Path object
-                    current_session_id = session_file.stem.replace("session_", "") # Extract ID from filename
-                    print(f"\n{COLORS['green']}Session loaded from {session_file.name}{COLORS['reset']}")
+                    current_session_filepath = session_file
+                    current_session_id = session["id"]
+                    current_session_name = session["name"]
+                    print(f"\n{COLORS['green']}Session loaded: {current_session_name}{COLORS['reset']}")
                     display_history()
                 else:
                     print(f"\n{COLORS['red']}Error: Invalid session file format.{COLORS['reset']}")
@@ -285,8 +373,13 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
                 clear_history()
                 continue
             
-            if user_input.lower() == '/save':
-                save_session()
+            if user_input.lower().startswith('/save'):
+                # Check if a session name was provided
+                parts = user_input.strip().split(' ', 1)
+                if len(parts) > 1 and parts[1].strip():
+                    save_session(parts[1].strip())
+                else:
+                    save_session()
                 continue
 
             if user_input.lower() == '/sessions':
@@ -321,6 +414,10 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
             if not user_input.strip():
                 print(f"{COLORS['yellow']}Empty message skipped. Type 'exit' to quit.{COLORS['reset']}")
                 continue
+            
+            # Store first user prompt if not set
+            if first_user_prompt is None and not user_input.startswith('/'):
+                first_user_prompt = user_input
             
             # Add user message to conversation
             user_message = {"role": "user", "content": user_input}
