@@ -570,14 +570,12 @@ def main():
             interactive_chat_session(
                 client,
                 web_search=args.web_search,
-                no_stream=args.no_stream, 
                 temperature=args.temperature,
                 top_p=args.top_p,
                 max_tokens=args.max_tokens,
                 preprompt=args.preprompt,
-                prettify=args.prettify,
                 renderer=args.renderer,
-                stream_prettify=args.stream_prettify,
+                display_mode=args.display_mode,
                 logger=logger
             )
         elif args.shell:

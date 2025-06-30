@@ -88,17 +88,12 @@ def setup_argument_parser():
                               help='Manage custom roles (help, create, show, edit, list, remove) [role_name]')
 
     # Output display options (mutually exclusive group)
-    output_group = parser.add_argument_group('Output Display Options (mutually exclusive)')
-    output_exclusive_group = output_group.add_mutually_exclusive_group()
-    output_exclusive_group.add_argument('--no-stream', action='store_true',
-                      help='Return the whole response without streaming or formatting')
-    output_exclusive_group.add_argument('--prettify', action='store_const', const='auto',
-                      help='Render complete response with markdown and code formatting (non-streaming)')
-    output_exclusive_group.add_argument('--stream-prettify', action='store_true', default=None,
-                      help='Stream response with real-time markdown rendering (default)')
+    output_group = parser.add_argument_group('Output Display Options')
+    output_group.add_argument('--display-mode', choices=['no-stream', 'prettify', 'stream-prettify'], default=None,
+                      help='Set display mode: no-stream (plain text), prettify (formatted non-streaming), stream-prettify (live markdown)')
     
     global_group.add_argument('--renderer', choices=['auto', 'rich', 'glow'], default='auto',
-                      help='Select which markdown renderer to use with --prettify or --stream-prettify (auto, rich, or glow)')
+                      help='Select which markdown renderer to use with display modes that support markdown')
     
     # Code Mode Options
     code_group = parser.add_argument_group('Code Mode Options')
@@ -170,35 +165,23 @@ def validate_args(args):
     if args.remove and (not args.config or (args.config_index == 0 and not args.provider)):
         raise ValueError("--remove requires --config and either --config-index or --provider")
     
-    # Determine which rendering mode is specified (either directly or from config)
-    # Use explicit flags from command line, not the parsed args object that might have defaults
-    provided_modes = []
-    if '--no-stream' in sys.argv:
-        provided_modes.append('--no-stream')
-    if '--prettify' in sys.argv:
-        provided_modes.append('--prettify')
-    if '--stream-prettify' in sys.argv:
-        provided_modes.append('--stream-prettify')
+    # Handle display mode
+    if not args.display_mode:
+        # Default behavior: use stream-prettify if rich is available, otherwise no-stream
+        if has_markdown_renderer('rich'):
+            args.display_mode = 'stream-prettify'
+        else:
+            # No rich renderer available, use plain streaming (no prettify)
+            args.display_mode = 'no-stream'
+            print(f"{COLORS['yellow']}Warning: Rich is not available. Using plain text mode.{COLORS['reset']}")
+            print(f"{COLORS['yellow']}Install Rich for better rendering: pip install rich{COLORS['reset']}")
     
-    # If more than one rendering mode explicitly provided, raise error
-    if len(provided_modes) > 1:
-        raise ValueError(f"The options {', '.join(provided_modes)} cannot be used together. These options are mutually exclusive.")
-    
-    # Handle the conflict between default stream-prettify and explicitly provided options
-    if args.no_stream:
-        args.stream_prettify = False
-        args.prettify = False
-    elif args.prettify:
-        args.stream_prettify = False
-        args.no_stream = False
-    # If no rendering mode was explicitly set, default to stream-prettify
-    elif args.stream_prettify is None and args.no_stream is False and args.prettify is False:
-        args.stream_prettify = True
-    
-    # Check if --stream-prettify is used but Rich is not available
-    if args.stream_prettify:
-        if not has_markdown_renderer('rich'):
-            raise ValueError("--stream-prettify requires Rich to be installed. Install with: pip install rich")
+    # Check if stream-prettify is used but Rich is not available
+    if args.display_mode == 'stream-prettify' and not has_markdown_renderer('rich'):
+        # Don't raise an error, just fallback to plain streaming and show warning
+        print(f"{COLORS['yellow']}Warning: Rich renderer is required for stream-prettify mode. Falling back to no-stream mode.{COLORS['reset']}")
+        print(f"{COLORS['yellow']}You can install Rich with: pip install rich{COLORS['reset']}")
+        args.display_mode = 'no-stream'
     
     # Check for incompatible --pipe flag with certain modes
     if args.pipe and (args.text or args.interactive):
@@ -229,12 +212,12 @@ def validate_markdown_renderer(args):
             - args: Potentially modified args with prettify disabled if no renderer is available
     """
     has_renderer = True
-    if args.prettify:
+    if args.display_mode == 'prettify':
         has_renderer = warn_if_no_markdown_renderer(args.renderer)
         if not has_renderer:
             # Set a flag to disable prettify since we already warned the user
             print(f"{COLORS['yellow']}Continuing without markdown rendering.{COLORS['reset']}")
-            args.prettify = False
+            args.display_mode = 'no-stream'
     
     return has_renderer, args
 
