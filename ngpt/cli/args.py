@@ -2,7 +2,6 @@ import argparse
 import sys
 from .. import __version__
 from .formatters import COLORS, ColoredHelpFormatter
-from .renderers import has_markdown_renderer, warn_if_no_markdown_renderer, show_available_renderers
 
 def setup_argument_parser():
     """Set up and return a fully configured argument parser for nGPT CLI."""
@@ -80,8 +79,6 @@ def setup_argument_parser():
                               help='Show details for all configurations (requires --show-config)')
     config_group.add_argument('--list-models', action='store_true', 
                               help='List all available models for the current configuration and exit')
-    config_group.add_argument('--list-renderers', action='store_true', 
-                              help='Show available markdown renderers for use with --display-mode prettify')
     config_group.add_argument('--cli-config', nargs='*', metavar='COMMAND', 
                               help='Manage CLI configuration (set, get, unset, list, help)')
     config_group.add_argument('--role-config', nargs='*', metavar='ACTION', 
@@ -91,9 +88,6 @@ def setup_argument_parser():
     output_group = parser.add_argument_group('Output Display Options')
     output_group.add_argument('--display-mode', choices=['no-stream', 'prettify', 'stream-prettify'], default=None,
                       help='Set display mode: no-stream (plain text), prettify (formatted non-streaming), stream-prettify (live markdown)')
-    
-    global_group.add_argument('--renderer', choices=['auto', 'rich', 'glow'], default='auto',
-                      help='Select which markdown renderer to use with display modes that support markdown')
     
     # Code Mode Options
     code_group = parser.add_argument_group('Code Mode Options')
@@ -152,11 +146,6 @@ def parse_args():
 
 def validate_args(args):
     """Validate parsed arguments for correctness and compatibility."""
-    # Special case: always allow listing renderers, even if no renderers are installed
-    if args.list_renderers:
-        show_available_renderers()
-        sys.exit(0)
-    
     # Validate --all usage
     if args.all and not args.show_config:
         raise ValueError("--all can only be used with --show-config")
@@ -167,21 +156,8 @@ def validate_args(args):
     
     # Handle display mode
     if not args.display_mode:
-        # Default behavior: use stream-prettify if rich is available, otherwise no-stream
-        if has_markdown_renderer('rich'):
-            args.display_mode = 'stream-prettify'
-        else:
-            # No rich renderer available, use plain streaming (no prettify)
-            args.display_mode = 'no-stream'
-            print(f"{COLORS['yellow']}Warning: Rich is not available. Using plain text mode.{COLORS['reset']}")
-            print(f"{COLORS['yellow']}Install Rich for better rendering: pip install rich{COLORS['reset']}")
-    
-    # Check if stream-prettify is used but Rich is not available
-    if args.display_mode == 'stream-prettify' and not has_markdown_renderer('rich'):
-        # Don't raise an error, just fallback to plain streaming and show warning
-        print(f"{COLORS['yellow']}Warning: Rich renderer is required for stream-prettify mode. Falling back to no-stream mode.{COLORS['reset']}")
-        print(f"{COLORS['yellow']}You can install Rich with: pip install rich{COLORS['reset']}")
-        args.display_mode = 'no-stream'
+        # Default to stream-prettify since rich is a required dependency
+        args.display_mode = 'stream-prettify'
     
     # Check for incompatible --pipe flag with certain modes
     if args.pipe and (args.text or args.interactive):
@@ -199,27 +175,6 @@ def validate_args(args):
             raise ValueError("--web-search requires BeautifulSoup4 to be installed. Install with: pip install beautifulsoup4")
     
     return args
-
-def validate_markdown_renderer(args):
-    """Validate that required markdown renderers are available.
-    
-    Args:
-        args: The parsed command line arguments.
-    
-    Returns:
-        tuple: (has_renderer, args)
-            - has_renderer: Boolean indicating if a renderer is available
-            - args: Potentially modified args with prettify disabled if no renderer is available
-    """
-    has_renderer = True
-    if args.display_mode == 'prettify':
-        has_renderer = warn_if_no_markdown_renderer(args.renderer)
-        if not has_renderer:
-            # Set a flag to disable prettify since we already warned the user
-            print(f"{COLORS['yellow']}Continuing without markdown rendering.{COLORS['reset']}")
-            args.display_mode = 'no-stream'
-    
-    return has_renderer, args
 
 def handle_cli_config_args(args):
     """Process CLI configuration arguments and determine command parameters.
@@ -248,8 +203,7 @@ def handle_cli_config_args(args):
     if action in ("set", "get", "unset", "list", "help"):
         return (True, action, option, value)
     else:
-        # Unknown action, show help
-        return (True, "help", None, None)
+        return (True, "help", None, None)  # Show help for invalid actions
 
 def handle_role_config_args(args):
     """Process role configuration arguments and determine command parameters.
@@ -260,8 +214,8 @@ def handle_role_config_args(args):
     Returns:
         tuple: (should_handle, action, role_name)
             - should_handle: True if --role-config was specified and should be handled
-            - action: The action to perform (help, create, show, edit, list, remove)
-            - role_name: The name of the role (or None for actions like list and help)
+            - action: The action to perform (create, show, edit, list, remove, help)
+            - role_name: The role name (or None)
     """
     if args.role_config is None:
         return (False, None, None)
@@ -273,12 +227,11 @@ def handle_role_config_args(args):
     action = args.role_config[0].lower()
     role_name = args.role_config[1] if len(args.role_config) > 1 else None
     
-    # If action requires a role name but none is provided
-    if action in ("create", "show", "edit", "remove") and role_name is None:
-        raise ValueError(f"--role-config {action} requires a role name")
+    # Check if action needs role_name
+    if action in ("create", "show", "edit", "remove") and not role_name:
+        return (True, "help", None)  # Show help for missing role name
     
-    if action in ("help", "create", "show", "edit", "list", "remove"):
+    if action in ("create", "show", "edit", "list", "remove", "help"):
         return (True, action, role_name)
     else:
-        # Unknown action, show help
-        return (True, "help", None) 
+        return (True, "help", None)  # Show help for invalid actions 

@@ -1,5 +1,5 @@
 from ..formatters import COLORS
-from ..renderers import prettify_markdown, prettify_streaming_markdown, has_markdown_renderer, show_available_renderers, TERMINAL_RENDER_LOCK
+from ..renderers import prettify_markdown, prettify_streaming_markdown, TERMINAL_RENDER_LOCK
 from ..ui import spinner, copy_to_clipboard
 from ...utils import enhance_prompt_with_web_search, process_piped_input
 import sys
@@ -161,15 +161,10 @@ def code_mode(client, args, logger=None):
         should_stream = False
     elif args.display_mode == 'stream-prettify':
         # Stream prettify mode - stream with live markdown rendering
-        if has_markdown_renderer('rich'):
-            live_display, stream_callback, setup_spinner = prettify_streaming_markdown(args.renderer)
-            if not live_display:
-                # Fallback if display creation fails
-                print(f"{COLORS['yellow']}Warning: Live display setup failed. Falling back to plain streaming.{COLORS['reset']}")
-        else:
-            # Rich not available, fall back to plain streaming
-            print(f"{COLORS['yellow']}Rich renderer not available for streaming prettify.{COLORS['reset']}")
-            print(f"{COLORS['yellow']}Falling back to plain streaming. Install Rich with: pip install rich{COLORS['reset']}")
+        live_display, stream_callback, setup_spinner = prettify_streaming_markdown()
+        if not live_display:
+            # Fallback if display creation fails
+            print(f"{COLORS['yellow']}Warning: Live display setup failed. Falling back to plain streaming.{COLORS['reset']}")
     
     print("\nGenerating code...")
     
@@ -284,7 +279,7 @@ def code_mode(client, args, logger=None):
         with TERMINAL_RENDER_LOCK:
             if args.display_mode == 'prettify':
                 print("\nGenerated code:")
-                prettify_markdown(generated_code, args.renderer)
+                prettify_markdown(generated_code)
             else:
                 # Should only happen if --display-mode no-stream was used without prettify
                 print(f"\nGenerated code:\n{generated_code}")

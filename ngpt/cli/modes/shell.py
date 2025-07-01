@@ -1,6 +1,6 @@
 from ..formatters import COLORS
 from ..ui import spinner, copy_to_clipboard, get_terminal_input
-from ..renderers import prettify_markdown, has_markdown_renderer, prettify_streaming_markdown, show_available_renderers, TERMINAL_RENDER_LOCK
+from ..renderers import prettify_markdown, prettify_streaming_markdown, TERMINAL_RENDER_LOCK
 from ...utils import enhance_prompt_with_web_search, process_piped_input
 import subprocess
 import sys
@@ -424,35 +424,20 @@ def setup_streaming(args, logger=None):
         use_regular_prettify = False
     elif args.display_mode == 'prettify':
         # Regular prettify mode - no streaming, format afterwards
-        if has_markdown_renderer(args.renderer):
-            should_stream = False
-            use_regular_prettify = True
-            print(f"{COLORS['yellow']}Note: Using standard markdown rendering (--display-mode prettify). For streaming markdown rendering, use --display-mode stream-prettify instead.{COLORS['reset']}")
-        else:
-            # Renderer not available for prettify
-            print(f"{COLORS['yellow']}Warning: Renderer '{args.renderer}' not available for --display-mode prettify.{COLORS['reset']}")
-            show_available_renderers()
-            print(f"{COLORS['yellow']}Falling back to default streaming without prettify.{COLORS['reset']}")
-            should_stream = True 
-            use_regular_prettify = False
+        should_stream = False
+        use_regular_prettify = True
+        print(f"{COLORS['yellow']}Note: Using standard markdown rendering (--display-mode prettify). For streaming markdown rendering, use --display-mode stream-prettify instead.{COLORS['reset']}")
     elif args.display_mode == 'stream-prettify':
         # Stream prettify mode - stream with live markdown rendering
-        if has_markdown_renderer('rich'):
-            should_stream = True
-            use_stream_prettify = True
-            live_display, stream_callback, setup_spinner = prettify_streaming_markdown(args.renderer)
-            if not live_display:
-                # Fallback if live display fails
-                use_stream_prettify = False
-                use_regular_prettify = True
-                should_stream = False 
-                print(f"{COLORS['yellow']}Live display setup failed. Falling back to regular prettify mode.{COLORS['reset']}")
-        else:
-            # Rich not available for stream-prettify
-            print(f"{COLORS['yellow']}Warning: Rich is not available for --display-mode stream-prettify. Install with: pip install \"ngpt[full]\".{COLORS['reset']}")
-            print(f"{COLORS['yellow']}Falling back to default streaming without prettify.{COLORS['reset']}")
-            should_stream = True
+        should_stream = True
+        use_stream_prettify = True
+        live_display, stream_callback, setup_spinner = prettify_streaming_markdown()
+        if not live_display:
+            # Fallback if live display fails
             use_stream_prettify = False
+            use_regular_prettify = True
+            should_stream = False 
+            print(f"{COLORS['yellow']}Live display setup failed. Falling back to regular prettify mode.{COLORS['reset']}")
     
     # Create a wrapper for the stream callback that will stop the spinner on first content
     if stream_callback:
@@ -610,7 +595,7 @@ def display_content(content, content_type, highlight_lang, args, use_stream_pret
     title = titles.get(content_type, "Generated Content")
         
     # Format content appropriately - create formatted content only when needed
-    if use_regular_prettify and has_markdown_renderer(args.renderer):
+    if use_regular_prettify:
         if content_type == 'command':
             formatted_content = f"### {title}\n\n```{highlight_lang}\n{content}\n```"
         else:  # description
@@ -618,9 +603,9 @@ def display_content(content, content_type, highlight_lang, args, use_stream_pret
     
     # Only show formatted content if not already shown by stream-prettify
     if not use_stream_prettify:
-        if use_regular_prettify and has_markdown_renderer(args.renderer):
+        if use_regular_prettify:
             # Use rich renderer for pretty output
-            prettify_markdown(formatted_content, args.renderer)
+            prettify_markdown(formatted_content)
         elif args.display_mode == 'no-stream':
             # Simple output for no-stream mode (no box)
             if content_type == 'command':

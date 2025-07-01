@@ -14,7 +14,6 @@ CLI_CONFIG_OPTIONS = {
     "log": {"type": "str", "default": None, "context": ["all"]},
     "preprompt": {"type": "str", "default": None, "context": ["all"]},
     "display-mode": {"type": "str", "default": None, "context": ["all"]},
-    "renderer": {"type": "str", "default": "auto", "context": ["all"]},
     "config-index": {"type": "int", "default": 0, "context": ["all"], "exclusive": ["provider"]},
     "web-search": {"type": "bool", "default": False, "context": ["all"]},
     # GitCommit message options

@@ -16,7 +16,6 @@ from ..utils.log import create_logger
 from .. import __version__
 
 from .formatters import COLORS
-from .renderers import show_available_renderers
 from .config_manager import check_config
 from .modes.interactive import interactive_chat_session
 from .modes.chat import chat_mode
@@ -25,7 +24,7 @@ from .modes.shell import shell_mode
 from .modes.text import text_mode
 from .modes.rewrite import rewrite_mode
 from .modes.gitcommsg import gitcommsg_mode
-from .args import parse_args, validate_args, handle_cli_config_args, setup_argument_parser, validate_markdown_renderer, handle_role_config_args
+from .args import parse_args, validate_args, handle_cli_config_args, setup_argument_parser, handle_role_config_args
 from .roles import handle_role_config, get_role_prompt
 
 def show_cli_config_help():
@@ -235,11 +234,6 @@ def main():
     should_handle_role_config, action, role_name = handle_role_config_args(args)
     if should_handle_role_config:
         handle_role_config(action, role_name)
-        return
-    
-    # Handle --renderers flag to show available markdown renderers
-    if args.list_renderers:
-        show_available_renderers()
         return
     
     # Load CLI configuration early
@@ -521,12 +515,6 @@ def main():
     if not args.show_config and not args.list_models and not check_config(active_config):
         return
     
-    # Check if --display-mode prettify is used but no markdown renderer is available
-    # This will warn the user immediately if they request prettify but don't have the tools
-    has_renderer, args = validate_markdown_renderer(args)
-    if not has_renderer:
-        show_available_renderers()
-    
     # Get system prompt from role if specified
     if args.role:
         role_prompt = get_role_prompt(args.role)
@@ -575,7 +563,6 @@ def main():
                 top_p=args.top_p,
                 max_tokens=args.max_tokens,
                 preprompt=args.preprompt,
-                renderer=args.renderer,
                 display_mode=args.display_mode,
                 logger=logger
             )

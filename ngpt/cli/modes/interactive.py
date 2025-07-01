@@ -26,7 +26,7 @@ try:
 except ImportError:
     HAS_PROMPT_TOOLKIT = False
 
-def interactive_chat_session(client, web_search=False, temperature=0.7, top_p=1.0, max_tokens=None, preprompt=None, renderer='auto', display_mode='stream-prettify', logger=None, multiline_enabled=True):
+def interactive_chat_session(client, web_search=False, temperature=0.7, top_p=1.0, max_tokens=None, preprompt=None, display_mode='stream-prettify', logger=None, multiline_enabled=True):
     """Start an interactive chat session with the client.
     
     Args:
@@ -36,7 +36,6 @@ def interactive_chat_session(client, web_search=False, temperature=0.7, top_p=1.
         top_p: Controls diversity via nucleus sampling
         max_tokens: Maximum number of tokens to generate in each response
         preprompt: Custom system prompt to control AI behavior
-        renderer: Which markdown renderer to use ('auto', 'rich', or 'glow')
         display_mode: Display mode to use ('no-stream', 'prettify', 'stream-prettify')
         logger: Logger instance for logging the conversation
         multiline_enabled: Whether to enable the multiline input command
@@ -473,8 +472,8 @@ def interactive_chat_session(client, web_search=False, temperature=0.7, top_p=1.
             should_print_header = True
 
             # Determine if we should print a header based on formatting options
-            if display_mode == 'stream-prettify' and (renderer == 'rich' or renderer == 'auto'):
-                # Don't print header for Rich stream-prettify
+            if display_mode == 'stream-prettify':
+                # Don't print header for stream-prettify
                 should_print_header = False
             
             # Print the header if needed
@@ -496,14 +495,8 @@ def interactive_chat_session(client, web_search=False, temperature=0.7, top_p=1.
             first_content_received = False
             
             if display_mode == 'stream-prettify' and should_stream:
-                # Don't pass the header_text for rich renderer as it already creates its own header,
-                # but pass it for other renderers like glow
-                if renderer == 'rich' or renderer == 'auto':
-                    live_display, stream_callback, setup_spinner = prettify_streaming_markdown(renderer, is_interactive=True)
-                else:
-                    # Get the correct header for interactive mode for non-rich renderers
-                    header = ngpt_header()
-                    live_display, stream_callback, setup_spinner = prettify_streaming_markdown(renderer, is_interactive=True, header_text=header)
+                # Set up streaming markdown with interactive mode
+                live_display, stream_callback, setup_spinner = prettify_streaming_markdown(is_interactive=True)
                 
                 if not live_display:
                     # Fallback to normal prettify if live display setup failed
@@ -536,7 +529,7 @@ def interactive_chat_session(client, web_search=False, temperature=0.7, top_p=1.
                                 if live_display:
                                     live_display.start()
                         
-                        # Call the original callback to update content
+                                                # Call the original callback to update content
                         if original_callback:
                             original_callback(content, **kwargs)
                     
@@ -546,7 +539,7 @@ def interactive_chat_session(client, web_search=False, temperature=0.7, top_p=1.
                     # Set up and start the spinner
                     stop_spinner_event = threading.Event()
                     stop_spinner_func = setup_spinner(stop_spinner_event, "Waiting for response...", color=COLORS['green'])
-            
+
             # Get AI response with conversation history
             response = client.chat(
                 prompt=enhanced_prompt,
@@ -583,7 +576,7 @@ def interactive_chat_session(client, web_search=False, temperature=0.7, top_p=1.
                     with TERMINAL_RENDER_LOCK:
                         if display_mode == 'prettify':
                             # For pretty formatting with rich, don't print any header text
-                            prettify_markdown(response, renderer)
+                            prettify_markdown(response)
                         else:
                             print(response)
                 

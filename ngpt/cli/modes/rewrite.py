@@ -2,7 +2,7 @@ import sys
 import threading
 import time
 from ..formatters import COLORS
-from ..renderers import prettify_markdown, prettify_streaming_markdown, TERMINAL_RENDER_LOCK, has_markdown_renderer
+from ..renderers import prettify_markdown, prettify_streaming_markdown, TERMINAL_RENDER_LOCK
 from ..ui import get_multiline_input, spinner, copy_to_clipboard
 from ...utils import enhance_prompt_with_web_search, process_piped_input
 
@@ -291,15 +291,10 @@ def rewrite_mode(client, args, logger=None):
         should_stream = False
     elif args.display_mode == 'stream-prettify':
         # Stream prettify mode - stream with live markdown rendering
-        if has_markdown_renderer('rich'):
-            live_display, stream_callback, setup_spinner = prettify_streaming_markdown(args.renderer)
-            if not live_display:
-                # Fallback if display creation fails
-                print(f"{COLORS['yellow']}Warning: Live display setup failed. Falling back to plain streaming.{COLORS['reset']}")
-        else:
-            # Rich not available, fall back to plain streaming
-            print(f"{COLORS['yellow']}Rich renderer not available for streaming prettify.{COLORS['reset']}")
-            print(f"{COLORS['yellow']}Falling back to plain streaming. Install Rich with: pip install rich{COLORS['reset']}")
+        live_display, stream_callback, setup_spinner = prettify_streaming_markdown()
+        if not live_display:
+            # Fallback if display creation fails
+            print(f"{COLORS['yellow']}Warning: Live display setup failed. Falling back to plain streaming.{COLORS['reset']}")
     
     # Show a static message if streaming without prettify
     if should_stream and not live_display and args.display_mode != 'no-stream':
@@ -395,7 +390,7 @@ def rewrite_mode(client, args, logger=None):
     if (args.display_mode == 'no-stream' or args.display_mode == 'prettify') and response:
         with TERMINAL_RENDER_LOCK:
             if args.display_mode == 'prettify':
-                prettify_markdown(response, args.renderer)
+                prettify_markdown(response)
             else:
                 print(response)
             
