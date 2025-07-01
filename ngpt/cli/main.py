@@ -556,16 +556,7 @@ def main():
             args = apply_cli_config(args, "interactive")
             
             # Interactive chat mode
-            interactive_chat_session(
-                client,
-                web_search=args.web_search,
-                temperature=args.temperature,
-                top_p=args.top_p,
-                max_tokens=args.max_tokens,
-                preprompt=args.preprompt,
-                display_mode=args.display_mode,
-                logger=logger
-            )
+            interactive_chat_session(client, args, logger=logger)
         elif args.shell:
             # Apply CLI config for shell mode
             args = apply_cli_config(args, "shell")

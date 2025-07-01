@@ -26,20 +26,23 @@ try:
 except ImportError:
     HAS_PROMPT_TOOLKIT = False
 
-def interactive_chat_session(client, web_search=False, temperature=0.7, top_p=1.0, max_tokens=None, preprompt=None, display_mode='stream-prettify', logger=None, multiline_enabled=True):
+def interactive_chat_session(client, args, logger=None):
     """Start an interactive chat session with the client.
     
     Args:
         client: The NGPTClient instance
-        web_search: Whether to enable web search capability
-        temperature: Controls randomness in the response
-        top_p: Controls diversity via nucleus sampling
-        max_tokens: Maximum number of tokens to generate in each response
-        preprompt: Custom system prompt to control AI behavior
-        display_mode: Display mode to use ('no-stream', 'prettify', 'stream-prettify')
-        logger: Logger instance for logging the conversation
-        multiline_enabled: Whether to enable the multiline input command
+        args: The parsed command-line arguments
+        logger: Optional logger instance for logging the conversation
     """
+    # Extract arguments from args object
+    web_search = args.web_search
+    temperature = args.temperature
+    top_p = args.top_p
+    max_tokens = args.max_tokens
+    preprompt = args.preprompt
+    display_mode = args.display_mode
+    multiline_enabled = True  # Could be made configurable in the future
+    
     # Get terminal width for better formatting
     try:
         term_width = shutil.get_terminal_size().columns
