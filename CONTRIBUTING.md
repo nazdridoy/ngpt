@@ -37,13 +37,15 @@ Thank you for your interest in contributing to NGPT! This document provides guid
       - `rewrite.py` - Text rewriting mode
       - `shell.py` - Shell command generation
       - `text.py` - Text generation mode
-    - `renderers.py` - Output rendering logic (e.g., markdown)
+    - `renderers.py` - Markdown rendering using Rich
     - `ui.py` - User interface elements (e.g., prompts, spinners)
   - `utils/` - Utility modules
     - `__init__.py`
     - `config.py` - API endpoint and general configuration management
     - `cli_config.py` - CLI-specific option configuration management
     - `log.py` - Logging setup and utilities
+    - `pipe.py` - Utilities for handling piped input
+    - `web_search.py` - Web search functionality
 - `docs/` - Documentation files
   - `examples/` - Example usage
   - `usage/` - Usage guides and tutorials
@@ -129,12 +131,12 @@ If you're adding a new mode to nGPT, you should:
 4. Add tests for your new mode
 5. Update documentation in `docs/usage/` to describe your mode
 
-### Improving Renderers
+### Improving Output Rendering
 
-For improvements to the output rendering:
+For improvements to the markdown rendering:
 
 1. Modify the renderer code in `ngpt/cli/renderers.py`
-2. Ensure backward compatibility if possible
+2. The codebase uses Rich for all markdown rendering
 3. Test with various types of output (code, markdown, tables, etc.)
 
 ### Updating Documentation

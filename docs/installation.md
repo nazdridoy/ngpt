@@ -231,40 +231,7 @@ paru -Syu ngpt
 yay -Syu ngpt
 ```
 
-## Glow for Enhanced Markdown (Optional)
 
-For an enhanced markdown rendering experience, you can install the Glow terminal markdown viewer:
-
-### macOS
-```bash
-brew install glow
-```
-
-### Linux
-```bash
-# Arch Linux
-pacman -S glow
-
-# Ubuntu/Debian
-sudo apt install glow
-
-# Using Go
-go install github.com/charmbracelet/glow@latest
-```
-
-### Windows
-```bash
-# Using Scoop
-scoop install glow
-
-# Using Chocolatey
-choco install glow
-```
-
-Once installed, you can use it with nGPT:
-```bash
-ngpt --display-mode prettify --renderer=glow "Explain markdown tables"
-```
 
 ## Next Steps
 

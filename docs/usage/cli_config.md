@@ -14,7 +14,7 @@ nGPT offers a CLI configuration system that allows you to set persistent default
 
 ## Overview
 
-The CLI configuration system is separate from your API configuration (which stores API keys, base URLs, and models). Instead, it stores your preferred default values for CLI parameters like `temperature`, `language`, or `renderer`.
+The CLI configuration system is separate from your API configuration (which stores API keys, base URLs, and models). Instead, it stores your preferred default values for CLI parameters like `temperature`, `language`, or `display-mode`.
 
 This is especially useful when you:
 
@@ -68,8 +68,8 @@ ngpt --cli-config set provider Gemini
 # Enable web search by default
 ngpt --cli-config set web-search true
 
-# Set default renderer for prettify
-ngpt --cli-config set renderer glow
+# Set display-mode
+ngpt --cli-config set display-mode prettify
 ```
 
 Boolean values can be set using `true` or `false`:
@@ -130,63 +130,65 @@ ngpt --cli-config list
 
 This displays the available options, their types, default values, and any conflicts with other options.
 
-## Configuration Context and Exclusivity
-
-Some options only apply in specific modes:
-
-- `language` only applies to code generation mode
-- `rec-chunk` only applies to git commit message mode
-
-Some options are mutually exclusive:
-
-- `no-stream`, `prettify`, and `stream-prettify` cannot be used together
-- `provider` and `config-index` cannot be used together
-
-The CLI configuration system enforces these rules to prevent incompatible combinations.
-
 ## Available Options
 
-### General Options (All Modes)
+```console
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `config-index` | int | 0 | Index of the configuration to use |
-| `provider` | string | - | Provider name to use (alternative to config-index) |
-| `temperature` | float | 0.7 | Controls randomness (0.0-2.0) |
-| `top_p` | float | 1.0 | Controls diversity (0.0-1.0) |
-| `max_tokens` | int | - | Maximum response length in tokens |
-| `preprompt` | string | - | Custom system prompt |
-| `log` | string | - | Log file path |
-| `web-search` | bool | false | Enable web search capability |
-| `no-stream` | bool | false | Disable streaming |
-| `prettify` | bool | false | Enable markdown rendering |
-| `stream-prettify` | bool | false | Enable real-time markdown rendering |
-| `renderer` | string | auto | Markdown renderer to use (auto, rich, or glow) |
+❯ uv run ngpt --cli-config help
 
-### Mode-Specific Options
+CLI Configuration Help:
+  Command syntax:
+    ngpt --cli-config help                - Show this help message
+    ngpt --cli-config set OPTION VALUE    - Set a default value for OPTION
+    ngpt --cli-config get OPTION          - Get the current value of OPTION
+    ngpt --cli-config get                 - Show all CLI configuration settings
+    ngpt --cli-config unset OPTION        - Remove OPTION from configuration
+    ngpt --cli-config list                - List all available options with types and defaults
 
-#### Code Generation Mode
+  Available options:
+    General options (all modes):
+      config-index - Type: int (default: 0)
+      display-mode - Type: str (default: None)
+      log - Type: str (default: None)
+      max_tokens - Type: int (default: None)
+      preprompt - Type: str (default: None)
+      provider - Type: str (default: None)
+      temperature - Type: float (default: 0.7)
+      top_p - Type: float (default: 1.0)
+      web-search - Type: bool (default: False)
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `language` | string | python | Programming language for code generation |
+    Code mode options (-c/--code):
+      language - Type: str (default: python)
 
-#### Interactive Mode
+    Git commit message options (-g/--gitcommsg):
+      analyses-chunk-size - Type: int (default: 200)
+      chunk-size - Type: int (default: 200)
+      diff - Type: str (default: None)
+      max-msg-lines - Type: int (default: 20)
+      max-recursion-depth - Type: int (default: 3)
+      rec-chunk - Type: bool (default: False)
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `interactive-multiline` | bool | false | Enable multiline text input with the "ml" command in interactive mode |
+  Example usage:
+    ngpt --cli-config set language java        - Set default language to java for code generation
+    ngpt --cli-config set temperature 0.9      - Set default temperature to 0.9
+    ngpt --cli-config set display-mode no-stream - Disable streaming by default
+    ngpt --cli-config set display-mode prettify  - Enable markdown formatting by default
+    ngpt --cli-config set recursive-chunk true - Enable recursive chunking for git commit messages
+    ngpt --cli-config set diff /path/to/file.diff - Set default diff file for git commit messages
+    ngpt --cli-config get temperature          - Check the current temperature setting
+    ngpt --cli-config get                      - Show all current CLI settings
+    ngpt --cli-config unset language           - Remove language setting
 
-#### Git Commit Message Mode
+  Notes:
+    - CLI configuration is stored in:
+      • Linux: ~/.config/ngpt/ngpt-cli.conf
+      • macOS: ~/Library/Application Support/ngpt/ngpt-cli.conf
+      • Windows: %APPDATA%\ngpt\ngpt-cli.conf
+    - Settings are applied based on context (e.g., language only applies to code generation mode)
+    - Command-line arguments always override CLI configuration
+    - Some options are mutually exclusive and will not be applied together
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `rec-chunk` | bool | false | Process large diffs in chunks recursively |
-| `diff` | string | - | Path to diff file |
-| `chunk-size` | int | 200 | Lines per chunk when chunking is enabled |
-| `analyses-chunk-size` | int | 200 | Lines per chunk when recursively chunking analyses |
-| `max-msg-lines` | int | 20 | Maximum lines in commit message before condensing |
-| `max-recursion-depth` | int | 3 | Maximum recursion depth for commit message condensing |
+```
 
 ## Examples
 

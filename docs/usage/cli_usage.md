@@ -42,9 +42,8 @@ You can set configuration options directly via command-line arguments:
 usage: ngpt [-h] [-v] [--api-key API_KEY] [--base-url BASE_URL] [--model MODEL] [--web-search] [--pipe]
             [--temperature TEMPERATURE] [--top_p TOP_P] [--max_tokens MAX_TOKENS] [--log [FILE]]
             [--preprompt PREPROMPT | --role ROLE] [--config [CONFIG]] [--config-index CONFIG_INDEX]
-            [--provider PROVIDER] [--remove] [--show-config] [--all] [--list-models] [--list-renderers]
-            [--cli-config [COMMAND ...]] [--role-config [ACTION ...]]
-            [--display-mode {no-stream,prettify,stream-prettify}] [--renderer {auto,rich,glow}] [--language LANGUAGE]
+            [--provider PROVIDER] [--remove] [--show-config] [--all] [--list-models] [--cli-config [COMMAND ...]]
+            [--role-config [ACTION ...]] [--display-mode {no-stream,prettify,stream-prettify}] [--language LANGUAGE]
             [--rec-chunk] [--diff [FILE]] [--chunk-size CHUNK_SIZE] [--analyses-chunk-size ANALYSES_CHUNK_SIZE]
             [--max-msg-lines MAX_MSG_LINES] [--max-recursion-depth MAX_RECURSION_DEPTH] [--humanize] [-i | -s | -c |
             -t | -r | -g]
@@ -76,7 +75,6 @@ Global Options::
 --preprompt PREPROMPT               Set custom system prompt to control AI behavior
 --role ROLE                         Use a predefined role to set system prompt (mutually exclusive with
                                     --preprompt)
---renderer {auto,rich,glow}         Select which markdown renderer to use with display modes that support markdown
 
 Configuration Options::
 
@@ -89,7 +87,6 @@ Configuration Options::
 --show-config                       Show the current configuration(s) and exit
 --all                               Show details for all configurations (requires --show-config)
 --list-models                       List all available models for the current configuration and exit
---list-renderers                    Show available markdown renderers for use with --display-mode prettify
 --cli-config [COMMAND ...]          Manage CLI configuration (set, get, unset, list, help)
 --role-config [ACTION ...]          Manage custom roles (help, create, show, edit, list, remove) [role_name]
 
@@ -551,28 +548,8 @@ ngpt --display-mode prettify "Create a markdown table showing top 5 programming 
 
 # Enable real-time markdown formatting
 ngpt --display-mode stream-prettify "Explain Big O notation with code examples"
-
-# Use specific renderer with markdown formatting
-ngpt --display-mode prettify --renderer=rich "Create a markdown tutorial"
-
-# Use Glow renderer for markdown formatting
-ngpt --display-mode prettify --renderer=glow "Explain markdown syntax"
-
-# Use auto-detected renderer for markdown formatting
-ngpt --display-mode prettify --renderer=auto "Create a technical document outline"
 ```
 
-You can select different renderers:
-
-```bash
-# Use Rich renderer (default)
-ngpt --display-mode prettify --renderer=rich "Create a markdown tutorial"
-
-# Use Glow renderer (if installed)
-ngpt --display-mode prettify --renderer=glow "Explain markdown syntax"
-
-# Let ngpt select the best available (auto)
-ngpt --display-mode prettify --renderer=auto "Create a technical document outline"
 ```
 
 ## Configuration Management

@@ -84,7 +84,7 @@ def setup_argument_parser():
     config_group.add_argument('--role-config', nargs='*', metavar='ACTION', 
                               help='Manage custom roles (help, create, show, edit, list, remove) [role_name]')
 
-    # Output display options (mutually exclusive group)
+    # Output display options
     output_group = parser.add_argument_group('Output Display Options')
     output_group.add_argument('--display-mode', choices=['no-stream', 'prettify', 'stream-prettify'], default=None,
                       help='Set display mode: no-stream (plain text), prettify (formatted non-streaming), stream-prettify (live markdown)')

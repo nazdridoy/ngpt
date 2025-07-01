@@ -306,21 +306,18 @@ ngpt --display-mode prettify "Create a markdown table showing the top 5 programm
 # Enable real-time markdown formatting
 ngpt --display-mode stream-prettify "Explain the main Git commands with examples"
 
-# Use specific renderer with markdown formatting
-ngpt --display-mode prettify --renderer=rich "Create a tutorial for Docker basics"
+# Use markdown formatting
+ngpt --display-mode prettify "Create a tutorial for Docker basics"
 
-# Use Glow renderer for markdown formatting
-ngpt --display-mode prettify --renderer=glow "Explain REST API design principles"
+
 ```
 
-### Renderer Selection
+
 
 ```bash
-# Use Rich renderer (default)
-ngpt --display-mode prettify --renderer=rich "Create a tutorial for Docker basics"
 
-# Use Glow renderer (if installed)
-ngpt --display-mode prettify --renderer=glow "Explain REST API design principles"
+# Use markdown formatting
+ngpt --display-mode prettify "Explain REST API design principles"
 ```
 
 ## Provider Selection Examples
