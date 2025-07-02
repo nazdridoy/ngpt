@@ -64,7 +64,6 @@ def interactive_chat_session(client, args, logger=None):
         print(f"  {COLORS['yellow']}↑/↓{COLORS['reset']} : Browse input history")
         
         print(f"\n{COLORS['cyan']}Session Commands (prefix with '/'):{COLORS['reset']}")
-        print(f"  {COLORS['yellow']}/history{COLORS['reset']} : Show conversation history")
         print(f"  {COLORS['yellow']}/clear{COLORS['reset']}   : Reset conversation")
         print(f"  {COLORS['yellow']}/exit{COLORS['reset']}    : End session")
         print(f"  {COLORS['yellow']}/save [name]{COLORS['reset']} : Save session (with optional custom name)")
@@ -132,32 +131,6 @@ def interactive_chat_session(client, args, logger=None):
     
     def ngpt_header():
         return f"{COLORS['green']}{COLORS['bold']}╭─ 🤖 nGPT {COLORS['reset']}"
-    
-    # Function to display conversation history
-    def display_history():
-        with TERMINAL_RENDER_LOCK:
-            if len(conversation) <= 1:  # Only system message
-                print(f"\n{COLORS['yellow']}No conversation history yet.{COLORS['reset']}")
-                return
-                
-            print(f"\n{COLORS['cyan']}{COLORS['bold']}Conversation History:{COLORS['reset']}")
-            print(separator)
-            
-            # Skip system message
-            message_count = 0
-            for i, msg in enumerate(conversation):
-                if msg["role"] == "system":
-                    continue
-                    
-                if msg["role"] == "user":
-                    message_count += 1
-                    print(f"\n{user_header()}")
-                    print(f"{COLORS['cyan']}│ [{message_count}] {COLORS['reset']}{msg['content']}")
-                elif msg["role"] == "assistant":
-                    print(f"\n{ngpt_header()}")
-                    print(f"{COLORS['green']}│ {COLORS['reset']}{msg['content']}")
-            
-            print(f"\n{separator}")  # Consistent separator at the end
     
     # Function to clear conversation history
     def clear_history():
@@ -777,8 +750,8 @@ def interactive_chat_session(client, args, logger=None):
                     history=prompt_history,
                     # Add completer for fuzzy suggestions
                     completer=WordCompleter([
-                        '/history', '/clear', '/save', '/load', '/sessions', '/help', '/ml',
-                        '/exit', '/quit', '/bye' # Include exit commands for completeness in suggestions
+                        '/clear', '/save', '/load', '/sessions', '/help', '/ml',
+                        '/exit'
                     ], ignore_case=True, sentence=True)
                 )
             else:
@@ -790,10 +763,6 @@ def interactive_chat_session(client, args, logger=None):
                 break
             
             # Check for special commands (now require a '/' prefix)
-            if user_input.lower() == '/history':
-                display_history()
-                continue
-            
             if user_input.lower() == '/clear':
                 clear_history()
                 continue
