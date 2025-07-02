@@ -82,19 +82,75 @@ def interactive_chat_session(client, args, logger=None):
         
         print(f"\n{separator}\n")
 
-    show_help()
+    def show_welcome():
+        # Enhanced welcome screen with better visual structure
+        box_width = min(term_width - 4, 80)  # Limit box width for better appearance
+        
+        print(f"\n{COLORS['cyan']}{COLORS['bold']}╭{'─' * box_width}╮{COLORS['reset']}")
+        
+        # Logo and welcome message
+        logo_lines = [
+            " ███╗   ██╗ ██████╗ ██████╗ ████████╗",
+            " ████╗  ██║██╔════╝ ██╔══██╗╚══██╔══╝",
+            " ██╔██╗ ██║██║  ███╗██████╔╝   ██║   ",
+            " ██║╚██╗██║██║   ██║██╔═══╝    ██║   ",
+            " ██║ ╚████║╚██████╔╝██║        ██║   ",
+            " ╚═╝  ╚═══╝ ╚═════╝ ╚═╝        ╚═╝   "
+        ]
+        
+        # Print logo with proper centering
+        for line in logo_lines:
+            padding = (box_width - len(line)) // 2
+            print(f"{COLORS['cyan']}{COLORS['bold']}│{COLORS['reset']}{' ' * padding}{COLORS['green']}{line}{' ' * (box_width - len(line) - padding)}{COLORS['cyan']}{COLORS['bold']}│{COLORS['reset']}")
+        
+        # Add a blank line after logo
+        print(f"{COLORS['cyan']}{COLORS['bold']}│{' ' * box_width}│{COLORS['reset']}")
+        
+        # Version info
+        from ngpt.version import __version__
+        version_info = f"v{__version__}"
+        version_padding = (box_width - len(version_info)) // 2
+        print(f"{COLORS['cyan']}{COLORS['bold']}│{COLORS['reset']}{' ' * version_padding}{COLORS['yellow']}{version_info}{' ' * (box_width - len(version_info) - version_padding)}{COLORS['cyan']}{COLORS['bold']}│{COLORS['reset']}")
+        
+        # Status line - improved model detection
+        model_name = None
+        
+        # Try to get model from client object
+        if hasattr(client, 'model'):
+            model_name = client.model
+        # Try to get from client config
+        elif hasattr(client, 'config') and hasattr(client.config, 'model'):
+            model_name = client.config.model
+        # Fallback to args
+        elif hasattr(args, 'model') and args.model:
+            model_name = args.model
+            
+        model_info = f"Model: {model_name}" if model_name else "Default model"
+        status_line = f"Temperature: {temperature} | {model_info}"
+        if len(status_line) > box_width:
+            status_line = f"Temp: {temperature} | {model_info}"  # Shorten if needed
+        status_padding = (box_width - len(status_line)) // 2
+        print(f"{COLORS['cyan']}{COLORS['bold']}│{COLORS['reset']}{' ' * status_padding}{COLORS['gray']}{status_line}{' ' * (box_width - len(status_line) - status_padding)}{COLORS['cyan']}{COLORS['bold']}│{COLORS['reset']}")
+        
+        print(f"{COLORS['cyan']}{COLORS['bold']}╰{'─' * box_width}╯{COLORS['reset']}")
+        
+        # Show help info after the welcome box
+        show_help()
+        
+        # Show logging info if logger is available
+        if logger:
+            print(f"{COLORS['green']}Logging conversation to: {logger.get_log_path()}{COLORS['reset']}")
+        
+        # Display a note about web search if enabled
+        if web_search:
+            print(f"{COLORS['green']}Web search capability is enabled.{COLORS['reset']}")
+        
+        # Display a note about markdown rendering
+        if args.plaintext:
+            print(f"{COLORS['yellow']}Note: Using plain text mode (--plaintext). For markdown rendering, remove --plaintext flag.{COLORS['reset']}")
     
-    # Show logging info if logger is available
-    if logger:
-        print(f"{COLORS['green']}Logging conversation to: {logger.get_log_path()}{COLORS['reset']}")
-    
-    # Display a note about web search if enabled
-    if web_search:
-        print(f"{COLORS['green']}Web search capability is enabled.{COLORS['reset']}")
-    
-    # Display a note about markdown rendering only once at the beginning
-    if args.plaintext:
-        print(f"{COLORS['yellow']}Note: Using plain text mode (--plaintext). For markdown rendering, remove --plaintext flag.{COLORS['reset']}")
+    # Show the welcome screen
+    show_welcome()
     
     # Custom separator - use the same length for consistency
     def print_separator():
