@@ -2,8 +2,8 @@ import argparse
 import sys
 import os
 from ..client import NGPTClient
-from ..utils.config import load_config, get_config_path, load_configs, add_config_entry, remove_config_entry
-from ..utils.cli_config import (
+from ..core.config import load_config, get_config_path, load_configs, add_config_entry, remove_config_entry
+from ..core.cli_config import (
     set_cli_config_option, 
     get_cli_config_option, 
     unset_cli_config_option, 
@@ -12,11 +12,11 @@ from ..utils.cli_config import (
     CLI_CONFIG_OPTIONS,
     load_cli_config
 )
-from ..utils.log import create_logger
+from ..core.log import create_logger
 from .. import __version__
 
 from .ui.formatters import COLORS
-from ..utils.config import check_config
+from ..core.config import check_config
 from .modes.interactive import interactive_chat_session
 from .modes.chat import chat_mode
 from .modes.code import code_mode

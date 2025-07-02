@@ -8,7 +8,7 @@ import json
 import uuid
 import re
 from datetime import datetime
-from ...utils.config import get_config_dir
+from ...core.config import get_config_dir
 from ..ui.formatters import COLORS
 from ..ui.renderers import prettify_streaming_markdown, TERMINAL_RENDER_LOCK, setup_plaintext_spinner, cleanup_plaintext_spinner, create_spinner_handling_callback
 from ..ui.ui import spinner, get_multiline_input

@@ -9,8 +9,8 @@ from datetime import datetime
 import logging
 from ..ui.formatters import COLORS
 from ..ui.ui import spinner, copy_to_clipboard
-from ...utils.log import create_gitcommsg_logger
-from ...utils.cli_config import get_cli_config_option
+from ...core.log import create_gitcommsg_logger
+from ...core.cli_config import get_cli_config_option
 from ...utils.pipe import process_piped_input
 
 def get_diff_content(diff_file=None):

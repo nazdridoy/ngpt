@@ -14,9 +14,7 @@ import datetime
 from bs4 import BeautifulSoup
 from bs4.element import Comment, Declaration, Doctype, ProcessingInstruction
 import json
-
-# Get actual logger from global context instead of using standard logging
-from . import log
+from ngpt.core import log
 
 # Use a global variable to store the logger provided during runtime
 _logger = None
