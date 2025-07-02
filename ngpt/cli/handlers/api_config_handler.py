@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from typing import Tuple, Optional, Dict, Any, List, Union
 
-from ngpt.ui.formatters import COLORS
+from ngpt.ui.colors import COLORS
 from ngpt.core.config import load_config, get_config_path, load_configs, add_config_entry, remove_config_entry, check_config
 
 def handle_config_command(config_file: Union[str, bool, None], config_index: int, provider: Optional[str], remove: bool = False) -> None:

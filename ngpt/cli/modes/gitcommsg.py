@@ -7,7 +7,7 @@ import subprocess
 import threading
 from datetime import datetime
 import logging
-from ngpt.ui.formatters import COLORS
+from ngpt.ui.colors import COLORS
 from ngpt.ui.tui import spinner, copy_to_clipboard
 from ngpt.core.log import create_gitcommsg_logger
 from ngpt.core.cli_config import get_cli_config_option

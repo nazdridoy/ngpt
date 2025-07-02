@@ -5,21 +5,7 @@ import logging
 import tempfile
 from pathlib import Path
 from typing import Optional, TextIO, Dict, Any, Union
-
-# Define colors locally to avoid circular imports
-COLORS = {
-    "reset": "\033[0m",
-    "bold": "\033[1m",
-    "cyan": "\033[36m",
-    "green": "\033[32m", 
-    "yellow": "\033[33m",
-    "red": "\033[31m",
-    "blue": "\033[34m",
-    "magenta": "\033[35m",
-    "gray": "\033[90m",
-    "bg_blue": "\033[44m",
-    "bg_cyan": "\033[46m"
-}
+from ngpt.ui.colors import COLORS
 
 class Logger:
     """Handles logging functionality for ngpt"""

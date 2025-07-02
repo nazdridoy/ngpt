@@ -1,7 +1,7 @@
 import sys
 from ngpt.api.client import NGPTClient
 from ngpt.core.config import load_config
-from ngpt.ui.formatters import COLORS
+from ngpt.ui.colors import COLORS
 
 def process_config_selection(args, cli_config):
     """

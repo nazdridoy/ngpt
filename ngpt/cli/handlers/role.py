@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from typing import Tuple, Optional, Dict, Any
 
-from ngpt.ui.formatters import COLORS
+from ngpt.ui.colors import COLORS
 from ngpt.ui.tui import get_multiline_input
 
 # Role directory within config

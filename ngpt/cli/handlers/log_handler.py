@@ -1,7 +1,7 @@
 import os
 import sys
 from ngpt.core.log import create_logger
-from ngpt.ui.formatters import COLORS
+from ngpt.ui.colors import COLORS
 
 def setup_logger(args):
     """

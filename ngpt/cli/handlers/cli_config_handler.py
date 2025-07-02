@@ -5,7 +5,7 @@ Handles CLI config options stored in ngpt-cli.conf
 import sys
 from typing import Tuple, Optional, Dict, Any
 
-from ngpt.ui.formatters import COLORS
+from ngpt.ui.colors import COLORS
 from ngpt.core.cli_config import (
     set_cli_config_option, 
     get_cli_config_option, 

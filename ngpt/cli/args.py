@@ -1,7 +1,8 @@
 import argparse
 import sys
-from ngpt import __version__
-from ngpt.ui.formatters import COLORS, ColoredHelpFormatter
+from ngpt.version import __version__
+from ngpt.ui.colors import COLORS
+from ngpt.ui.formatters import ColoredHelpFormatter
 
 def setup_argument_parser():
     """Set up and return a fully configured argument parser for nGPT CLI."""

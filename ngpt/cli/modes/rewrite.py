@@ -1,7 +1,7 @@
 import sys
 import threading
 import time
-from ngpt.ui.formatters import COLORS
+from ngpt.ui.colors import COLORS
 from ngpt.ui.renderers import prettify_streaming_markdown, TERMINAL_RENDER_LOCK, setup_plaintext_spinner, cleanup_plaintext_spinner, create_spinner_handling_callback
 from ngpt.ui.tui import get_multiline_input, spinner, copy_to_clipboard
 from ngpt.utils.web_search import enhance_prompt_with_web_search

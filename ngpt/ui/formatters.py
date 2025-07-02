@@ -5,21 +5,8 @@ import argparse
 import re
 import textwrap
 import ctypes
+from ngpt.ui.colors import COLORS, HAS_COLOR, supports_ansi_colors
 
-# ANSI color codes for terminal output
-COLORS = {
-    "reset": "\033[0m",
-    "bold": "\033[1m",
-    "cyan": "\033[36m",
-    "green": "\033[32m",
-    "yellow": "\033[33m",
-    "red": "\033[31m",
-    "blue": "\033[34m",
-    "magenta": "\033[35m",
-    "gray": "\033[90m",
-    "bg_blue": "\033[44m",
-    "bg_cyan": "\033[46m"
-}
 
 # Check if ANSI colors are supported
 def supports_ansi_colors():

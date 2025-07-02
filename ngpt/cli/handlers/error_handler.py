@@ -1,6 +1,6 @@
 import sys
 import traceback
-from ngpt.ui.formatters import COLORS
+from ngpt.ui.colors import COLORS
 
 def handle_validation_error(error):
     """

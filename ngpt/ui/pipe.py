@@ -1,4 +1,5 @@
 import sys
+from ngpt.ui.colors import COLORS
 
 def process_piped_input(prompt, logger=None):
     """Process piped input to be used with a prompt.
@@ -10,11 +11,6 @@ def process_piped_input(prompt, logger=None):
     Returns:
         str: The processed prompt with piped input inserted at placeholder, or appended
     """
-    # Define colors locally to avoid circular imports
-    COLORS = {
-        'yellow': '\033[33m',
-        'reset': '\033[0m'
-    }
     
     # Only process if stdin is not a TTY (i.e., if we're receiving piped input)
     if not sys.stdin.isatty():
