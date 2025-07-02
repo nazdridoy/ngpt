@@ -5,11 +5,20 @@ from .web_search import (
     get_web_search_results,
     format_web_search_results_for_prompt
 )
-from .pipe import process_piped_input
+
+from .roles import (
+    handle_role_config,
+    get_role_prompt,
+    create_role,
+    edit_role,
+    show_role,
+    list_roles,
+    remove_role,
+)
 
 __all__ = [
     # Web search utilities
     "enhance_prompt_with_web_search", "get_web_search_results", "format_web_search_results_for_prompt",
-    # Input processing utilities
-    "process_piped_input"
+    # Role management utilities
+    "handle_role_config", "get_role_prompt", "create_role", "edit_role", "show_role", "list_roles", "remove_role",
 ]

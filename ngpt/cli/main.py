@@ -25,7 +25,7 @@ from .modes.text import text_mode
 from .modes.rewrite import rewrite_mode
 from .modes.gitcommsg import gitcommsg_mode
 from .args import parse_args, validate_args, handle_cli_config_args, setup_argument_parser, handle_role_config_args
-from .roles import handle_role_config, get_role_prompt
+from ..utils.roles import handle_role_config, get_role_prompt
 
 def show_cli_config_help():
     """Display help information about CLI configuration."""
