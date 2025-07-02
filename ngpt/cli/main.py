@@ -11,13 +11,15 @@ from ngpt.core.log import create_logger
 from ngpt import __version__
 
 from ngpt.ui.formatters import COLORS
-from ngpt.cli.modes.interactive import interactive_chat_session
-from ngpt.cli.modes.chat import chat_mode
-from ngpt.cli.modes.code import code_mode
-from ngpt.cli.modes.shell import shell_mode
-from ngpt.cli.modes.text import text_mode
-from ngpt.cli.modes.rewrite import rewrite_mode
-from ngpt.cli.modes.gitcommsg import gitcommsg_mode
+from ngpt.cli.modes import (
+    interactive_chat_session,
+    chat_mode,
+    code_mode,
+    shell_mode,
+    text_mode,
+    rewrite_mode,
+    gitcommsg_mode
+)
 from ngpt.cli.args import parse_args, validate_args, handle_cli_config_args, setup_argument_parser, handle_role_config_args
 
 # Import handlers
