@@ -15,8 +15,8 @@ from ..utils.cli_config import (
 from ..utils.log import create_logger
 from .. import __version__
 
-from .formatters import COLORS
-from .config_manager import check_config
+from .ui.formatters import COLORS
+from ..utils.config import check_config
 from .modes.interactive import interactive_chat_session
 from .modes.chat import chat_mode
 from .modes.code import code_mode

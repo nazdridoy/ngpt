@@ -7,8 +7,8 @@ import subprocess
 import threading
 from datetime import datetime
 import logging
-from ..formatters import COLORS
-from ..ui import spinner, copy_to_clipboard
+from ..ui.formatters import COLORS
+from ..ui.ui import spinner, copy_to_clipboard
 from ...utils.log import create_gitcommsg_logger
 from ...utils.cli_config import get_cli_config_option
 from ...utils.pipe import process_piped_input

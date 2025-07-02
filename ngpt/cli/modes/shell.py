@@ -1,6 +1,6 @@
-from ..formatters import COLORS
-from ..ui import spinner, copy_to_clipboard, get_terminal_input
-from ..renderers import prettify_streaming_markdown, TERMINAL_RENDER_LOCK, setup_plaintext_spinner, cleanup_plaintext_spinner, create_spinner_handling_callback
+from ..ui.formatters import COLORS
+from ..ui.renderers import prettify_streaming_markdown, TERMINAL_RENDER_LOCK, setup_plaintext_spinner, cleanup_plaintext_spinner, create_spinner_handling_callback
+from ..ui.ui import spinner, copy_to_clipboard, get_terminal_input
 from ...utils.web_search import enhance_prompt_with_web_search
 from ...utils.pipe import process_piped_input
 import subprocess
