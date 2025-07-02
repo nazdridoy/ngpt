@@ -2,14 +2,9 @@ import argparse
 import sys
 import os
 from ngpt.api.client import NGPTClient
-from ngpt.core.config import load_config, get_config_path, load_configs, add_config_entry, remove_config_entry, check_config
+from ngpt.core.config import load_config, check_config
 from ngpt.core.cli_config import (
-    set_cli_config_option, 
-    get_cli_config_option, 
-    unset_cli_config_option, 
     apply_cli_config,
-    list_cli_config_options,
-    CLI_CONFIG_OPTIONS,
     load_cli_config
 )
 from ngpt.core.log import create_logger
@@ -24,194 +19,19 @@ from ngpt.cli.modes.text import text_mode
 from ngpt.cli.modes.rewrite import rewrite_mode
 from ngpt.cli.modes.gitcommsg import gitcommsg_mode
 from ngpt.cli.args import parse_args, validate_args, handle_cli_config_args, setup_argument_parser, handle_role_config_args
-from ngpt.cli.handlers.role import handle_role_config, get_role_prompt
 
-def show_cli_config_help():
-    """Display help information about CLI configuration."""
-    print(f"\n{COLORS['green']}{COLORS['bold']}CLI Configuration Help:{COLORS['reset']}")
-    print(f"  {COLORS['cyan']}Command syntax:{COLORS['reset']}")
-    print(f"    {COLORS['yellow']}ngpt --cli-config help{COLORS['reset']}                - Show this help message")
-    print(f"    {COLORS['yellow']}ngpt --cli-config set OPTION VALUE{COLORS['reset']}    - Set a default value for OPTION")
-    print(f"    {COLORS['yellow']}ngpt --cli-config get OPTION{COLORS['reset']}          - Get the current value of OPTION")
-    print(f"    {COLORS['yellow']}ngpt --cli-config get{COLORS['reset']}                 - Show all CLI configuration settings")
-    print(f"    {COLORS['yellow']}ngpt --cli-config unset OPTION{COLORS['reset']}        - Remove OPTION from configuration")
-    print(f"    {COLORS['yellow']}ngpt --cli-config list{COLORS['reset']}                - List all available options with types and defaults")
-    
-    print(f"\n  {COLORS['cyan']}Available options:{COLORS['reset']}")
-    
-    # Group options by context
-    context_groups = {
-        "all": [],
-        "code": [],
-        "interactive": [],
-        "text": [],
-        "shell": [],
-        "gitcommsg": []  # Add gitcommsg context
-    }
-    
-    # Get option details from list_cli_config_options instead of CLI_CONFIG_OPTIONS
-    for option_details in list_cli_config_options():
-        option = option_details["name"]
-        for context in option_details["context"]:
-            if context in context_groups:
-                if context == "all":
-                    context_groups[context].append(option)
-                    break
-                else:
-                    context_groups[context].append(option)
-    
-    # Print general options (available in all contexts)
-    print(f"    {COLORS['yellow']}General options (all modes):{COLORS['reset']}")
-    for option in sorted(context_groups["all"]):
-        # Get option details
-        option_detail = next((o for o in list_cli_config_options() if o["name"] == option), None)
-        if option_detail:
-            option_type = option_detail["type"]
-            default = option_detail["default"]
-            default_str = f"(default: {default})" if default is not None else "(default: None)"
-            print(f"      {option} - {COLORS['cyan']}Type: {option_type}{COLORS['reset']} {default_str}")
-        else:
-            print(f"      {option}")
-    
-    # Print code options
-    if context_groups["code"]:
-        print(f"\n    {COLORS['yellow']}Code mode options (-c/--code):{COLORS['reset']}")
-        for option in sorted(context_groups["code"]):
-            # Get option details
-            option_detail = next((o for o in list_cli_config_options() if o["name"] == option), None)
-            if option_detail:
-                option_type = option_detail["type"]
-                default = option_detail["default"]
-                default_str = f"(default: {default})" if default is not None else "(default: None)"
-                print(f"      {option} - {COLORS['cyan']}Type: {option_type}{COLORS['reset']} {default_str}")
-            else:
-                print(f"      {option}")
-    
-    # Print interactive mode options
-    if context_groups["interactive"]:
-        print(f"\n    {COLORS['yellow']}Interactive mode options (-i/--interactive):{COLORS['reset']}")
-        for option in sorted(context_groups["interactive"]):
-            # Get option details
-            option_detail = next((o for o in list_cli_config_options() if o["name"] == option), None)
-            if option_detail:
-                option_type = option_detail["type"]
-                default = option_detail["default"]
-                default_str = f"(default: {default})" if default is not None else "(default: None)"
-                print(f"      {option} - {COLORS['cyan']}Type: {option_type}{COLORS['reset']} {default_str}")
-            else:
-                print(f"      {option}")
-    
-    # Print gitcommsg options
-    if context_groups["gitcommsg"]:
-        print(f"\n    {COLORS['yellow']}Git commit message options (-g/--gitcommsg):{COLORS['reset']}")
-        for option in sorted(context_groups["gitcommsg"]):
-            # Get option details
-            option_detail = next((o for o in list_cli_config_options() if o["name"] == option), None)
-            if option_detail:
-                option_type = option_detail["type"]
-                default = option_detail["default"]
-                default_str = f"(default: {default})" if default is not None else "(default: None)"
-                print(f"      {option} - {COLORS['cyan']}Type: {option_type}{COLORS['reset']} {default_str}")
-            else:
-                print(f"      {option}")
-    
-    print(f"\n  {COLORS['cyan']}Example usage:{COLORS['reset']}")
-    print(f"    {COLORS['yellow']}ngpt --cli-config set language java{COLORS['reset']}        - Set default language to java for code generation")
-    print(f"    {COLORS['yellow']}ngpt --cli-config set temperature 0.9{COLORS['reset']}      - Set default temperature to 0.9")
-    print(f"    {COLORS['yellow']}ngpt --cli-config set recursive-chunk true{COLORS['reset']} - Enable recursive chunking for git commit messages")
-    print(f"    {COLORS['yellow']}ngpt --cli-config set diff /path/to/file.diff{COLORS['reset']} - Set default diff file for git commit messages")
-    print(f"    {COLORS['yellow']}ngpt --cli-config get temperature{COLORS['reset']}          - Check the current temperature setting")
-    print(f"    {COLORS['yellow']}ngpt --cli-config get{COLORS['reset']}                      - Show all current CLI settings")
-    print(f"    {COLORS['yellow']}ngpt --cli-config unset language{COLORS['reset']}           - Remove language setting")
-    
-    print(f"\n  {COLORS['cyan']}Notes:{COLORS['reset']}")
-    print(f"    - CLI configuration is stored in:")
-    print(f"      • Linux: {COLORS['yellow']}~/.config/ngpt/ngpt-cli.conf{COLORS['reset']}")
-    print(f"      • macOS: {COLORS['yellow']}~/Library/Application Support/ngpt/ngpt-cli.conf{COLORS['reset']}")
-    print(f"      • Windows: {COLORS['yellow']}%APPDATA%\\ngpt\\ngpt-cli.conf{COLORS['reset']}")
-    print(f"    - Settings are applied based on context (e.g., language only applies to code generation mode)")
-    print(f"    - Command-line arguments always override CLI configuration")
-    print(f"    - Some options are mutually exclusive and will not be applied together")
-
-def handle_cli_config(action, option=None, value=None):
-    """Handle CLI configuration commands."""
-    if action == "help":
-        show_cli_config_help()
-        return
-    
-    if action == "list":
-        # List all available options
-        print(f"{COLORS['green']}{COLORS['bold']}Available CLI configuration options:{COLORS['reset']}")
-        for option_details in list_cli_config_options():
-            option = option_details["name"]
-            option_type = option_details["type"]
-            default = option_details["default"]
-            contexts = option_details["context"]
-            
-            default_str = f"(default: {default})" if default is not None else "(default: None)"
-            contexts_str = ', '.join(contexts)
-            if "all" in contexts:
-                contexts_str = "all modes"
-            
-            print(f"  {COLORS['cyan']}{option}{COLORS['reset']} - {COLORS['yellow']}Type: {option_type}{COLORS['reset']} {default_str} - Available in: {contexts_str}")
-        return
-    
-    if action == "get":
-        if option is None:
-            # Get all options
-            success, config = get_cli_config_option()
-            if success and config:
-                print(f"{COLORS['green']}{COLORS['bold']}Current CLI configuration:{COLORS['reset']}")
-                for opt, val in config.items():
-                    if opt in CLI_CONFIG_OPTIONS:
-                        print(f"  {COLORS['cyan']}{opt}{COLORS['reset']} = {val}")
-                    else:
-                        print(f"  {COLORS['yellow']}{opt}{COLORS['reset']} = {val} (unknown option)")
-            else:
-                print(f"{COLORS['yellow']}No CLI configuration set. Use 'ngpt --cli-config set OPTION VALUE' to set options.{COLORS['reset']}")
-        else:
-            # Get specific option
-            success, result = get_cli_config_option(option)
-            if success:
-                if result is None:
-                    print(f"{COLORS['cyan']}{option}{COLORS['reset']} is not set (default: {CLI_CONFIG_OPTIONS.get(option, {}).get('default', 'N/A')})")
-                else:
-                    print(f"{COLORS['cyan']}{option}{COLORS['reset']} = {result}")
-            else:
-                print(f"{COLORS['yellow']}{result}{COLORS['reset']}")
-        return
-    
-    if action == "set":
-        if option is None or value is None:
-            print(f"{COLORS['yellow']}Error: Both OPTION and VALUE are required for 'set' command.{COLORS['reset']}")
-            print(f"Usage: ngpt --cli-config set OPTION VALUE")
-            return
-            
-        success, message = set_cli_config_option(option, value)
-        if success:
-            print(f"{COLORS['green']}{message}{COLORS['reset']}")
-        else:
-            print(f"{COLORS['yellow']}{message}{COLORS['reset']}")
-        return
-    
-    if action == "unset":
-        if option is None:
-            print(f"{COLORS['yellow']}Error: OPTION is required for 'unset' command.{COLORS['reset']}")
-            print(f"Usage: ngpt --cli-config unset OPTION")
-            return
-            
-        success, message = unset_cli_config_option(option)
-        if success:
-            print(f"{COLORS['green']}{message}{COLORS['reset']}")
-        else:
-            print(f"{COLORS['yellow']}{message}{COLORS['reset']}")
-        return
-    
-    # If we get here, the action is not recognized
-    print(f"{COLORS['yellow']}Error: Unknown action '{action}'. Use 'set', 'get', 'unset', or 'list'.{COLORS['reset']}")
-    show_cli_config_help()
+# Import handlers
+from ngpt.cli.handlers import (
+    handle_role_config,
+    get_role_prompt,
+    handle_cli_config,
+    handle_config_command,
+    show_config,
+    list_models
+)
 
 def main():
+    """Main entry point for the CLI application."""
     # Parse command line arguments using args.py
     args = parse_args()
     
@@ -308,125 +128,7 @@ def main():
 
     # Handle interactive configuration mode
     if args.config is True:  # --config was used without a value
-        config_path = get_config_path()
-        
-        # Handle configuration removal if --remove flag is present
-        if args.remove:
-            # Validate that config_index is explicitly provided
-            if '--config-index' not in sys.argv and not effective_provider:
-                print(f"{COLORS['bold']}{COLORS['yellow']}error: {COLORS['reset']}--remove requires explicitly specifying --config-index or --provider\n")
-                sys.exit(2)
-            
-            # Show config details before asking for confirmation
-            configs = load_configs(str(config_path))
-            
-            # Determine the config index to remove
-            config_index = effective_config_index
-            if effective_provider:
-                # Find config index by provider name
-                matching_configs = [i for i, cfg in enumerate(configs) if cfg.get('provider', '').lower() == effective_provider.lower()]
-                if not matching_configs:
-                    print(f"Error: No configuration found for provider '{effective_provider}'")
-                    return
-                elif len(matching_configs) > 1:
-                    print(f"Multiple configurations found for provider '{effective_provider}':")
-                    for i, idx in enumerate(matching_configs):
-                        print(f"  Choice [{i+1}] → Config #{idx}: {configs[idx].get('model', 'Unknown model')}")
-                    
-                    try:
-                        choice = input("Choose a configuration to remove (or press Enter to cancel): ")
-                        if choice and choice.isdigit() and 1 <= int(choice) <= len(matching_configs):
-                            config_index = matching_configs[int(choice)-1]
-                        else:
-                            print("Configuration removal cancelled.")
-                            return
-                    except (ValueError, IndexError, KeyboardInterrupt):
-                        print("\nConfiguration removal cancelled.")
-                        return
-                else:
-                    config_index = matching_configs[0]
-            
-            # Check if index is valid
-            if config_index < 0 or config_index >= len(configs):
-                print(f"Error: Configuration index {config_index} is out of range. Valid range: 0-{len(configs)-1}")
-                return
-            
-            # Show the configuration that will be removed
-            config = configs[config_index]
-            print(f"Configuration to remove (index {config_index}):")
-            print(f"  Provider: {config.get('provider', 'N/A')}")
-            print(f"  Model: {config.get('model', 'N/A')}")
-            print(f"  Base URL: {config.get('base_url', 'N/A')}")
-            print(f"  API Key: {'[Set]' if config.get('api_key') else '[Not Set]'}")
-            
-            # Ask for confirmation
-            try:
-                print("\nAre you sure you want to remove this configuration? [y/N] ", end='')
-                response = input().lower()
-                if response in ('y', 'yes'):
-                    remove_config_entry(config_path, config_index)
-                else:
-                    print("Configuration removal cancelled.")
-            except KeyboardInterrupt:
-                print("\nConfiguration removal cancelled by user.")
-            
-            return
-        
-        # Check if --config-index was explicitly specified in command line args
-        config_index_explicit = '--config-index' in sys.argv
-        provider_explicit = '--provider' in sys.argv
-        
-        # When only --config is used (without explicit --config-index or --provider),
-        # always create a new configuration regardless of CLI config settings
-        if not config_index_explicit and not provider_explicit:
-            # Always create a new config when just --config is used
-            configs = load_configs(str(config_path))
-            print(f"Creating new configuration at index {len(configs)}")
-            add_config_entry(config_path, None)
-            return
-        
-        # If explicitly specified indexes or provider, continue with editing behavior
-        config_index = None
-        
-        # Determine if we're editing an existing config or creating a new one
-        if effective_provider:
-            # Find config by provider name
-            configs = load_configs(str(config_path))
-            matching_configs = [i for i, cfg in enumerate(configs) if cfg.get('provider', '').lower() == effective_provider.lower()]
-            
-            if not matching_configs:
-                print(f"No configuration found for provider '{effective_provider}'. Creating a new configuration.")
-            elif len(matching_configs) > 1:
-                print(f"Multiple configurations found for provider '{effective_provider}':")
-                for i, idx in enumerate(matching_configs):
-                    print(f"  [{i}] Index {idx}: {configs[idx].get('model', 'Unknown model')}")
-                
-                try:
-                    choice = input("Choose a configuration to edit (or press Enter for the first one): ")
-                    if choice and choice.isdigit() and 0 <= int(choice) < len(matching_configs):
-                        config_index = matching_configs[int(choice)]
-                    else:
-                        config_index = matching_configs[0]
-                except (ValueError, IndexError, KeyboardInterrupt):
-                    config_index = matching_configs[0]
-            else:
-                config_index = matching_configs[0]
-                
-            print(f"Editing existing configuration at index {config_index}")
-        elif effective_config_index != 0 or config_index_explicit:
-            # Check if the index is valid
-            configs = load_configs(str(config_path))
-            if effective_config_index >= 0 and effective_config_index < len(configs):
-                config_index = effective_config_index
-                print(f"Editing existing configuration at index {config_index}")
-            else:
-                print(f"Configuration index {effective_config_index} is out of range. Creating a new configuration.")
-        else:
-            # Creating a new config
-            configs = load_configs(str(config_path))
-            print(f"Creating new configuration at index {len(configs)}")
-        
-        add_config_entry(config_path, config_index)
+        handle_config_command(args.config, effective_config_index, effective_provider, args.remove)
         return
     
     # Load configuration using the effective provider/config-index
@@ -442,63 +144,7 @@ def main():
     
     # Show config if requested
     if args.show_config:
-        config_path = get_config_path(args.config)
-        configs = load_configs(args.config)
-        
-        print(f"Configuration file: {config_path}")
-        print(f"Total configurations: {len(configs)}")
-        
-        # Determine active configuration and display identifier
-        active_identifier = f"index {effective_config_index}"
-        if effective_provider:
-            active_identifier = f"provider '{effective_provider}'"
-        print(f"Active configuration: {active_identifier}")
-
-        if args.all:
-            # Show details for all configurations
-            print("\nAll configuration details:")
-            for i, cfg in enumerate(configs):
-                provider = cfg.get('provider', 'N/A')
-                active_str = '(Active)' if (
-                    (effective_provider and provider.lower() == effective_provider.lower()) or 
-                    (not effective_provider and i == effective_config_index)
-                ) else ''
-                print(f"\n--- Configuration Index {i} / Provider: {COLORS['green']}{provider}{COLORS['reset']} {active_str} ---")
-                print(f"  API Key: {'[Set]' if cfg.get('api_key') else '[Not Set]'}")
-                print(f"  Base URL: {cfg.get('base_url', 'N/A')}")
-                print(f"  Model: {cfg.get('model', 'N/A')}")
-        else:
-            # Show active config details and summary list
-            print("\nActive configuration details:")
-            print(f"  Provider: {COLORS['green']}{active_config.get('provider', 'N/A')}{COLORS['reset']}")
-            print(f"  API Key: {'[Set]' if active_config.get('api_key') else '[Not Set]'}")
-            print(f"  Base URL: {active_config.get('base_url', 'N/A')}")
-            print(f"  Model: {active_config.get('model', 'N/A')}")
-            
-            if len(configs) > 1:
-                print("\nAvailable configurations:")
-                # Check for duplicate provider names for warning
-                provider_counts = {}
-                for cfg in configs:
-                    provider = cfg.get('provider', 'N/A').lower()
-                    provider_counts[provider] = provider_counts.get(provider, 0) + 1
-                
-                for i, cfg in enumerate(configs):
-                    provider = cfg.get('provider', 'N/A')
-                    provider_display = provider
-                    # Add warning for duplicate providers
-                    if provider_counts.get(provider.lower(), 0) > 1:
-                        provider_display = f"{provider} {COLORS['yellow']}(duplicate){COLORS['reset']}"
-                    
-                    active_marker = "*" if (
-                        (effective_provider and provider.lower() == effective_provider.lower()) or 
-                        (not effective_provider and i == effective_config_index)
-                    ) else " "
-                    print(f"[{i}]{active_marker} {COLORS['green']}{provider_display}{COLORS['reset']} - {cfg.get('model', 'N/A')} ({'[API Key Set]' if cfg.get('api_key') else '[API Key Not Set]'})")
-                
-                # Show instruction for using --provider
-                print(f"\nTip: Use {COLORS['yellow']}--provider NAME{COLORS['reset']} to select a configuration by provider name.")
-        
+        show_config(args.config, effective_config_index, effective_provider, args.all)
         return
     
     # For interactive mode, we'll allow continuing without a specific prompt
@@ -532,19 +178,7 @@ def main():
     try:
         # Handle listing models
         if args.list_models:
-            print("Retrieving available models...")
-            models = client.list_models()
-            if models:
-                print(f"\nAvailable models for {active_config.get('provider', 'API')}:")
-                print("-" * 50)
-                for model in models:
-                    if "id" in model:
-                        owned_by = f" ({model.get('owned_by', 'Unknown')})" if "owned_by" in model else ""
-                        current = " [active]" if model["id"] == active_config["model"] else ""
-                        print(f"- {model['id']}{owned_by}{current}")
-                print("\nUse --model MODEL_NAME to select a specific model")
-            else:
-                print("No models available or could not retrieve models.")
+            list_models(client, active_config)
             return
         
         # Handle modes
