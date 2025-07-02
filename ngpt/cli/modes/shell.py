@@ -1,6 +1,6 @@
 from ..formatters import COLORS
 from ..ui import spinner, copy_to_clipboard, get_terminal_input
-from ..renderers import prettify_markdown, prettify_streaming_markdown, TERMINAL_RENDER_LOCK
+from ..renderers import prettify_streaming_markdown, TERMINAL_RENDER_LOCK, setup_plaintext_spinner, cleanup_plaintext_spinner
 from ...utils import enhance_prompt_with_web_search, process_piped_input
 import subprocess
 import sys
@@ -289,52 +289,7 @@ def detect_windows_shell(operating_system):
     Returns:
         tuple: (shell_name, highlight_language, operating_system) - the detected shell information
     """
-    # First check for the process name - most reliable indicator
-    try:
-        # Check parent process name for the most accurate detection
-        if os.name == 'nt':
-            import ctypes
-            from ctypes import wintypes
-
-            # Get parent process ID
-            GetCurrentProcessId = ctypes.windll.kernel32.GetCurrentProcessId
-            GetCurrentProcess = ctypes.windll.kernel32.GetCurrentProcess
-            GetProcessTimes = ctypes.windll.kernel32.GetProcessTimes
-            OpenProcess = ctypes.windll.kernel32.OpenProcess
-            GetModuleFileNameEx = ctypes.windll.psapi.GetModuleFileNameExW
-            QueryFullProcessImageName = ctypes.windll.kernel32.QueryFullProcessImageNameW
-            CloseHandle = ctypes.windll.kernel32.CloseHandle
-            
-            # Try to get process path
-            try:
-                # First try to check current process executable name
-                process_path = sys.executable.lower()
-                if "powershell" in process_path:
-                    if "pwsh" in process_path:
-                        return "pwsh", "powershell", operating_system
-                    else:
-                        return "powershell.exe", "powershell", operating_system
-                elif "cmd.exe" in process_path:
-                    return "cmd.exe", "batch", operating_system
-            except Exception as e:
-                pass
-            
-            # If that fails, check environment variables that strongly indicate shell type
-            if "PROMPT" in os.environ and "$P$G" in os.environ.get("PROMPT", ""):
-                # CMD.exe uses $P$G as default prompt
-                return "cmd.exe", "batch", operating_system
-            
-            if os.environ.get("PSModulePath"):
-                # PowerShell has this environment variable
-                if "pwsh" in os.environ.get("PSModulePath", "").lower():
-                    return "pwsh", "powershell", operating_system
-                else:
-                    return "powershell.exe", "powershell", operating_system
-    except Exception as e:
-        # If process detection fails, continue with environment checks
-        pass
-    
-    # Check for WSL within Windows
+    # Check for WSL within Windows first
     if any(("wsl" in path.lower() or "microsoft" in path.lower()) for path in os.environ.get("PATH", "").split(os.pathsep)):
         return "bash", "bash", operating_system
     
@@ -350,7 +305,19 @@ def detect_windows_shell(operating_system):
         elif "cmd" in shell_path:
             return "cmd.exe", "batch", operating_system
     
-    # Final fallback - Check common environment variables that indicate shell type
+    # Check environment variables that strongly indicate shell type
+    if "PROMPT" in os.environ and "$P$G" in os.environ.get("PROMPT", ""):
+        # CMD.exe uses $P$G as default prompt
+        return "cmd.exe", "batch", operating_system
+    
+    if os.environ.get("PSModulePath"):
+        # PowerShell has this environment variable
+        if "pwsh" in os.environ.get("PSModulePath", "").lower():
+            return "pwsh", "powershell", operating_system
+        else:
+            return "powershell.exe", "powershell", operating_system
+    
+    # Check ComSpec environment variable
     if "ComSpec" in os.environ:
         comspec = os.environ.get("ComSpec", "").lower()
         if "powershell" in comspec:
@@ -399,255 +366,6 @@ def detect_shell():
         else:
             return "bash", "bash", operating_system
 
-def setup_streaming(args, logger=None):
-    """Set up streaming configuration based on command-line arguments.
-    
-    Args:
-        args: The parsed command-line arguments
-        logger: Optional logger instance for logging
-        
-    Returns:
-        tuple: (should_stream, use_stream_prettify, use_regular_prettify, 
-                stream_setup) - Configuration settings and streaming components
-    """
-    # Default values - initialize all at once
-    stream_callback = live_display = stop_spinner_func = None
-    stop_spinner = spinner_thread = stop_spinner_event = None
-    should_stream = True  # Default to streaming
-    use_stream_prettify = use_regular_prettify = False
-    first_content_received = False
-    
-    # Determine final behavior based on plaintext flag
-    if args.plaintext:
-        # Plain text mode - no streaming, no markdown rendering
-        should_stream = False
-        use_regular_prettify = False
-    else:
-        # Default stream-prettify mode - stream with live markdown rendering
-        should_stream = True
-        use_stream_prettify = True
-        live_display, stream_callback, setup_spinner = prettify_streaming_markdown()
-        if not live_display:
-            # Fallback if live display fails
-            use_stream_prettify = False
-            use_regular_prettify = True
-            should_stream = False 
-            print(f"{COLORS['yellow']}Live display setup failed. Falling back to regular prettify mode.{COLORS['reset']}")
-    
-    # Create a wrapper for the stream callback that will stop the spinner on first content
-    if stream_callback:
-        original_callback = stream_callback
-        
-        def spinner_handling_callback(content, **kwargs):
-            nonlocal first_content_received
-            
-            # On first content, stop the spinner 
-            if not first_content_received and stop_spinner_func:
-                first_content_received = True
-                # Stop the spinner
-                stop_spinner_func()
-                # Ensure spinner message is cleared with an extra blank line
-                sys.stdout.write("\r" + " " * 100 + "\r")
-                sys.stdout.flush()
-            
-            # Call the original callback to update the display
-            if original_callback:
-                original_callback(content, **kwargs)
-        
-        # Use our wrapper callback
-        if use_stream_prettify and live_display:
-            stream_callback = spinner_handling_callback
-            
-            # Set up the spinner if we have a live display
-            stop_spinner_event = threading.Event()
-            stop_spinner_func = setup_spinner(stop_spinner_event, color=COLORS['cyan'])
-    
-    # Create spinner for non-stream-prettify modes EXCEPT no-stream
-    if not use_stream_prettify and should_stream:
-        # Prepare spinner (but don't start it yet - will be started in generate_with_model)
-        stop_spinner = threading.Event()
-        spinner_thread = threading.Thread(
-            target=spinner, 
-            args=("Generating...",), 
-            kwargs={"stop_event": stop_spinner, "color": COLORS['cyan']}
-        )
-        spinner_thread.daemon = True
-    
-    # Create a stream_setup dict to hold all the variables - use a dict comprehension
-    stream_setup = {
-        'stream_callback': stream_callback,
-        'live_display': live_display,
-        'stop_spinner_func': stop_spinner_func,
-        'stop_spinner': stop_spinner,
-        'spinner_thread': spinner_thread,
-        'stop_spinner_event': stop_spinner_event,
-        'first_content_received': first_content_received
-    }
-    
-    return (should_stream, use_stream_prettify, use_regular_prettify, stream_setup)
-
-def generate_with_model(client, prompt, messages, args, stream_setup, 
-                         use_stream_prettify, should_stream, spinner_message="Generating...",
-                         temp_override=None, logger=None):
-    """Generate content using the model with proper streaming and spinner handling.
-    
-    Args:
-        client: The NGPTClient instance
-        prompt: The prompt to send to the model
-        messages: The formatted messages to send
-        args: The parsed command-line arguments
-        stream_setup: The streaming setup from setup_streaming
-        use_stream_prettify: Whether to use stream prettify
-        should_stream: Whether to stream the response
-        spinner_message: Message to show in the spinner
-        temp_override: Optional temperature override
-        logger: Optional logger instance
-        
-    Returns:
-        str: The generated content
-    """
-    # Extract variables from stream_setup - only unpack what we need
-    stream_callback = stream_setup['stream_callback']
-    stop_spinner = stream_setup['stop_spinner']
-    spinner_thread = stream_setup['spinner_thread']
-    stop_spinner_event = stream_setup['stop_spinner_event']
-    stop_spinner_func = stream_setup['stop_spinner_func']
-    
-    # Show spinner for all modes except when output is redirected
-    if should_stream:
-        # Two possible spinner types:
-        # 1. Rich spinner for stream_prettify
-        # 2. Regular spinner for all other modes (including fallback from stream-prettify)
-        
-        if use_stream_prettify and stop_spinner_func:
-            # Rich spinner is handled by callbacks
-            pass
-        elif spinner_thread and stop_spinner:
-            # Start the regular spinner thread
-            spinner_thread._args = (spinner_message,)
-            if not spinner_thread.is_alive():
-                spinner_thread.start()
-    else:
-        # For plaintext mode, use spinner instead of static message
-        # Only show spinner if output is not redirected
-        if sys.stdout.isatty():
-            # Create a temporary spinner for plaintext mode
-            temp_stop_event = threading.Event()
-            temp_spinner_thread = threading.Thread(
-                target=spinner,
-                args=(spinner_message,),
-                kwargs={"stop_event": temp_stop_event, "color": COLORS['cyan']}
-            )
-            temp_spinner_thread.daemon = True
-            temp_spinner_thread.start()
-            
-            # Store for cleanup in finally block
-            stream_setup['temp_spinner_thread'] = temp_spinner_thread
-            stream_setup['temp_stop_event'] = temp_stop_event
-    
-    # Set temperature
-    temp = args.temperature if temp_override is None else temp_override
-    
-    try:
-        # Make the API call
-        return client.chat(
-            prompt=prompt,
-            stream=should_stream,
-            messages=messages,
-            temperature=temp,
-            top_p=args.top_p,
-            max_tokens=args.max_tokens,
-            markdown_format=not args.plaintext,
-            stream_callback=stream_callback
-        )
-    except KeyboardInterrupt:
-        print("\nRequest cancelled by user.")
-        return ""
-    except Exception as e:
-        print(f"Error generating content: {e}")
-        return ""
-    finally:
-        # Stop the spinner
-        if use_stream_prettify and stop_spinner_event:
-            # Stop rich spinner
-            if not stream_setup['first_content_received']:
-                stop_spinner_event.set()
-        elif stop_spinner:
-            # Stop regular spinner
-            stop_spinner.set()
-            if spinner_thread and spinner_thread.is_alive():
-                spinner_thread.join()
-            
-            # Clear the spinner line completely
-            sys.stdout.write("\r" + " " * 100 + "\r")
-            sys.stdout.flush()
-        
-        # Stop temporary spinner for plaintext mode
-        if 'temp_stop_event' in stream_setup and 'temp_spinner_thread' in stream_setup:
-            stream_setup['temp_stop_event'].set()
-            if stream_setup['temp_spinner_thread'].is_alive():
-                stream_setup['temp_spinner_thread'].join()
-            
-            # Clear the spinner line completely
-            sys.stdout.write("\r" + " " * 100 + "\r")
-            sys.stdout.flush()
-
-def display_content(content, content_type, highlight_lang, args, use_stream_prettify, use_regular_prettify):
-    """Display generated content with appropriate formatting.
-    
-    Args:
-        content: The content to display
-        content_type: Type of content ('command' or 'description')
-        highlight_lang: Language for syntax highlighting
-        args: The parsed command-line arguments
-        use_stream_prettify: Whether stream prettify is enabled
-        use_regular_prettify: Whether regular prettify is enabled
-    """
-    if not content:
-        return
-    
-    # Define title based on content type - use a lookup instead of if-else
-    titles = {
-        'command': "Generated Command",
-        'description': "Command Description"
-    }
-    title = titles.get(content_type, "Generated Content")
-        
-    # Format content appropriately - create formatted content only when needed
-    if use_regular_prettify:
-        if content_type == 'command':
-            formatted_content = f"### {title}\n\n```{highlight_lang}\n{content}\n```"
-        else:  # description
-            formatted_content = f"### {title}\n\n{content}"
-    
-    # Only show formatted content if not already shown by stream-prettify
-    if not use_stream_prettify:
-        if use_regular_prettify:
-            # Use rich renderer for pretty output
-            prettify_markdown(formatted_content)
-        elif args.plaintext:
-            # Simple output for plaintext mode (no extra formatting)
-            if content_type == 'command':
-                print(content)
-            else:
-                print(content)
-        else:
-            # Regular display or fallback
-            if content_type == 'command':
-                # Box formatting for commands in regular mode - calculate once
-                term_width = shutil.get_terminal_size().columns
-                box_width = min(term_width - 4, len(content) + 8)
-                horizontal_line = "─" * box_width
-                spacing = box_width - len(title) - 11
-                content_spacing = box_width - len(content) - 2
-                
-                print(f"\n┌{horizontal_line}┐")
-                print(f"│ {COLORS['bold']}{title}:{COLORS['reset']}  {' ' * spacing}│")
-                print(f"│ {COLORS['green']}{content}{COLORS['reset']}{' ' * content_spacing}│")
-                print(f"└{horizontal_line}┘\n")
-            else:
-                # Simple display for descriptions
-                print(f"\n{content}\n")
 
 def shell_mode(client, args, logger=None):
     """Handle the shell command generation mode.
@@ -657,7 +375,7 @@ def shell_mode(client, args, logger=None):
         args: The parsed command-line arguments
         logger: Optional logger instance
     """
-    # Get the user prompt more efficiently
+    # Get the user prompt
     if args.prompt is None:
         try:
             print("Enter shell command description: ", end='')
@@ -676,12 +394,11 @@ def shell_mode(client, args, logger=None):
     if logger:
         logger.log("user", prompt)
     
-    # Enhance prompt with web search if enabled - reuse variables
+    # Enhance prompt with web search if enabled
     if args.web_search:
-        original_prompt = prompt
-        web_search_succeeded = False
-        
         try:
+            original_prompt = prompt
+            
             # Start spinner for web search
             stop_spinner = threading.Event()
             spinner_thread = threading.Thread(
@@ -694,23 +411,24 @@ def shell_mode(client, args, logger=None):
             
             try:
                 prompt = enhance_prompt_with_web_search(prompt, logger=logger, disable_citations=True)
-                web_search_succeeded = True
-            finally:
-                # Always stop the spinner
+                # Stop the spinner
                 stop_spinner.set()
                 spinner_thread.join()
-                
                 # Clear the spinner line completely
-                sys.stdout.write("\r" + " " * 100 + "\r")
-                sys.stdout.flush()
+                with TERMINAL_RENDER_LOCK:
+                    sys.stdout.write("\r" + " " * 100 + "\r")
+                    sys.stdout.flush()
+                    print("Enhanced input with web search results.")
+            except Exception as e:
+                # Stop the spinner before re-raising
+                stop_spinner.set()
+                spinner_thread.join()
+                raise e
             
-            if web_search_succeeded:
-                print("Enhanced input with web search results.")
-                
-                # Log the enhanced prompt if logging is enabled
-                if logger:
-                    # Use "web_search" role instead of "system" for clearer logs
-                    logger.log("web_search", prompt.replace(original_prompt, "").strip())
+            # Log the enhanced prompt if logging is enabled
+            if logger:
+                # Use "web_search" role instead of "system" for clearer logs
+                logger.log("web_search", prompt.replace(original_prompt, "").strip())
         except Exception as e:
             print(f"{COLORS['yellow']}Warning: Failed to enhance prompt with web search: {str(e)}{COLORS['reset']}")
             # Continue with the original prompt if web search fails
@@ -748,54 +466,104 @@ def shell_mode(client, args, logger=None):
     if logger:
         logger.log("system", system_prompt)
     
-    # Set up streaming once and reuse for both command and description
-    should_stream, use_stream_prettify, use_regular_prettify, stream_setup = setup_streaming(args)
+    # Set up display mode based on args (unified pattern)
+    should_stream = True  # Default behavior (stream-prettify)
+    stream_callback = None
+    live_display = None
+    stop_spinner_func = None
+    stop_spinner_event = None
+    first_content_received = False
+    
+    # Spinner for plaintext mode
+    plaintext_spinner_thread = None
+    plaintext_stop_event = None
+    
+    # Handle display mode based on parameters
+    if args.plaintext:
+        # Plain text mode - no streaming, no markdown rendering
+        should_stream = False
+        plaintext_spinner_thread, plaintext_stop_event = setup_plaintext_spinner("Generating command...", COLORS['cyan'])
+    else:
+        # Default stream-prettify mode - stream with live markdown rendering
+        live_display, stream_callback, setup_spinner = prettify_streaming_markdown()
+        if not live_display:
+            # Fallback if display creation fails
+            print(f"{COLORS['yellow']}Warning: Live display setup failed. Falling back to plain streaming.{COLORS['reset']}")
+    
+    # Set up the spinner if we have a live display and stream-prettify is enabled
+    if should_stream and not args.plaintext and live_display:
+        stop_spinner_event = threading.Event()
+        stop_spinner_func = setup_spinner(stop_spinner_event, color=COLORS['cyan'])
+    
+    # Create a wrapper for the stream callback that handles spinner
+    if stream_callback:
+        original_callback = stream_callback
+        
+        def spinner_handling_callback(content, **kwargs):
+            nonlocal first_content_received
+            
+            # On first content, stop the spinner 
+            if not first_content_received and stop_spinner_func:
+                first_content_received = True
+                
+                # Use lock to prevent terminal rendering conflicts
+                with TERMINAL_RENDER_LOCK:
+                    # Stop the spinner
+                    stop_spinner_func()
+                    # Ensure spinner message is cleared with an extra blank line
+                    sys.stdout.write("\r" + " " * 100 + "\r")
+                    sys.stdout.flush()
+            
+            # Call the original callback to update the display
+            if original_callback:
+                original_callback(content, **kwargs)
+        
+        # Use our wrapper callback
+        stream_callback = spinner_handling_callback
     
     # Generate the command
-    command = generate_with_model(
-        client=client, 
-        prompt=prompt, 
-        messages=messages, 
-        args=args, 
-        stream_setup=stream_setup, 
-        use_stream_prettify=use_stream_prettify, 
-        should_stream=should_stream,
-        spinner_message="Generating command...",
-        logger=logger
-    )
+    try:
+        command = client.chat(prompt, stream=should_stream,
+                           temperature=args.temperature, top_p=args.top_p,
+                           max_tokens=args.max_tokens, messages=messages,
+                           markdown_format=not args.plaintext,
+                           stream_callback=stream_callback)
+    except KeyboardInterrupt:
+        print("\nRequest cancelled by user.")
+        return
+    except Exception as e:
+        print(f"Error generating content: {e}")
+        return
     
-    if not command:
-        return  # Error already printed by client
+    # Stop plaintext spinner if it was started
+    cleanup_plaintext_spinner(plaintext_spinner_thread, plaintext_stop_event)
+    
+    # Ensure spinner is stopped if no content was received
+    if stop_spinner_event and not first_content_received:
+        stop_spinner_event.set()
+    
+    # Stop live display if using stream-prettify
+    if not args.plaintext and live_display:
+        # Before stopping the live display, update with complete=True to show final formatted content
+        if stream_callback and command:
+            # Format command with syntax highlighting for streaming display
+            formatted_command = f"```{highlight_lang}\n{command}\n```"
+            stream_callback(formatted_command, complete=True)
     
     # Log the generated command if logging is enabled
-    if logger:
+    if logger and command:
         logger.log("assistant", command)
     
-    # Get the most up-to-date shell type at command generation time
-    _, highlight_lang, _ = detect_shell()
-    
-    # Format with proper syntax highlighting for streaming prettify - only if needed
-    if use_stream_prettify and stream_setup['stream_callback'] and command:
-        # Create properly formatted markdown for streaming display
-        formatted_command = f"```{highlight_lang}\n{command}\n```"
-        # Update the live display with the formatted command
-        stream_setup['stream_callback'](formatted_command, complete=True)
-    
-    # Display the command
-    display_content(
-        content=command,
-        content_type='command',
-        highlight_lang=highlight_lang,
-        args=args,
-        use_stream_prettify=use_stream_prettify,
-        use_regular_prettify=use_regular_prettify
-    )
+    # Handle plain text response
+    if args.plaintext and command:
+        with TERMINAL_RENDER_LOCK:
+            print(command)
     
     # Skip interactive options if output is redirected (not a terminal)
     if not sys.stdout.isatty():
         return
     
-    # Display options with better formatting - prepare strings once
+    # Display options with better formatting
     options_text = f"{COLORS['bold']}Options:{COLORS['reset']}"
     options = [
         f"  {COLORS['cyan']}C{COLORS['reset']} - Copy       - Copy the command to clipboard",
@@ -809,7 +577,7 @@ def shell_mode(client, args, logger=None):
     with TERMINAL_RENDER_LOCK:
         # Add a small delay to ensure terminal rendering is complete,
         # especially important for stream-prettify mode
-        if use_stream_prettify:
+        if not args.plaintext:
             time.sleep(0.5)
             
         # Print options with proper flushing to ensure display
@@ -905,72 +673,98 @@ def shell_mode(client, args, logger=None):
         if logger:
             logger.log("system", f"Command description requested for {operating_system}/{shell_name}")
         
-        # Set up fresh streaming for description - reuse existing setup when possible
-        # We only need to refresh the streaming setup if we're using stream_prettify
-        if use_stream_prettify:
-            _, use_stream_prettify_desc, use_regular_prettify_desc, stream_setup_desc = setup_streaming(args)
+        # Set up fresh display for description (unified pattern)
+        desc_should_stream = True
+        desc_stream_callback = None
+        desc_live_display = None
+        desc_stop_spinner_func = None
+        desc_stop_spinner_event = None
+        desc_first_content_received = False
+        
+        # Spinner for plaintext mode
+        desc_plaintext_spinner_thread = None
+        desc_plaintext_stop_event = None
+        
+        # Handle display mode based on parameters
+        if args.plaintext:
+            # Plain text mode - no streaming, no markdown rendering
+            desc_should_stream = False
+            desc_plaintext_spinner_thread, desc_plaintext_stop_event = setup_plaintext_spinner("Generating command description...", COLORS['cyan'])
         else:
-            # Reuse the existing setup for non-prettify streaming
-            use_stream_prettify_desc = use_stream_prettify
-            use_regular_prettify_desc = use_regular_prettify
+            # Default stream-prettify mode - stream with live markdown rendering
+            desc_live_display, desc_stream_callback, desc_setup_spinner = prettify_streaming_markdown()
+            if not desc_live_display:
+                # Fallback if display creation fails
+                print(f"{COLORS['yellow']}Warning: Live display setup failed. Falling back to plain streaming.{COLORS['reset']}")
+        
+        # Set up the spinner if we have a live display and stream-prettify is enabled
+        if desc_should_stream and not args.plaintext and desc_live_display:
+            desc_stop_spinner_event = threading.Event()
+            desc_stop_spinner_func = desc_setup_spinner(desc_stop_spinner_event, color=COLORS['cyan'])
+        
+        # Create a wrapper for the stream callback that handles spinner
+        if desc_stream_callback:
+            desc_original_callback = desc_stream_callback
             
-            # Always create a fresh spinner for description
-            stop_spinner = threading.Event()
-            spinner_thread = threading.Thread(
-                target=spinner, 
-                args=("Generating command description...",), 
-                kwargs={"stop_event": stop_spinner, "color": COLORS['cyan']}
-            )
-            spinner_thread.daemon = True
+            def desc_spinner_handling_callback(content, **kwargs):
+                nonlocal desc_first_content_received
+                
+                # On first content, stop the spinner 
+                if not desc_first_content_received and desc_stop_spinner_func:
+                    desc_first_content_received = True
+                    
+                    # Use lock to prevent terminal rendering conflicts
+                    with TERMINAL_RENDER_LOCK:
+                        # Stop the spinner
+                        desc_stop_spinner_func()
+                        # Ensure spinner message is cleared with an extra blank line
+                        sys.stdout.write("\r" + " " * 100 + "\r")
+                        sys.stdout.flush()
+                
+                # Call the original callback to update the display
+                if desc_original_callback:
+                    desc_original_callback(content, **kwargs)
             
-            # Create a new stream setup with the fresh spinner
-            stream_setup_desc = {
-                'stream_callback': stream_setup.get('stream_callback'),
-                'live_display': stream_setup.get('live_display'),
-                'stop_spinner_func': stream_setup.get('stop_spinner_func'),
-                'stop_spinner': stop_spinner,
-                'spinner_thread': spinner_thread,
-                'stop_spinner_event': stream_setup.get('stop_spinner_event'),
-                'first_content_received': False
-            }
+            # Use our wrapper callback
+            desc_stream_callback = desc_spinner_handling_callback
         
         # Generate the description
-        description = generate_with_model(
-            client=client, 
-            prompt=describe_prompt, 
-            messages=describe_messages, 
-            args=args, 
-            stream_setup=stream_setup_desc, 
-            use_stream_prettify=use_stream_prettify_desc, 
-            should_stream=should_stream,
-            spinner_message="Generating command description...",
-            temp_override=0.3,
-            logger=logger
-        )
+        try:
+            description = client.chat(describe_prompt, stream=desc_should_stream,
+                                   temperature=0.3, top_p=args.top_p,
+                                   max_tokens=args.max_tokens, messages=describe_messages,
+                                   markdown_format=not args.plaintext,
+                                   stream_callback=desc_stream_callback)
+        except KeyboardInterrupt:
+            print("\nRequest cancelled by user.")
+            return
+        except Exception as e:
+            print(f"Error generating description: {e}")
+            return
         
-        if not description:
-            return  # Error already printed
+        # Stop plaintext spinner if it was started
+        cleanup_plaintext_spinner(desc_plaintext_spinner_thread, desc_plaintext_stop_event)
+        
+        # Ensure spinner is stopped if no content was received
+        if desc_stop_spinner_event and not desc_first_content_received:
+            desc_stop_spinner_event.set()
+        
+        # Stop live display if using stream-prettify
+        if not args.plaintext and desc_live_display:
+            # Before stopping the live display, update with complete=True to show final formatted content
+            if desc_stream_callback and description:
+                # Format description as markdown for prettier display
+                md_description = f"### Command Description\n\n{description}"
+                desc_stream_callback(md_description, complete=True)
         
         # Log the generated description if logging is enabled
-        if logger:
+        if logger and description:
             logger.log("assistant", description)
         
-        # Format with proper markdown for streaming prettify - only if needed
-        if use_stream_prettify_desc and stream_setup_desc['stream_callback'] and description:
-            # Format description as markdown for prettier display
-            md_description = f"### Command Description\n\n{description}"
-            # Update the live display with the formatted description
-            stream_setup_desc['stream_callback'](md_description, complete=True)
-        
-        # Display the description
-        display_content(
-            content=description,
-            content_type='description',
-            highlight_lang=highlight_lang,
-            args=args,
-            use_stream_prettify=use_stream_prettify_desc,
-            use_regular_prettify=use_regular_prettify_desc
-        )
+        # Handle plain text response
+        if args.plaintext and description:
+            with TERMINAL_RENDER_LOCK:
+                print(description)
     elif response == 'a' or response == '':
         print("\nCommand aborted.")
         

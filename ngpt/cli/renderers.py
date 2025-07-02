@@ -18,46 +18,6 @@ from rich.text import Text
 from rich.panel import Panel
 import rich.box
 
-def prettify_markdown(text):
-    """Render markdown text with beautiful formatting using Rich.
-    
-    The function handles both general markdown and code blocks with syntax highlighting.
-    For code generation mode, it automatically wraps the code in markdown code blocks.
-    
-    Args:
-        text (str): Markdown text to render
-        
-    Returns:
-        bool: True if rendering was successful, False otherwise
-    """
-    try:
-        console = Console()
-        
-        # Create a panel around the markdown for consistency with stream_prettify
-        # Get terminal dimensions
-        term_width = shutil.get_terminal_size().columns
-        
-        # Create panel with similar styling to stream_prettify
-        clean_header = "🤖 nGPT"
-        panel_title = Text(clean_header, style="cyan bold")
-        
-        md = Markdown(text)
-        panel = Panel(
-            md,
-            title=panel_title,
-            title_align="left",
-            border_style="cyan",
-            padding=(1, 1),
-            width=console.width - 4,  # Make panel slightly narrower than console
-            box=rich.box.ROUNDED
-        )
-        
-        console.print(panel)
-        return True
-    except Exception as e:
-        print(f"{COLORS['yellow']}Error using rich for markdown: {str(e)}{COLORS['reset']}")
-        return False
-
 def prettify_streaming_markdown(is_interactive=False, header_text=None):
     """Set up streaming markdown rendering.
     

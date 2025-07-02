@@ -1,5 +1,5 @@
 from ..formatters import COLORS
-from ..renderers import prettify_markdown, prettify_streaming_markdown, TERMINAL_RENDER_LOCK, setup_plaintext_spinner, cleanup_plaintext_spinner
+from ..renderers import prettify_streaming_markdown, TERMINAL_RENDER_LOCK, setup_plaintext_spinner, cleanup_plaintext_spinner
 from ..ui import spinner, copy_to_clipboard
 from ...utils import enhance_prompt_with_web_search, process_piped_input
 import sys
@@ -276,14 +276,10 @@ def code_mode(client, args, logger=None):
     if logger and generated_code:
         logger.log("assistant", generated_code)
         
-    # Print non-streamed output if needed
-    if generated_code and not should_stream:
+    # Print plaintext output if needed
+    if generated_code and args.plaintext:
         with TERMINAL_RENDER_LOCK:
-            if args.plaintext:
-                print(generated_code)
-            else:
-                print("\nGenerated code:")
-                prettify_markdown(generated_code)
+            print(generated_code)
             
     # Offer to copy to clipboard
     if generated_code and should_stream:
