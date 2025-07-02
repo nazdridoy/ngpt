@@ -74,6 +74,12 @@ def interactive_chat_session(client, args, logger=None):
         if multiline_enabled:
             print(f"  {COLORS['yellow']}/ml{COLORS['reset']}      : Open multiline editor")
         
+        # Add a dedicated keyboard shortcuts section
+        print(f"\n{COLORS['cyan']}Keyboard Shortcuts:{COLORS['reset']}")
+        if multiline_enabled:
+            print(f"  {COLORS['yellow']}Ctrl+E{COLORS['reset']}   : Open multiline editor")
+        print(f"  {COLORS['yellow']}Ctrl+C{COLORS['reset']}   : Interrupt/exit session")
+        
         print(f"\n{separator}\n")
 
     show_help()
@@ -703,6 +709,12 @@ def interactive_chat_session(client, args, logger=None):
                         event.app.exit(result=None)
                         raise KeyboardInterrupt()
                     
+                    # Add Ctrl+E binding for multiline input
+                    @kb.add('c-e')
+                    def open_multiline_editor(event):
+                        # Exit the prompt and return a special value that indicates we want multiline
+                        event.app.exit(result="/ml")
+                    
                     # Use HTML formatting for better styling
                     prompt_prefix = HTML(f"<ansigreen>command</ansigreen>: ")
                     
@@ -741,6 +753,13 @@ def interactive_chat_session(client, args, logger=None):
                 def _(event):
                     event.app.exit(result=None)
                     raise KeyboardInterrupt()
+                
+                # Add Ctrl+E binding for multiline input
+                @kb.add('c-e')
+                def open_multiline_editor(event):
+                    # Exit the prompt and return a special value that indicates we want multiline
+                    # We don't print any message here as it will be handled in the main loop
+                    event.app.exit(result="/ml")
                 
                 # Get user input with styled prompt - using proper HTML formatting
                 user_input = pt_prompt(
@@ -788,7 +807,8 @@ def interactive_chat_session(client, args, logger=None):
                 show_help()
                 continue
                 
-            if multiline_enabled and user_input.lower() == '/ml':
+            # Handle multiline input from either /ml command or Ctrl+E shortcut
+            if multiline_enabled and user_input == "/ml":
                 print(f"{COLORS['cyan']}Opening multiline editor. Press Ctrl+D to submit.{COLORS['reset']}")
                 multiline_input = get_multiline_input()
                 if multiline_input is None:
