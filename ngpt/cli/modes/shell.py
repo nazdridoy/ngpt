@@ -1,6 +1,6 @@
 from ..formatters import COLORS
 from ..ui import spinner, copy_to_clipboard, get_terminal_input
-from ..renderers import prettify_streaming_markdown, TERMINAL_RENDER_LOCK, setup_plaintext_spinner, cleanup_plaintext_spinner
+from ..renderers import prettify_streaming_markdown, TERMINAL_RENDER_LOCK, setup_plaintext_spinner, cleanup_plaintext_spinner, create_spinner_handling_callback
 from ...utils import enhance_prompt_with_web_search, process_piped_input
 import subprocess
 import sys
@@ -498,28 +498,8 @@ def shell_mode(client, args, logger=None):
     # Create a wrapper for the stream callback that handles spinner
     if stream_callback:
         original_callback = stream_callback
-        
-        def spinner_handling_callback(content, **kwargs):
-            nonlocal first_content_received
-            
-            # On first content, stop the spinner 
-            if not first_content_received and stop_spinner_func:
-                first_content_received = True
-                
-                # Use lock to prevent terminal rendering conflicts
-                with TERMINAL_RENDER_LOCK:
-                    # Stop the spinner
-                    stop_spinner_func()
-                    # Ensure spinner message is cleared with an extra blank line
-                    sys.stdout.write("\r" + " " * 100 + "\r")
-                    sys.stdout.flush()
-            
-            # Call the original callback to update the display
-            if original_callback:
-                original_callback(content, **kwargs)
-        
-        # Use our wrapper callback
-        stream_callback = spinner_handling_callback
+        first_content_received_ref = [first_content_received]
+        stream_callback = create_spinner_handling_callback(original_callback, stop_spinner_func, first_content_received_ref)
     
     # Generate the command
     try:
@@ -539,7 +519,7 @@ def shell_mode(client, args, logger=None):
     cleanup_plaintext_spinner(plaintext_spinner_thread, plaintext_stop_event)
     
     # Ensure spinner is stopped if no content was received
-    if stop_spinner_event and not first_content_received:
+    if stop_spinner_event and not first_content_received_ref[0]:
         stop_spinner_event.set()
     
     # Stop live display if using stream-prettify
@@ -705,28 +685,8 @@ def shell_mode(client, args, logger=None):
         # Create a wrapper for the stream callback that handles spinner
         if desc_stream_callback:
             desc_original_callback = desc_stream_callback
-            
-            def desc_spinner_handling_callback(content, **kwargs):
-                nonlocal desc_first_content_received
-                
-                # On first content, stop the spinner 
-                if not desc_first_content_received and desc_stop_spinner_func:
-                    desc_first_content_received = True
-                    
-                    # Use lock to prevent terminal rendering conflicts
-                    with TERMINAL_RENDER_LOCK:
-                        # Stop the spinner
-                        desc_stop_spinner_func()
-                        # Ensure spinner message is cleared with an extra blank line
-                        sys.stdout.write("\r" + " " * 100 + "\r")
-                        sys.stdout.flush()
-                
-                # Call the original callback to update the display
-                if desc_original_callback:
-                    desc_original_callback(content, **kwargs)
-            
-            # Use our wrapper callback
-            desc_stream_callback = desc_spinner_handling_callback
+            desc_first_content_received_ref = [desc_first_content_received]
+            desc_stream_callback = create_spinner_handling_callback(desc_original_callback, desc_stop_spinner_func, desc_first_content_received_ref)
         
         # Generate the description
         try:
@@ -746,7 +706,7 @@ def shell_mode(client, args, logger=None):
         cleanup_plaintext_spinner(desc_plaintext_spinner_thread, desc_plaintext_stop_event)
         
         # Ensure spinner is stopped if no content was received
-        if desc_stop_spinner_event and not desc_first_content_received:
+        if desc_stop_spinner_event and not desc_first_content_received_ref[0]:
             desc_stop_spinner_event.set()
         
         # Stop live display if using stream-prettify

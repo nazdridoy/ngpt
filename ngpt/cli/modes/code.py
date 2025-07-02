@@ -1,5 +1,5 @@
 from ..formatters import COLORS
-from ..renderers import prettify_streaming_markdown, TERMINAL_RENDER_LOCK, setup_plaintext_spinner, cleanup_plaintext_spinner
+from ..renderers import prettify_streaming_markdown, TERMINAL_RENDER_LOCK, setup_plaintext_spinner, cleanup_plaintext_spinner, create_spinner_handling_callback
 from ..ui import spinner, copy_to_clipboard
 from ...utils import enhance_prompt_with_web_search, process_piped_input
 import sys
@@ -179,28 +179,8 @@ def code_mode(client, args, logger=None):
     # Create a wrapper for the stream callback that handles spinner
     if stream_callback:
         original_callback = stream_callback
-        
-        def spinner_handling_callback(content, **kwargs):
-            nonlocal first_content_received
-            
-            # On first content, stop the spinner 
-            if not first_content_received and stop_spinner_func:
-                first_content_received = True
-                
-                # Use lock to prevent terminal rendering conflicts
-                with TERMINAL_RENDER_LOCK:
-                    # Stop the spinner
-                    stop_spinner_func()
-                    # Ensure spinner message is cleared with an extra blank line
-                    sys.stdout.write("\r" + " " * 100 + "\r")
-                    sys.stdout.flush()
-            
-            # Call the original callback to update the display
-            if original_callback:
-                original_callback(content, **kwargs)
-        
-        # Use our wrapper callback
-        stream_callback = spinner_handling_callback
+        first_content_received_ref = [first_content_received]
+        stream_callback = create_spinner_handling_callback(original_callback, stop_spinner_func, first_content_received_ref)
     
     # Select the appropriate system prompt based on formatting and preprompt
     if args.preprompt:
@@ -263,7 +243,7 @@ def code_mode(client, args, logger=None):
     cleanup_plaintext_spinner(processing_spinner_thread, processing_stop_event)
     
     # Ensure spinner is stopped if no content was received
-    if stop_spinner_event and not first_content_received:
+    if stop_spinner_event and not first_content_received_ref[0]:
         stop_spinner_event.set()
     
     # Stop live display if using stream-prettify

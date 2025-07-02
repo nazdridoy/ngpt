@@ -18,16 +18,45 @@ from rich.text import Text
 from rich.panel import Panel
 import rich.box
 
-def prettify_streaming_markdown(is_interactive=False, header_text=None):
+def create_spinner_handling_callback(original_callback, stop_spinner_func, first_content_received_ref):
+    """Create a spinner handling callback function to eliminate code repetition.
+    
+    This function creates a wrapper callback that handles stopping the spinner
+    on first content received and then delegates to the original callback.
+    
+    Args:
+        original_callback: The original stream callback function
+        stop_spinner_func: Function to stop the spinner
+        first_content_received_ref: Reference to the first_content_received variable (list with single element)
+        
+    Returns:
+        function: The wrapped callback function
+    """
+    def spinner_handling_callback(content, **kwargs):
+        # On first content, stop the spinner 
+        if not first_content_received_ref[0] and stop_spinner_func:
+            first_content_received_ref[0] = True
+            
+            # Use lock to prevent terminal rendering conflicts
+            with TERMINAL_RENDER_LOCK:
+                # Stop the spinner
+                stop_spinner_func()
+                # Ensure spinner message is cleared with an extra blank line
+                sys.stdout.write("\r" + " " * 100 + "\r")
+                sys.stdout.flush()
+        
+        # Call the original callback to update the display
+        if original_callback:
+            original_callback(content, **kwargs)
+    
+    return spinner_handling_callback
+
+def prettify_streaming_markdown():
     """Set up streaming markdown rendering.
     
     This function creates a live display context for rendering markdown
     that can be updated in real-time as streaming content arrives.
     
-    Args:
-        is_interactive (bool): Whether this is being used in interactive mode
-        header_text (str): Header text to include at the top (for interactive mode)
-        
     Returns:
         tuple: (live_display, update_function, stop_spinner_func) if successful, (None, None, None) otherwise
               stop_spinner_func is a function that should be called when first content is received
@@ -36,38 +65,19 @@ def prettify_streaming_markdown(is_interactive=False, header_text=None):
         console = Console()
         
         # Create an empty markdown object to start with
-        if is_interactive and header_text:
-            # For interactive mode, include header in a panel
-            # Clean up the header text to avoid duplication - use just "🤖 nGPT" instead of "╭─ 🤖 nGPT"
-            clean_header = "🤖 nGPT"
-            panel_title = Text(clean_header, style="cyan bold")
-            
-            # Create a nicer, more compact panel
-            padding = (1, 1)  # Less horizontal padding (left, right)
-            md_obj = Panel(
-                Markdown(""),
-                title=panel_title,
-                title_align="left",
-                border_style="cyan",
-                padding=padding,
-                width=console.width - 4,  # Make panel slightly narrower than console
-                box=rich.box.ROUNDED
-            )
-        else:
-            # Always use a panel - even in non-interactive mode
-            clean_header = "🤖 nGPT"
-            panel_title = Text(clean_header, style="cyan bold")
-            
-            padding = (1, 1)  # Less horizontal padding (left, right)
-            md_obj = Panel(
-                Markdown(""),
-                title=panel_title,
-                title_align="left",
-                border_style="cyan",
-                padding=padding,
-                width=console.width - 4,  # Make panel slightly narrower than console
-                box=rich.box.ROUNDED
-            )
+        clean_header = "🤖 nGPT"
+        panel_title = Text(clean_header, style="cyan bold")
+        
+        padding = (1, 1)  # Less horizontal padding (left, right)
+        md_obj = Panel(
+            Markdown(""),
+            title=panel_title,
+            title_align="left",
+            border_style="cyan",
+            padding=padding,
+            width=console.width - 4,  # Make panel slightly narrower than console
+            box=rich.box.ROUNDED
+        )
         
         # Get terminal dimensions for better display
         term_width = shutil.get_terminal_size().columns
@@ -112,42 +122,22 @@ def prettify_streaming_markdown(is_interactive=False, header_text=None):
                     live.start()
                 
                 # Update content in live display
-                if is_interactive and header_text:
-                    # Update the panel content - for streaming, only show the last portion that fits in display_height
-                    if not is_complete:
-                        # Calculate approximate lines needed (rough estimation)
-                        content_lines = content.count('\n') + 1
-                        available_height = display_height - 4  # Account for panel borders and padding
-                        
-                        if content_lines > available_height:
-                            # If content is too big, show only the last part that fits
-                            lines = content.split('\n')
-                            truncated_content = '\n'.join(lines[-available_height:])
-                            md_obj.renderable = Markdown(truncated_content)
-                        else:
-                            md_obj.renderable = Markdown(content)
-                    else:
-                        md_obj.renderable = Markdown(content)
+                if not is_complete:
+                    # Calculate approximate lines needed
+                    content_lines = content.count('\n') + 1
+                    available_height = display_height - 4  # Account for panel borders and padding
                     
-                    live.update(md_obj)
-                else:
-                    # Same logic for non-interactive mode
-                    if not is_complete:
-                        # Calculate approximate lines needed
-                        content_lines = content.count('\n') + 1
-                        available_height = display_height - 4  # Account for panel borders and padding
-                        
-                        if content_lines > available_height:
-                            # If content is too big, show only the last part that fits
-                            lines = content.split('\n')
-                            truncated_content = '\n'.join(lines[-available_height:])
-                            md_obj.renderable = Markdown(truncated_content)
-                        else:
-                            md_obj.renderable = Markdown(content)
+                    if content_lines > available_height:
+                        # If content is too big, show only the last part that fits
+                        lines = content.split('\n')
+                        truncated_content = '\n'.join(lines[-available_height:])
+                        md_obj.renderable = Markdown(truncated_content)
                     else:
                         md_obj.renderable = Markdown(content)
-                        
-                    live.update(md_obj)
+                else:
+                    md_obj.renderable = Markdown(content)
+                    
+                live.update(md_obj)
                     
                 # Ensure the display refreshes with new content
                 live.refresh()

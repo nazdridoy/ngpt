@@ -10,7 +10,7 @@ import re
 from datetime import datetime
 from ...utils.config import get_config_dir
 from ..formatters import COLORS
-from ..renderers import prettify_streaming_markdown, TERMINAL_RENDER_LOCK, setup_plaintext_spinner, cleanup_plaintext_spinner
+from ..renderers import prettify_streaming_markdown, TERMINAL_RENDER_LOCK, setup_plaintext_spinner, cleanup_plaintext_spinner, create_spinner_handling_callback
 from ..ui import spinner, get_multiline_input
 from ...utils import enhance_prompt_with_web_search
 
@@ -507,49 +507,23 @@ def interactive_chat_session(client, args, logger=None):
                 plaintext_spinner_thread, plaintext_stop_event = setup_plaintext_spinner("Waiting for response...", COLORS['green'])
             
             if not args.plaintext and should_stream:
-                # Set up streaming markdown with interactive mode
-                live_display, stream_callback, setup_spinner = prettify_streaming_markdown(is_interactive=True)
+                # Set up streaming markdown (same as other modes)
+                live_display, stream_callback, setup_spinner = prettify_streaming_markdown()
                 
                 if not live_display:
                     # Fallback to plain text if live display setup failed
                     should_stream = False
                     print(f"{COLORS['yellow']}Falling back to plain text mode.{COLORS['reset']}")
                 else:
-                    # Create a wrapper for the stream callback that handles spinner and live display
-                    original_callback = stream_callback
-                    
-                    def spinner_handling_callback(content, **kwargs):
-                        nonlocal first_content_received
-                        
-                        # On first content, stop the spinner and start the live display
-                        if not first_content_received:
-                            first_content_received = True
-                            
-                            # Use lock to prevent terminal rendering conflicts
-                            with TERMINAL_RENDER_LOCK:
-                                # Stop the spinner if it's running
-                                if stop_spinner_func:
-                                    stop_spinner_func()
-                                    
-                                # Clear the spinner line completely without leaving extra newlines
-                                # Use direct terminal control to ensure consistency
-                                sys.stdout.write("\r" + " " * shutil.get_terminal_size().columns + "\r")
-                                sys.stdout.flush()
-                                
-                                # Now start the live display
-                                if live_display:
-                                    live_display.start()
-                        
-                                                # Call the original callback to update content
-                        if original_callback:
-                            original_callback(content, **kwargs)
-                    
-                    # Use our wrapper callback
-                    stream_callback = spinner_handling_callback
-                    
-                    # Set up and start the spinner
+                    # Set up the spinner if we have a live display and stream-prettify is enabled
                     stop_spinner_event = threading.Event()
                     stop_spinner_func = setup_spinner(stop_spinner_event, "Waiting for response...", color=COLORS['green'])
+                    
+                    # Create a wrapper for the stream callback that handles spinner
+                    if stream_callback:
+                        original_callback = stream_callback
+                        first_content_received_ref = [first_content_received]
+                        stream_callback = create_spinner_handling_callback(original_callback, stop_spinner_func, first_content_received_ref)
 
             # Get AI response with conversation history
             response = client.chat(
@@ -567,15 +541,11 @@ def interactive_chat_session(client, args, logger=None):
             cleanup_plaintext_spinner(plaintext_spinner_thread, plaintext_stop_event)
             
             # Ensure spinner is stopped if no content was received
-            if stop_spinner_event and not first_content_received:
+            if stop_spinner_event and not first_content_received_ref[0]:
                 stop_spinner_event.set()
-                # Clear the spinner line completely without leaving extra newlines
-                # Use direct terminal control to ensure consistency
-                sys.stdout.write("\r" + " " * shutil.get_terminal_size().columns + "\r")
-                sys.stdout.flush()
             
             # Stop live display if using stream-prettify
-            if not args.plaintext and live_display and first_content_received:
+            if not args.plaintext and live_display and first_content_received_ref[0]:
                 # Before stopping the live display, update with complete=True to show final formatted content
                 if stream_callback and response:
                     stream_callback(response, complete=True)
