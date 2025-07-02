@@ -40,7 +40,7 @@ For a quick start, refer to the [Installation](installation.md) and [CLI Usage](
 - 🎭 **System Prompts**: Customize model behavior with custom system prompts
 - 🤖 **Custom Roles**: Create and use reusable AI roles for specialized tasks
 - 📃 **Conversation Logging**: Save your conversations to text files for later reference
-- 💾 **Session Management**: Save, load, and list interactive chat sessions.
+- 💾 **Session Management**: Save, load, and list interactive chat sessions with advanced session manager
 - 🔌 **Modular Architecture**: Well-structured codebase with clean separation of concerns
 - 🔄 **Provider Switching**: Easily switch between different LLM providers with a single parameter
 - 🚀 **Performance Optimized**: Fast response times and minimal resource usage
@@ -56,10 +56,15 @@ ngpt -i
 # Inside interactive mode, you can use commands like:
 # /help     - Show help menu
 # /save     - Save the current session
-# /load     - Load a previous session
+# /load     - Load a previous session through interactive session manager
 # /sessions - List saved sessions
 # /clear    - Clear the conversation
 # /exit     - Exit the session (also 'exit', 'quit', 'bye' without '/')
+# 
+# Keyboard shortcuts:
+# Ctrl+E    - Open multiline editor for complex inputs
+# Ctrl+C    - Exit the session
+# ↑/↓       - Navigate command history
 
 # Generate code
 ngpt --code "function to calculate Fibonacci numbers"

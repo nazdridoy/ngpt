@@ -152,29 +152,87 @@ This opens a continuous chat session where the AI remembers previous exchanges. 
 - Press Ctrl+C to exit the session
 - Use `help` to see a list of available commands.
 
+#### Keyboard Shortcuts
+
+Interactive mode provides convenient keyboard shortcuts:
+
+- **`Ctrl+E`**: Open multiline editor for complex inputs
+- **`Ctrl+C`**: Interrupt current operation or exit the session
+- **`↑/↓`**: Navigate through command history
+
+#### Command History
+
+Navigate through previously entered commands using arrow keys:
+- Press `↑` (up arrow) to access earlier commands
+- Press `↓` (down arrow) to move forward through the command history
+
+This makes it easy to repeat or modify previous prompts.
+
 #### Session Management
 
 In interactive mode, you can manage your chat sessions with the following commands:
 
-- **`save`**: Saves the current conversation to a timestamped JSON file in the `history` subdirectory of your configuration folder.
-- **`load`**: Lists recent sessions and prompts you to select one to load, restoring the conversation history.
-- **`sessions`**: Displays a list of all saved sessions.
-- **`clear`**: Clears the current conversation history.
-- **`history`**: Shows the full history of the current conversation.
-- **`exit`**: Exits the interactive session.
-- **`help`**: Shows the help menu with all available commands.
+- **`/save [name]`**: Saves the current conversation with an optional custom name.
+- **`/load`**: Opens the interactive session manager to browse and load previous sessions.
+- **`/sessions`**: Displays a list of all saved sessions.
+- **`/clear`**: Clears the current conversation history.
+- **`/exit`**: Exits the interactive session (also works with `exit`, `quit`, or `bye` without the slash).
+- **`/help`**: Shows the help menu with all available commands.
+
+#### Interactive Session Manager
+
+The improved session manager provides a full-featured interface for working with saved sessions:
+
+```
+🤖 nGPT Session Manager - List Sessions 🤖
+────────────────────────────────────
+
+Sessions (sorted by date, oldest first):
+  [0] 2023-05-15 10:30  •    Python Helper       (2.5 KB)
+  [1] 2023-06-20 14:45  ••   Project Brainstorm  (15 KB) 
+  [2] 2023-07-10 09:15  •••  Code Review         (35 KB)
+```
+
+Available commands:
+- **`list`**: Show session list (sorted by date)
+- **`preview <idx>`**: Show preview of session messages
+- **`load <idx>`**: Load a session
+- **`rename <idx> <name>`**: Rename a session
+- **`delete <idx>`**: Delete a session
+- **`search <query>`**: Search sessions by name
+- **`help`**: Show available commands
+- **`exit`**: Exit session manager
+
+Sessions display:
+- Creation date and last modified time
+- Size indicator (• small, •• medium, ••• large)
+- Custom name (if set) or default name
+- File size
 
 Example:
 ```
-> save
-Session saved to /home/user/.config/ngpt/history/session_2024-10-26_12-30-00.json
+> /load
+🤖 nGPT Session Manager - List Sessions 🤖
+────────────────────────────────────
 
-> load
-Saved Sessions:
-  [0] session_2024-10-26_12-30-00.json
-  [1] session_2024-10-25_18-00-00.json
-Enter the number of the session to load: 0
-Session loaded from ...
+Sessions (sorted by date, oldest first):
+  [0] 2024-01-15 10:30  •    Python Helper       (2.5 KB)
+  [1] 2024-01-20 14:45  ••   Project Brainstorm  (15 KB) 
+  [2] 2024-02-10 09:15  •••  Code Review         (35 KB)
+
+command: preview 1
+🤖 nGPT Session Manager - Preview 🤖
+────────────────────────────────────
+
+╭─ 👤 User 1
+│ How can I structure my new web application project?
+
+╭─ 🤖 AI
+│ For a well-structured web application, I recommend...
+
+command: load 1
+Loading session "Project Brainstorm"...
+Session loaded successfully!
 ```
 
 #### Conversation Logging
@@ -216,8 +274,8 @@ Enable multiline input in interactive chat mode:
 ngpt -i
 ```
 
-In interective mode you can:
-- Use the "ml" command to enter multiline text mode
+In interactive mode you can:
+- Use the `/ml` command or press `Ctrl+E` to enter multiline text mode
 - Type or paste complex, multi-paragraph prompts
 - Press Ctrl+D (or Ctrl+Z on Windows) to submit the multiline input
 - Exit multiline mode anytime by typing ".exit" on a new line
@@ -230,7 +288,7 @@ This is especially useful when:
 
 Example usage:
 ```
-> ml
+> /ml
 (multiline mode - press Ctrl+D to submit)
 Here's the error I'm getting:
 
