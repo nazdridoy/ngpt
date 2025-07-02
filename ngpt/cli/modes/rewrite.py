@@ -1,11 +1,11 @@
 import sys
 import threading
 import time
-from ..ui.formatters import COLORS
-from ..ui.renderers import prettify_streaming_markdown, TERMINAL_RENDER_LOCK, setup_plaintext_spinner, cleanup_plaintext_spinner, create_spinner_handling_callback
-from ..ui.ui import get_multiline_input, spinner, copy_to_clipboard
-from ...utils.web_search import enhance_prompt_with_web_search
-from ..pipe import process_piped_input
+from ngpt.ui.formatters import COLORS
+from ngpt.ui.renderers import prettify_streaming_markdown, TERMINAL_RENDER_LOCK, setup_plaintext_spinner, cleanup_plaintext_spinner, create_spinner_handling_callback
+from ngpt.ui.tui import get_multiline_input, spinner, copy_to_clipboard
+from ngpt.utils.web_search import enhance_prompt_with_web_search
+from ngpt.ui.pipe import process_piped_input
 
 # System prompt for rewriting text
 REWRITE_SYSTEM_PROMPT = """You are an expert text editor and rewriter. Your task is to rewrite the user's text to improve readability and flow while carefully preserving the original meaning, tone, and style.

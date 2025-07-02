@@ -7,7 +7,7 @@ from .renderers import (
     create_spinner_handling_callback,
     TERMINAL_RENDER_LOCK
 )
-from .ui import (
+from .tui import (
     spinner,
     copy_to_clipboard,
     get_multiline_input,

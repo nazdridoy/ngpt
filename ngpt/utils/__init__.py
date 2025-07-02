@@ -1,12 +1,12 @@
 # ngpt utils module
 
-from .web_search import (
+from ngpt.utils.web_search import (
     enhance_prompt_with_web_search,
     get_web_search_results,
     format_web_search_results_for_prompt
 )
 
-from .roles import (
+from ngpt.utils.roles import (
     handle_role_config,
     get_role_prompt,
     create_role,

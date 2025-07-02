@@ -1,8 +1,8 @@
-from ..ui.formatters import COLORS
-from ..ui.renderers import prettify_streaming_markdown, TERMINAL_RENDER_LOCK, setup_plaintext_spinner, cleanup_plaintext_spinner, create_spinner_handling_callback
-from ..ui.ui import spinner
-from ...utils.web_search import enhance_prompt_with_web_search
-from ..pipe import process_piped_input
+from ngpt.ui.formatters import COLORS
+from ngpt.ui.renderers import prettify_streaming_markdown, TERMINAL_RENDER_LOCK, setup_plaintext_spinner, cleanup_plaintext_spinner, create_spinner_handling_callback
+from ngpt.ui.tui import spinner
+from ngpt.utils.web_search import enhance_prompt_with_web_search
+from ngpt.ui.pipe import process_piped_input
 import sys
 import threading
 

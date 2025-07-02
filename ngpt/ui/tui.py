@@ -2,7 +2,7 @@ import sys
 import time
 import shutil
 import platform
-from .formatters import COLORS
+from ngpt.ui.formatters import COLORS
 
 # Optional imports for enhanced UI
 try:

@@ -1,9 +1,9 @@
 import argparse
 import sys
 import os
-from ..client import NGPTClient
-from ..core.config import load_config, get_config_path, load_configs, add_config_entry, remove_config_entry
-from ..core.cli_config import (
+from ngpt.api.client import NGPTClient
+from ngpt.core.config import load_config, get_config_path, load_configs, add_config_entry, remove_config_entry, check_config
+from ngpt.core.cli_config import (
     set_cli_config_option, 
     get_cli_config_option, 
     unset_cli_config_option, 
@@ -12,20 +12,19 @@ from ..core.cli_config import (
     CLI_CONFIG_OPTIONS,
     load_cli_config
 )
-from ..core.log import create_logger
-from .. import __version__
+from ngpt.core.log import create_logger
+from ngpt import __version__
 
-from .ui.formatters import COLORS
-from ..core.config import check_config
-from .modes.interactive import interactive_chat_session
-from .modes.chat import chat_mode
-from .modes.code import code_mode
-from .modes.shell import shell_mode
-from .modes.text import text_mode
-from .modes.rewrite import rewrite_mode
-from .modes.gitcommsg import gitcommsg_mode
-from .args import parse_args, validate_args, handle_cli_config_args, setup_argument_parser, handle_role_config_args
-from ..utils.roles import handle_role_config, get_role_prompt
+from ngpt.ui.formatters import COLORS
+from ngpt.cli.modes.interactive import interactive_chat_session
+from ngpt.cli.modes.chat import chat_mode
+from ngpt.cli.modes.code import code_mode
+from ngpt.cli.modes.shell import shell_mode
+from ngpt.cli.modes.text import text_mode
+from ngpt.cli.modes.rewrite import rewrite_mode
+from ngpt.cli.modes.gitcommsg import gitcommsg_mode
+from ngpt.cli.args import parse_args, validate_args, handle_cli_config_args, setup_argument_parser, handle_role_config_args
+from ngpt.utils.roles import handle_role_config, get_role_prompt
 
 def show_cli_config_help():
     """Display help information about CLI configuration."""

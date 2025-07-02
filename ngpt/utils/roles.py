@@ -2,8 +2,8 @@ import os
 import json
 import sys
 from pathlib import Path
-from ..cli.ui.formatters import COLORS
-from ..cli.ui.ui import get_multiline_input
+from ngpt.ui.formatters import COLORS
+from ngpt.ui.tui import get_multiline_input
 
 # Role directory within config
 ROLE_DIR_NAME = "ngpt_roles"

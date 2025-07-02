@@ -1,8 +1,8 @@
 from importlib.metadata import version as get_version
 __version__ = get_version("ngpt")
 
-from .client import NGPTClient
-from .core.config import (
+from ngpt.api.client import NGPTClient
+from ngpt.core.config import (
     load_config, 
     get_config_path, 
     get_config_dir,
@@ -14,7 +14,7 @@ from .core.config import (
     check_config
 )
 # Export CLI config functions for public API
-from .core.cli_config import (
+from ngpt.core.cli_config import (
     load_cli_config,
     set_cli_config_option,
     get_cli_config_option,
@@ -39,5 +39,5 @@ __all__ = [
 ]
 
 # Import cli last to avoid circular imports
-from .cli import main
+from ngpt.cli import main
 __all__.append("main") 

@@ -4,7 +4,7 @@ import subprocess
 import tempfile
 import sys
 import threading
-from .formatters import COLORS
+from ngpt.ui.formatters import COLORS
 
 # Global lock for terminal rendering to prevent race conditions
 TERMINAL_RENDER_LOCK = threading.Lock()
@@ -155,7 +155,7 @@ def prettify_streaming_markdown():
         # Define a function to set up and start the spinner
         def setup_spinner(stop_event, message="Waiting for AI response...", color=COLORS['cyan']):
             nonlocal stop_spinner_event, spinner_thread
-            from .ui import spinner
+            from ngpt.ui import spinner
             import threading
             
             # Store the event so the update function can access it
@@ -194,7 +194,7 @@ def setup_plaintext_spinner(message="Waiting for response...", color=COLORS['cya
     """
     import threading
     import sys
-    from .ui import spinner
+    from ngpt.ui import spinner
     
     # Only show spinner if output is a terminal (not redirected)
     if not sys.stdout.isatty():

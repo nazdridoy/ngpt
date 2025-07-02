@@ -8,11 +8,11 @@ import json
 import uuid
 import re
 from datetime import datetime
-from ...core.config import get_config_dir
-from ..ui.formatters import COLORS
-from ..ui.renderers import prettify_streaming_markdown, TERMINAL_RENDER_LOCK, setup_plaintext_spinner, cleanup_plaintext_spinner, create_spinner_handling_callback
-from ..ui.ui import spinner, get_multiline_input
-from ...utils.web_search import enhance_prompt_with_web_search
+from ngpt.core.config import get_config_dir
+from ngpt.ui.formatters import COLORS
+from ngpt.ui.renderers import prettify_streaming_markdown, TERMINAL_RENDER_LOCK, setup_plaintext_spinner, cleanup_plaintext_spinner, create_spinner_handling_callback
+from ngpt.ui.tui import spinner, get_multiline_input
+from ngpt.utils.web_search import enhance_prompt_with_web_search
 
 # Optional imports for enhanced UI
 try:
