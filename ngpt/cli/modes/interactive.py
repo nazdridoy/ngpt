@@ -259,8 +259,8 @@ def interactive_chat_session(client, args, logger=None):
         def get_last_modified(session):
             return session.get("last_modified") or session.get("created_at") or ""
         
-        # Sort sessions by last modified time (newest first)
-        sorted_sessions = sorted(index["sessions"], key=get_last_modified, reverse=True)
+        # Sort sessions by last modified time (oldest first)
+        sorted_sessions = sorted(index["sessions"], key=get_last_modified, reverse=False)
         
         # Format dates nicely and calculate session sizes
         for session in sorted_sessions:
@@ -299,7 +299,8 @@ def interactive_chat_session(client, args, logger=None):
         }
         
         current_mode = 'list'
-        current_session_idx = 0 if sorted_sessions else -1
+        # Initialize to the last index (newest session) rather than the first
+        current_session_idx = len(sorted_sessions) - 1 if sorted_sessions else -1
         preview_mode = 'tail'
         preview_count = 5
         filtered_sessions = sorted_sessions.copy()
@@ -368,8 +369,8 @@ def interactive_chat_session(client, args, logger=None):
                 print(f"{COLORS['yellow']}Filtered by: \"{search_query}\" ({len(filtered_sessions)} results){COLORS['reset']}")
             
             # Header row
-            print(f"\n {COLORS['cyan']}#{COLORS['reset']}  {COLORS['cyan']}Size{COLORS['reset']}  {COLORS['cyan']}Session Name{COLORS['reset']}                        {COLORS['cyan']}Last Modified{COLORS['reset']}")
-            print(f" {COLORS['gray']}─{COLORS['reset']}  {COLORS['gray']}────{COLORS['reset']}  {COLORS['gray']}────────────────────────────────────{COLORS['reset']}  {COLORS['gray']}─────────────────{COLORS['reset']}")
+            print(f"\n  {COLORS['cyan']}#{COLORS['reset']}  {COLORS['cyan']}Size{COLORS['reset']}  {COLORS['cyan']}Session Name{COLORS['reset']}                        {COLORS['cyan']}Last Modified{COLORS['reset']}")
+            print(f"  {COLORS['gray']}─{COLORS['reset']}  {COLORS['gray']}────{COLORS['reset']}  {COLORS['gray']}────────────────────────────────────{COLORS['reset']}  {COLORS['gray']}─────────────────{COLORS['reset']}")
             
             # Session rows
             if not filtered_sessions:
@@ -385,9 +386,9 @@ def interactive_chat_session(client, args, logger=None):
                     if len(name) > 30:
                         name = name[:27] + "..."
                     
-                    # Highlight current session
+                    # Display sessions with consistent formatting
                     if i == current_session_idx and current_mode == 'list':
-                        print(f" {COLORS['cyan']}{COLORS['bold']}▶ {i:<2}{COLORS['reset']} {size_color}{size_indicator:<4}{COLORS['reset']} {COLORS['white']}{COLORS['bold']}{name:<35}{COLORS['reset']} {COLORS['white']}{last_fmt}{COLORS['reset']}")
+                        print(f"  {COLORS['cyan']}{COLORS['bold']}{i:<2}{COLORS['reset']} {size_color}{size_indicator:<4}{COLORS['reset']} {COLORS['white']}{COLORS['bold']}{name:<35}{COLORS['reset']} {COLORS['white']}{last_fmt}{COLORS['reset']}")
                     else:
                         print(f"  {COLORS['yellow']}{i:<2}{COLORS['reset']} {size_color}{size_indicator:<4}{COLORS['reset']} {COLORS['white']}{name:<35}{COLORS['reset']} {COLORS['gray']}{last_fmt}{COLORS['reset']}")
             
