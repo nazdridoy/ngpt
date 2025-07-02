@@ -219,35 +219,33 @@ def interactive_chat_session(client, args, logger=None):
     def update_session_in_index(session_id, session_name, update_existing=False):
         """Add or update a session in the index."""
         index = get_session_index()
-        
+        now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         # Check if session already exists in index
         session_exists = False
         for session in index["sessions"]:
             if session["id"] == session_id:
                 session["name"] = session_name
+                session["last_modified"] = now_str
                 session_exists = True
                 break
-        
         # If session doesn't exist and we're not just updating, add it
         if not session_exists and not update_existing:
             index["sessions"].append({
                 "id": session_id,
                 "name": session_name,
-                "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                "created_at": now_str,
+                "last_modified": now_str
             })
-        
         save_session_index(index)
 
     def save_session(session_name=None):
         """Save the current conversation to a JSON file, creating a new session or updating the current one."""
         nonlocal current_session_id, current_session_filepath, current_session_name, first_user_prompt
         history_dir = get_history_dir()
-
         if current_session_id is None:
             # Generate a new session ID if not already set (new session or cleared)
             current_session_id = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{uuid.uuid4().hex[:8]}"
             current_session_filepath = history_dir / f"session_{current_session_id}.json"
-            
             # Generate a session name if none provided
             if not session_name:
                 # Use first user prompt to generate name
@@ -257,32 +255,39 @@ def interactive_chat_session(client, args, logger=None):
                     current_session_name = "Untitled Session"
             else:
                 current_session_name = session_name
-                
             # Add to index
             update_session_in_index(current_session_id, current_session_name)
-            
             print(f"\n{COLORS['green']}Starting new session: {current_session_name}{COLORS['reset']}")
-        elif session_name:
-            # Update existing session name
-            current_session_name = session_name
+        else:
+            # Always update last_modified, and optionally name
+            if session_name:
+                current_session_name = session_name
             update_session_in_index(current_session_id, current_session_name, update_existing=True)
-        
         with open(current_session_filepath, "w") as f:
             json.dump(conversation, f, indent=2)
-        
         print(f"\n{COLORS['green']}Session saved as: {current_session_name}{COLORS['reset']}")
 
     def list_sessions():
-        """List all saved sessions."""
+        """List all saved sessions, sorted by last_modified ascending."""
         index = get_session_index()
-        
         if not index["sessions"]:
             print(f"\n{COLORS['yellow']}No saved sessions found.{COLORS['reset']}")
             return
-            
+        # Sort by last_modified (or created_at if missing)
+        def get_last_modified(session):
+            return session.get("last_modified") or session.get("created_at") or ""
+        sorted_sessions = sorted(index["sessions"], key=get_last_modified)
         print(f"\n{COLORS['cyan']}{COLORS['bold']}Saved Sessions:{COLORS['reset']}")
-        for i, session in enumerate(index["sessions"]):
-            print(f"  [{i}] {session['name']} (created: {session['created_at']})")
+        for i, session in enumerate(sorted_sessions):
+            name = session['name']
+            # Use last_modified if available, else created_at
+            last = session.get('last_modified') or session.get('created_at', 'N/A')
+            # Format to 12-hour with AM/PM if possible
+            try:
+                last_fmt = datetime.strptime(last, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M %p')
+            except Exception:
+                last_fmt = last
+            print(f"  [{i}] {name} | Last: {last_fmt}")
 
     def load_session():
         """Load a conversation from a saved session file."""
