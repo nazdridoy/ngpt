@@ -31,6 +31,7 @@ COLORS = {
     "blue": "\033[34m",
     "magenta": "\033[35m",
     "gray": "\033[90m",
+    "white": "\033[37m",
     "bg_blue": "\033[44m",
     "bg_cyan": "\033[46m"
 }
