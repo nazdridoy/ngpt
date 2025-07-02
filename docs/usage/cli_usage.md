@@ -43,10 +43,9 @@ usage: ngpt [-h] [-v] [--api-key API_KEY] [--base-url BASE_URL] [--model MODEL] 
             [--temperature TEMPERATURE] [--top_p TOP_P] [--max_tokens MAX_TOKENS] [--log [FILE]]
             [--preprompt PREPROMPT | --role ROLE] [--config [CONFIG]] [--config-index CONFIG_INDEX]
             [--provider PROVIDER] [--remove] [--show-config] [--all] [--list-models] [--cli-config [COMMAND ...]]
-            [--role-config [ACTION ...]] [--display-mode {no-stream,prettify,stream-prettify}] [--language LANGUAGE]
-            [--rec-chunk] [--diff [FILE]] [--chunk-size CHUNK_SIZE] [--analyses-chunk-size ANALYSES_CHUNK_SIZE]
-            [--max-msg-lines MAX_MSG_LINES] [--max-recursion-depth MAX_RECURSION_DEPTH] [--humanize] [-i | -s | -c |
-            -t | -r | -g]
+            [--role-config [ACTION ...]] [--plaintext] [--language LANGUAGE] [--rec-chunk] [--diff [FILE]]
+            [--chunk-size CHUNK_SIZE] [--analyses-chunk-size ANALYSES_CHUNK_SIZE] [--max-msg-lines MAX_MSG_LINES]
+            [--max-recursion-depth MAX_RECURSION_DEPTH] [--humanize] [-i | -s | -c | -t | -r | -g]
             [prompt]
 
 nGPT - AI-powered terminal toolkit for code, commits, commands & chat
@@ -92,9 +91,7 @@ Configuration Options::
 
 Output Display Options::
 
---display-mode {no-stream,prettify,stream-prettify}
-                                    Set display mode: no-stream (plain text), prettify (formatted non-streaming),
-                                    stream-prettify (live markdown)
+--plaintext                         Disable streaming and markdown rendering (plain text output)
 
 Code Mode Options::
 
@@ -257,10 +254,10 @@ ngpt -i --preprompt "You are a Python programming tutor"
 ngpt -i --web-search
 
 # Interactive mode with markdown formatting
-ngpt -i --display-mode prettify
+ngpt -i
 
-# Interactive mode with real-time markdown formatting
-ngpt -i --display-mode stream-prettify
+# Interactive mode with real-time markdown formatting (default)
+ngpt -i
 ```
 
 ### Custom Roles
@@ -333,13 +330,13 @@ ngpt --code --language javascript "create a function that calculates prime numbe
 You can combine code generation with pretty formatting:
 
 ```bash
-ngpt --code --display-mode prettify "create a sorting algorithm"
+ngpt --code "create a sorting algorithm"
 ```
 
 Or with real-time syntax highlighting:
 
 ```bash
-ngpt --code --display-mode stream-prettify "create a binary search tree implementation"
+ngpt --code "create a binary search tree implementation"
 ```
 
 ### Text Rewriting
@@ -522,32 +519,33 @@ Each mode handles piped content appropriately for that context:
 
 ## Formatting Options
 
-### No Streaming
+### Plain Text Output
 
-By default, responses are streamed in real-time. To receive the complete response at once:
+By default, responses are streamed in real-time with markdown rendering. To disable streaming and markdown rendering:
 
 ```bash
-ngpt --display-mode no-stream "Explain quantum computing"
+ngpt --plaintext "Explain quantum computing"
 ```
 
 This is useful for:
 - Scripts that process the complete output
 - Redirecting output to files
 - Situations where you prefer to see the full response at once
+- Plain text output without formatting
 
 ### Markdown Rendering
 
-Enable beautiful markdown formatting and syntax highlighting:
+By default, nGPT provides real-time markdown formatting and syntax highlighting:
 
 ```bash
-# Disable streaming (get complete response at once)
-ngpt --display-mode no-stream "Explain quantum computing"
+# Disable streaming and markdown rendering (plain text)
+ngpt --plaintext "Explain quantum computing"
 
-# Enable markdown formatting
-ngpt --display-mode prettify "Create a markdown table showing top 5 programming languages"
+# Enable markdown formatting (default)
+ngpt "Create a markdown table showing top 5 programming languages"
 
-# Enable real-time markdown formatting
-ngpt --display-mode stream-prettify "Explain Big O notation with code examples"
+# Enable real-time markdown formatting (default)
+ngpt "Explain Big O notation with code examples"
 ```
 
 ```
@@ -652,11 +650,11 @@ ngpt --code --web-search --preprompt "You are an expert Python developer" "creat
 # Interactive chat with logging and custom temperature
 ngpt -i --log chat.log --temperature 0.9
 
-# Shell command with no streaming
-ngpt --shell --display-mode no-stream "find all large files and create a report"
+# Shell command with plain text output
+ngpt --shell --plaintext "find all large files and create a report"
 
-# Git commit message with pretty formatting
-ngpt --gitcommsg --display-mode prettify
+# Git commit message with markdown formatting (default)
+ngpt --gitcommsg
 
 # Use a custom role with web search
 ngpt --role technical_writer --web-search "Write documentation for a REST API"
@@ -681,9 +679,9 @@ You can compare responses by saving to files:
 
 ```bash
 # Compare outputs from different providers
-ngpt --provider OpenAI --display-mode no-stream "Explain quantum computing" > openai.txt
-ngpt --provider Groq --display-mode no-stream "Explain quantum computing" > groq.txt
-ngpt --provider Ollama --display-mode no-stream "Explain quantum computing" > ollama.txt
+ngpt --provider OpenAI --plaintext "Explain quantum computing" > openai.txt
+ngpt --provider Groq --plaintext "Explain quantum computing" > groq.txt
+ngpt --provider Ollama --plaintext "Explain quantum computing" > ollama.txt
 ```
 
 ### Piping and Redirection

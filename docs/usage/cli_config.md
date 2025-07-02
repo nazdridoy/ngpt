@@ -14,7 +14,7 @@ nGPT offers a CLI configuration system that allows you to set persistent default
 
 ## Overview
 
-The CLI configuration system is separate from your API configuration (which stores API keys, base URLs, and models). Instead, it stores your preferred default values for CLI parameters like `temperature`, `language`, or `display-mode`.
+The CLI configuration system is separate from your API configuration (which stores API keys, base URLs, and models). Instead, it stores your preferred default values for CLI parameters like `temperature`, `language`, or `web-search`.
 
 This is especially useful when you:
 
@@ -68,18 +68,18 @@ ngpt --cli-config set provider Gemini
 # Enable web search by default
 ngpt --cli-config set web-search true
 
-# Set display-mode
-ngpt --cli-config set display-mode prettify
+# Enable web search by default
+ngpt --cli-config set web-search true
 ```
 
 Boolean values can be set using `true` or `false`:
 
 ```bash
-# Enable streaming markdown rendering by default
-ngpt --cli-config set stream-prettify true
+# Enable web search by default
+ngpt --cli-config set web-search true
 
-# Disable streaming by default
-ngpt --cli-config set no-stream true
+# Disable web search by default
+ngpt --cli-config set web-search false
 ```
 
 ## Getting Configuration Values
@@ -148,7 +148,6 @@ CLI Configuration Help:
   Available options:
     General options (all modes):
       config-index - Type: int (default: 0)
-      display-mode - Type: str (default: None)
       log - Type: str (default: None)
       max_tokens - Type: int (default: None)
       preprompt - Type: str (default: None)
@@ -171,8 +170,6 @@ CLI Configuration Help:
   Example usage:
     ngpt --cli-config set language java        - Set default language to java for code generation
     ngpt --cli-config set temperature 0.9      - Set default temperature to 0.9
-    ngpt --cli-config set display-mode no-stream - Disable streaming by default
-    ngpt --cli-config set display-mode prettify  - Enable markdown formatting by default
     ngpt --cli-config set recursive-chunk true - Enable recursive chunking for git commit messages
     ngpt --cli-config set diff /path/to/file.diff - Set default diff file for git commit messages
     ngpt --cli-config get temperature          - Check the current temperature setting
@@ -198,8 +195,8 @@ CLI Configuration Help:
 # Set Python as default language
 ngpt --cli-config set language python
 
-# Enable pretty markdown rendering by default
-ngpt --cli-config set prettify true
+# Enable web search by default
+ngpt --cli-config set web-search true
 
 # Set temperature for more deterministic responses
 ngpt --cli-config set temperature 0.3

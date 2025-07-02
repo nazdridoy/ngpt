@@ -152,10 +152,9 @@ usage: ngpt [-h] [-v] [--api-key API_KEY] [--base-url BASE_URL] [--model MODEL] 
             [--temperature TEMPERATURE] [--top_p TOP_P] [--max_tokens MAX_TOKENS] [--log [FILE]]
             [--preprompt PREPROMPT | --role ROLE] [--config [CONFIG]] [--config-index CONFIG_INDEX]
             [--provider PROVIDER] [--remove] [--show-config] [--all] [--list-models] [--cli-config [COMMAND ...]]
-            [--role-config [ACTION ...]] [--display-mode {no-stream,prettify,stream-prettify}] [--language LANGUAGE]
-            [--rec-chunk] [--diff [FILE]] [--chunk-size CHUNK_SIZE] [--analyses-chunk-size ANALYSES_CHUNK_SIZE]
-            [--max-msg-lines MAX_MSG_LINES] [--max-recursion-depth MAX_RECURSION_DEPTH] [--humanize] [-i | -s | -c |
-            -t | -r | -g]
+            [--role-config [ACTION ...]] [--plaintext] [--language LANGUAGE] [--rec-chunk] [--diff [FILE]]
+            [--chunk-size CHUNK_SIZE] [--analyses-chunk-size ANALYSES_CHUNK_SIZE] [--max-msg-lines MAX_MSG_LINES]
+            [--max-recursion-depth MAX_RECURSION_DEPTH] [--humanize] [-i | -s | -c | -t | -r | -g]
             [prompt]
 
 nGPT - AI-powered terminal toolkit for code, commits, commands & chat
@@ -201,9 +200,7 @@ Configuration Options::
 
 Output Display Options::
 
---display-mode {no-stream,prettify,stream-prettify}
-                                    Set display mode: no-stream (plain text), prettify (formatted non-streaming),
-                                    stream-prettify (live markdown)
+--plaintext                         Disable streaming and markdown rendering (plain text output)
 
 Code Mode Options::
 

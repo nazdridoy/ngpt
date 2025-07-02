@@ -529,7 +529,7 @@ Roles can be combined with other nGPT features for enhanced functionality:
 ngpt --role technical_writer --web-search "Write documentation for JWT authentication"
 
 # Role with pretty formatting
-ngpt --role python_expert --display-mode prettify "Explain decorators in Python"
+ngpt --role python_expert "Explain decorators in Python"
 
 # Role with logging
 ngpt --role data_analyst --log analysis.log "Analyze this customer retention data"

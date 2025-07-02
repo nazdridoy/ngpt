@@ -270,7 +270,7 @@ Create a git hook in `.git/hooks/prepare-commit-msg`:
 # Skip if commit message is already provided
 if [ -z "$(cat $1 | grep -v '^#')" ]; then
   # Generate commit message with nGPT and write to commit message file
-  ngpt -g --display-mode no-stream | tee $1
+  ngpt -g --plaintext | tee $1
 fi
 ```
 

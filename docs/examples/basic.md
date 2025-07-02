@@ -85,10 +85,10 @@ ngpt --code "create a UserManager class with methods for add, remove, update, an
 
 ```bash
 # Generate code with syntax highlighting
-ngpt --code --display-mode prettify "create a binary search tree implementation"
+ngpt --code "create a binary search tree implementation"
 
-# Generate code with real-time syntax highlighting
-ngpt --code --display-mode stream-prettify "create a function to download a file from a URL"
+# Generate code with real-time syntax highlighting (default)
+ngpt --code "create a function to download a file from a URL"
 ```
 
 ## Shell Command Generation Examples
@@ -301,13 +301,13 @@ ngpt --gitcommsg --preprompt "This refactors the payment processing module"
 
 ```bash
 # Enable markdown formatting
-ngpt --display-mode prettify "Create a markdown table showing the top 5 programming languages and their key features"
+ngpt "Create a markdown table showing the top 5 programming languages and their key features"
 
-# Enable real-time markdown formatting
-ngpt --display-mode stream-prettify "Explain the main Git commands with examples"
+# Enable real-time markdown formatting (default)
+ngpt "Explain the main Git commands with examples"
 
-# Use markdown formatting
-ngpt --display-mode prettify "Create a tutorial for Docker basics"
+# Use markdown formatting (default)
+ngpt "Create a tutorial for Docker basics"
 
 
 ```
@@ -317,7 +317,7 @@ ngpt --display-mode prettify "Create a tutorial for Docker basics"
 ```bash
 
 # Use markdown formatting
-ngpt --display-mode prettify "Explain REST API design principles"
+ngpt "Explain REST API design principles"
 ```
 
 ## Provider Selection Examples
@@ -339,8 +339,8 @@ ngpt --provider Ollama "What are the advantages of transformer models?"
 
 ```bash
 # Compare outputs from different providers
-ngpt --provider OpenAI --display-mode no-stream "Explain quantum computing" > openai.txt
-ngpt --provider Groq --display-mode no-stream "Explain quantum computing" > groq.txt
+ngpt --provider OpenAI --plaintext "Explain quantum computing" > openai.txt
+ngpt --provider Groq --plaintext "Explain quantum computing" > groq.txt
 ```
 
 ## Configuration Examples
