@@ -24,7 +24,7 @@ from ngpt.cli.modes.text import text_mode
 from ngpt.cli.modes.rewrite import rewrite_mode
 from ngpt.cli.modes.gitcommsg import gitcommsg_mode
 from ngpt.cli.args import parse_args, validate_args, handle_cli_config_args, setup_argument_parser, handle_role_config_args
-from ngpt.utils.roles import handle_role_config, get_role_prompt
+from ngpt.cli.handlers.role import handle_role_config, get_role_prompt
 
 def show_cli_config_help():
     """Display help information about CLI configuration."""
