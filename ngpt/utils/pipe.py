@@ -10,8 +10,11 @@ def process_piped_input(prompt, logger=None):
     Returns:
         str: The processed prompt with piped input inserted at placeholder, or appended
     """
-    # Import COLORS here to avoid circular imports
-    from ..cli.formatters import COLORS
+    # Define colors locally to avoid circular imports
+    COLORS = {
+        'yellow': '\033[33m',
+        'reset': '\033[0m'
+    }
     
     # Only process if stdin is not a TTY (i.e., if we're receiving piped input)
     if not sys.stdin.isatty():

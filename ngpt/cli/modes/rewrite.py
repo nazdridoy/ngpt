@@ -4,7 +4,8 @@ import time
 from ..formatters import COLORS
 from ..renderers import prettify_streaming_markdown, TERMINAL_RENDER_LOCK, setup_plaintext_spinner, cleanup_plaintext_spinner, create_spinner_handling_callback
 from ..ui import get_multiline_input, spinner, copy_to_clipboard
-from ...utils import enhance_prompt_with_web_search, process_piped_input
+from ...utils.web_search import enhance_prompt_with_web_search
+from ...utils.pipe import process_piped_input
 
 # System prompt for rewriting text
 REWRITE_SYSTEM_PROMPT = """You are an expert text editor and rewriter. Your task is to rewrite the user's text to improve readability and flow while carefully preserving the original meaning, tone, and style.

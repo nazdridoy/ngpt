@@ -11,7 +11,7 @@ from ..formatters import COLORS
 from ..ui import spinner, copy_to_clipboard
 from ...utils.log import create_gitcommsg_logger
 from ...utils.cli_config import get_cli_config_option
-from ...utils import process_piped_input
+from ...utils.pipe import process_piped_input
 
 def get_diff_content(diff_file=None):
     """Get git diff content from file or git staged changes.
