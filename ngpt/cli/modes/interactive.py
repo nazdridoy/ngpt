@@ -10,7 +10,7 @@ import re
 from datetime import datetime
 from ...utils.config import get_config_dir
 from ..formatters import COLORS
-from ..renderers import prettify_markdown, prettify_streaming_markdown, TERMINAL_RENDER_LOCK
+from ..renderers import prettify_markdown, prettify_streaming_markdown, TERMINAL_RENDER_LOCK, setup_plaintext_spinner, cleanup_plaintext_spinner
 from ..ui import spinner, get_multiline_input
 from ...utils import enhance_prompt_with_web_search
 
@@ -40,7 +40,6 @@ def interactive_chat_session(client, args, logger=None):
     top_p = args.top_p
     max_tokens = args.max_tokens
     preprompt = args.preprompt
-    display_mode = args.display_mode
     multiline_enabled = True  # Could be made configurable in the future
     
     # Get terminal width for better formatting
@@ -89,8 +88,8 @@ def interactive_chat_session(client, args, logger=None):
         print(f"{COLORS['green']}Web search capability is enabled.{COLORS['reset']}")
     
     # Display a note about markdown rendering only once at the beginning
-    if display_mode == 'prettify':
-        print(f"{COLORS['yellow']}Note: Using standard markdown rendering (--display-mode prettify). For streaming markdown rendering, use --display-mode stream-prettify.{COLORS['reset']}")
+    if args.plaintext:
+        print(f"{COLORS['yellow']}Note: Using plain text mode (--plaintext). For markdown rendering, remove --plaintext flag.{COLORS['reset']}")
     
     # Custom separator - use the same length for consistency
     def print_separator():
@@ -103,8 +102,8 @@ def interactive_chat_session(client, args, logger=None):
     # Initialize conversation history
     system_prompt = preprompt if preprompt else "You are a helpful assistant."
     
-    # Add markdown formatting instruction to system prompt if display mode supports markdown
-    if display_mode in ['prettify', 'stream-prettify']:
+    # Add markdown formatting instruction to system prompt if not in plaintext mode
+    if not args.plaintext:
         if system_prompt:
             system_prompt += " You can use markdown formatting in your responses where appropriate."
         else:
@@ -475,20 +474,22 @@ def interactive_chat_session(client, args, logger=None):
             should_print_header = True
 
             # Determine if we should print a header based on formatting options
-            if display_mode == 'stream-prettify':
+            if not args.plaintext:
                 # Don't print header for stream-prettify
                 should_print_header = False
+            else:
+                should_print_header = True
             
             # Print the header if needed
             if should_print_header:
                 with TERMINAL_RENDER_LOCK:
-                    if display_mode != 'no-stream':
+                    if not args.plaintext:
                         print(f"\n{ngpt_header()}: {COLORS['reset']}", end="", flush=True)
                     else:
                         print(f"\n{ngpt_header()}: {COLORS['reset']}", flush=True)
             
             # Determine streaming behavior
-            should_stream = display_mode != 'no-stream'
+            should_stream = not args.plaintext
             
             # Setup for stream-prettify
             stream_callback = None
@@ -497,15 +498,22 @@ def interactive_chat_session(client, args, logger=None):
             stop_spinner_event = None
             first_content_received = False
             
-            if display_mode == 'stream-prettify' and should_stream:
+            # Set up spinner for plaintext mode
+            plaintext_spinner_thread = None
+            plaintext_stop_event = None
+            
+            if args.plaintext:
+                # Use spinner for plaintext mode
+                plaintext_spinner_thread, plaintext_stop_event = setup_plaintext_spinner("Waiting for response...", COLORS['green'])
+            
+            if not args.plaintext and should_stream:
                 # Set up streaming markdown with interactive mode
                 live_display, stream_callback, setup_spinner = prettify_streaming_markdown(is_interactive=True)
                 
                 if not live_display:
-                    # Fallback to normal prettify if live display setup failed
-                    display_mode = 'prettify'
+                    # Fallback to plain text if live display setup failed
                     should_stream = False
-                    print(f"{COLORS['yellow']}Falling back to regular prettify mode.{COLORS['reset']}")
+                    print(f"{COLORS['yellow']}Falling back to plain text mode.{COLORS['reset']}")
                 else:
                     # Create a wrapper for the stream callback that handles spinner and live display
                     original_callback = stream_callback
@@ -551,9 +559,12 @@ def interactive_chat_session(client, args, logger=None):
                 temperature=temperature,
                 top_p=top_p,
                 max_tokens=max_tokens,
-                markdown_format=display_mode in ['prettify', 'stream-prettify'],
+                markdown_format=not args.plaintext,
                 stream_callback=stream_callback
             )
+            
+            # Stop plaintext spinner if it was started
+            cleanup_plaintext_spinner(plaintext_spinner_thread, plaintext_stop_event)
             
             # Ensure spinner is stopped if no content was received
             if stop_spinner_event and not first_content_received:
@@ -564,7 +575,7 @@ def interactive_chat_session(client, args, logger=None):
                 sys.stdout.flush()
             
             # Stop live display if using stream-prettify
-            if display_mode == 'stream-prettify' and live_display and first_content_received:
+            if not args.plaintext and live_display and first_content_received:
                 # Before stopping the live display, update with complete=True to show final formatted content
                 if stream_callback and response:
                     stream_callback(response, complete=True)
@@ -574,14 +585,10 @@ def interactive_chat_session(client, args, logger=None):
                 assistant_message = {"role": "assistant", "content": response}
                 conversation.append(assistant_message)
                 
-                # Print response if not streamed or using prettify without streaming
-                if display_mode in ['no-stream', 'prettify']:
+                # Print response if not streamed (plaintext mode)
+                if args.plaintext:
                     with TERMINAL_RENDER_LOCK:
-                        if display_mode == 'prettify':
-                            # For pretty formatting with rich, don't print any header text
-                            prettify_markdown(response)
-                        else:
-                            print(response)
+                        print(response)
                 
                 # Log AI response if logging is enabled
                 if logger:

@@ -417,18 +417,13 @@ def setup_streaming(args, logger=None):
     use_stream_prettify = use_regular_prettify = False
     first_content_received = False
     
-    # Determine final behavior based on display_mode
-    if args.display_mode == 'no-stream':
-        # No streaming mode
+    # Determine final behavior based on plaintext flag
+    if args.plaintext:
+        # Plain text mode - no streaming, no markdown rendering
         should_stream = False
         use_regular_prettify = False
-    elif args.display_mode == 'prettify':
-        # Regular prettify mode - no streaming, format afterwards
-        should_stream = False
-        use_regular_prettify = True
-        print(f"{COLORS['yellow']}Note: Using standard markdown rendering (--display-mode prettify). For streaming markdown rendering, use --display-mode stream-prettify instead.{COLORS['reset']}")
-    elif args.display_mode == 'stream-prettify':
-        # Stream prettify mode - stream with live markdown rendering
+    else:
+        # Default stream-prettify mode - stream with live markdown rendering
         should_stream = True
         use_stream_prettify = True
         live_display, stream_callback, setup_spinner = prettify_streaming_markdown()
@@ -518,11 +513,11 @@ def generate_with_model(client, prompt, messages, args, stream_setup,
     stop_spinner_event = stream_setup['stop_spinner_event']
     stop_spinner_func = stream_setup['stop_spinner_func']
     
-    # Show spinner for all modes except no-stream
+    # Show spinner for all modes except when output is redirected
     if should_stream:
         # Two possible spinner types:
         # 1. Rich spinner for stream_prettify
-        # 2. Regular spinner for all other modes (including --display-mode prettify)
+        # 2. Regular spinner for all other modes (including fallback from stream-prettify)
         
         if use_stream_prettify and stop_spinner_func:
             # Rich spinner is handled by callbacks
@@ -533,8 +528,22 @@ def generate_with_model(client, prompt, messages, args, stream_setup,
             if not spinner_thread.is_alive():
                 spinner_thread.start()
     else:
-        # No-stream mode just gets a status message
-        print(spinner_message)
+        # For plaintext mode, use spinner instead of static message
+        # Only show spinner if output is not redirected
+        if sys.stdout.isatty():
+            # Create a temporary spinner for plaintext mode
+            temp_stop_event = threading.Event()
+            temp_spinner_thread = threading.Thread(
+                target=spinner,
+                args=(spinner_message,),
+                kwargs={"stop_event": temp_stop_event, "color": COLORS['cyan']}
+            )
+            temp_spinner_thread.daemon = True
+            temp_spinner_thread.start()
+            
+            # Store for cleanup in finally block
+            stream_setup['temp_spinner_thread'] = temp_spinner_thread
+            stream_setup['temp_stop_event'] = temp_stop_event
     
     # Set temperature
     temp = args.temperature if temp_override is None else temp_override
@@ -548,7 +557,7 @@ def generate_with_model(client, prompt, messages, args, stream_setup,
             temperature=temp,
             top_p=args.top_p,
             max_tokens=args.max_tokens,
-            markdown_format=args.display_mode in ['prettify', 'stream-prettify'],
+            markdown_format=not args.plaintext,
             stream_callback=stream_callback
         )
     except KeyboardInterrupt:
@@ -568,6 +577,16 @@ def generate_with_model(client, prompt, messages, args, stream_setup,
             stop_spinner.set()
             if spinner_thread and spinner_thread.is_alive():
                 spinner_thread.join()
+            
+            # Clear the spinner line completely
+            sys.stdout.write("\r" + " " * 100 + "\r")
+            sys.stdout.flush()
+        
+        # Stop temporary spinner for plaintext mode
+        if 'temp_stop_event' in stream_setup and 'temp_spinner_thread' in stream_setup:
+            stream_setup['temp_stop_event'].set()
+            if stream_setup['temp_spinner_thread'].is_alive():
+                stream_setup['temp_spinner_thread'].join()
             
             # Clear the spinner line completely
             sys.stdout.write("\r" + " " * 100 + "\r")
@@ -606,12 +625,12 @@ def display_content(content, content_type, highlight_lang, args, use_stream_pret
         if use_regular_prettify:
             # Use rich renderer for pretty output
             prettify_markdown(formatted_content)
-        elif args.display_mode == 'no-stream':
-            # Simple output for no-stream mode (no box)
+        elif args.plaintext:
+            # Simple output for plaintext mode (no extra formatting)
             if content_type == 'command':
-                print(f"\n{title}:\n{COLORS['green']}{content}{COLORS['reset']}\n")
+                print(content)
             else:
-                print(f"\n{title}:\n{content}\n")
+                print(content)
         else:
             # Regular display or fallback
             if content_type == 'command':
@@ -771,6 +790,10 @@ def shell_mode(client, args, logger=None):
         use_stream_prettify=use_stream_prettify,
         use_regular_prettify=use_regular_prettify
     )
+    
+    # Skip interactive options if output is redirected (not a terminal)
+    if not sys.stdout.isatty():
+        return
     
     # Display options with better formatting - prepare strings once
     options_text = f"{COLORS['bold']}Options:{COLORS['reset']}"

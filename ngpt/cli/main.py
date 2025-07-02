@@ -119,8 +119,6 @@ def show_cli_config_help():
     print(f"\n  {COLORS['cyan']}Example usage:{COLORS['reset']}")
     print(f"    {COLORS['yellow']}ngpt --cli-config set language java{COLORS['reset']}        - Set default language to java for code generation")
     print(f"    {COLORS['yellow']}ngpt --cli-config set temperature 0.9{COLORS['reset']}      - Set default temperature to 0.9")
-    print(f"    {COLORS['yellow']}ngpt --cli-config set display-mode no-stream{COLORS['reset']} - Disable streaming by default")
-    print(f"    {COLORS['yellow']}ngpt --cli-config set display-mode prettify{COLORS['reset']}  - Enable markdown formatting by default")
     print(f"    {COLORS['yellow']}ngpt --cli-config set recursive-chunk true{COLORS['reset']} - Enable recursive chunking for git commit messages")
     print(f"    {COLORS['yellow']}ngpt --cli-config set diff /path/to/file.diff{COLORS['reset']} - Set default diff file for git commit messages")
     print(f"    {COLORS['yellow']}ngpt --cli-config get temperature{COLORS['reset']}          - Check the current temperature setting")

@@ -13,7 +13,6 @@ CLI_CONFIG_OPTIONS = {
     "max_tokens": {"type": "int", "default": None, "context": ["all"]},
     "log": {"type": "str", "default": None, "context": ["all"]},
     "preprompt": {"type": "str", "default": None, "context": ["all"]},
-    "display-mode": {"type": "str", "default": None, "context": ["all"]},
     "config-index": {"type": "int", "default": 0, "context": ["all"], "exclusive": ["provider"]},
     "web-search": {"type": "bool", "default": False, "context": ["all"]},
     # GitCommit message options
@@ -216,10 +215,6 @@ def apply_cli_config(args: Any, mode: str) -> Any:
         if arg.startswith('--'):
             explicit_args.add(arg)
     
-    # Special handling for rendering mode (--display-mode)
-    # Check if it is explicitly provided in command line
-    rendering_mode_specified = '--display-mode' in explicit_args
-    
     # Keep track of applied exclusive options
     applied_exclusives = set()
 
@@ -228,15 +223,6 @@ def apply_cli_config(args: Any, mode: str) -> Any:
         cli_option = f"--{option}"
         if cli_option in explicit_args and "exclusive" in CLI_CONFIG_OPTIONS[option]:
             applied_exclusives.update(CLI_CONFIG_OPTIONS[option]["exclusive"])
-
-    # Special handling for display mode - if not specified in CLI but set in config
-    if not rendering_mode_specified:
-        has_display_mode_in_config = 'display-mode' in cli_config
-        if has_display_mode_in_config:
-            # Since command line didn't specify a rendering mode, disable default value
-            # so the config value can be properly applied
-            if hasattr(args, 'display_mode'):
-                args.display_mode = None
 
     # Second pass: Apply CLI config options
     for option, value in cli_config.items():

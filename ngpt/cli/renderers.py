@@ -228,3 +228,58 @@ def prettify_streaming_markdown(is_interactive=False, header_text=None):
     except Exception as e:
         print(f"{COLORS['yellow']}Error setting up Rich streaming display: {str(e)}{COLORS['reset']}")
         return None, None, None 
+
+def setup_plaintext_spinner(message="Waiting for response...", color=COLORS['cyan']):
+    """Set up a spinner for plaintext mode.
+    
+    This function creates a spinner thread that will be shown during AI response generation
+    in plaintext mode, but only if output is a terminal (not redirected).
+    
+    Args:
+        message (str): Message to display in the spinner
+        color (str): Color for the spinner (from COLORS dict)
+        
+    Returns:
+        tuple: (spinner_thread, stop_event) if terminal output, (None, None) if redirected
+    """
+    import threading
+    import sys
+    from .ui import spinner
+    
+    # Only show spinner if output is a terminal (not redirected)
+    if not sys.stdout.isatty():
+        return None, None
+    
+    # Create spinner thread and stop event
+    stop_event = threading.Event()
+    spinner_thread = threading.Thread(
+        target=spinner,
+        args=(message,),
+        kwargs={"stop_event": stop_event, "color": color}
+    )
+    spinner_thread.daemon = True
+    spinner_thread.start()
+    
+    return spinner_thread, stop_event
+
+def cleanup_plaintext_spinner(spinner_thread, stop_event):
+    """Clean up a plaintext spinner.
+    
+    This function stops the spinner thread and clears the terminal line.
+    
+    Args:
+        spinner_thread: The spinner thread to stop
+        stop_event: The stop event to signal
+    """
+    import sys
+    import threading
+    
+    if stop_event and spinner_thread:
+        stop_event.set()
+        if spinner_thread.is_alive():
+            spinner_thread.join()
+        
+        # Clear the spinner line completely
+        with TERMINAL_RENDER_LOCK:
+            sys.stdout.write("\r" + " " * 100 + "\r")
+            sys.stdout.flush() 

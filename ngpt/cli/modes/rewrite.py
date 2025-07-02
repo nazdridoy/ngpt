@@ -2,7 +2,7 @@ import sys
 import threading
 import time
 from ..formatters import COLORS
-from ..renderers import prettify_markdown, prettify_streaming_markdown, TERMINAL_RENDER_LOCK
+from ..renderers import prettify_markdown, prettify_streaming_markdown, TERMINAL_RENDER_LOCK, setup_plaintext_spinner, cleanup_plaintext_spinner
 from ..ui import get_multiline_input, spinner, copy_to_clipboard
 from ...utils import enhance_prompt_with_web_search, process_piped_input
 
@@ -275,33 +275,35 @@ def rewrite_mode(client, args, logger=None):
         logger.log("user", input_text)
     
     # Set up display mode based on args
-    should_stream = True  # Default behavior
+    should_stream = True  # Default behavior (stream-prettify)
     stream_callback = None
     live_display = None
     stop_spinner_func = None
     stop_spinner_event = None
     first_content_received = False
     
+    # Spinner for plaintext mode
+    plaintext_spinner_thread = None
+    plaintext_stop_event = None
+    
     # Handle display mode based on parameters
-    if args.display_mode == 'no-stream':
-        # No streaming mode - just get the response at once
+    if args.plaintext:
+        # Plain text mode - no streaming, no markdown rendering
         should_stream = False
-    elif args.display_mode == 'prettify':
-        # Regular prettify mode - no streaming, format afterwards
-        should_stream = False
-    elif args.display_mode == 'stream-prettify':
-        # Stream prettify mode - stream with live markdown rendering
+        plaintext_spinner_thread, plaintext_stop_event = setup_plaintext_spinner("Waiting for response...", COLORS['cyan'])
+    else:
+        # Default stream-prettify mode - stream with live markdown rendering
         live_display, stream_callback, setup_spinner = prettify_streaming_markdown()
         if not live_display:
             # Fallback if display creation fails
             print(f"{COLORS['yellow']}Warning: Live display setup failed. Falling back to plain streaming.{COLORS['reset']}")
     
     # Show a static message if streaming without prettify
-    if should_stream and not live_display and args.display_mode != 'no-stream':
+    if should_stream and not live_display and not args.plaintext:
         print("\nWaiting for AI response...")
     
     # Set up the spinner if we have a live display and stream-prettify is enabled
-    if should_stream and args.display_mode == 'stream-prettify' and live_display:
+    if should_stream and not args.plaintext and live_display:
         stop_spinner_event = threading.Event()
         stop_spinner_func = setup_spinner(stop_spinner_event, color=COLORS['cyan'])
     
@@ -336,8 +338,8 @@ def rewrite_mode(client, args, logger=None):
     else:
         operation_text = "Rewriting text"
     
-    # Start spinner for processing
-    if should_stream and not live_display:
+    # Start spinner for processing (only if output is not redirected)
+    if should_stream and not live_display and sys.stdout.isatty():
         stop_spinner = threading.Event()
         spinner_thread = threading.Thread(
             target=spinner, 
@@ -355,12 +357,12 @@ def rewrite_mode(client, args, logger=None):
         temperature=args.temperature, 
         top_p=args.top_p,
         max_tokens=args.max_tokens, 
-        markdown_format=args.display_mode in ['prettify', 'stream-prettify'],
+        markdown_format=not args.plaintext,
         stream_callback=stream_callback,
         messages=messages  # Use messages array instead of prompt
     )
     
-    # Stop spinner if it was started
+    # Stop spinner if it was started (streaming fallback)
     if should_stream and not live_display:
         stop_spinner.set()
         spinner_thread.join()
@@ -369,12 +371,15 @@ def rewrite_mode(client, args, logger=None):
             sys.stdout.write("\r" + " " * 100 + "\r")
             sys.stdout.flush()
     
+    # Stop plaintext spinner if it was started
+    cleanup_plaintext_spinner(plaintext_spinner_thread, plaintext_stop_event)
+    
     # Ensure spinner is stopped if no content was received
     if stop_spinner_event and not first_content_received:
         stop_spinner_event.set()
     
     # Stop live display if using stream-prettify
-    if args.display_mode == 'stream-prettify' and live_display:
+    if not args.plaintext and live_display:
         # Before stopping the live display, update with complete=True to show final formatted content
         if stream_callback and response:
             stream_callback(response, complete=True)
@@ -386,14 +391,11 @@ def rewrite_mode(client, args, logger=None):
     if logger and response:
         logger.log("assistant", response)
         
-    # Handle non-stream response or regular prettify
-    if (args.display_mode == 'no-stream' or args.display_mode == 'prettify') and response:
+    # Handle plain text response
+    if args.plaintext and response:
         with TERMINAL_RENDER_LOCK:
-            if args.display_mode == 'prettify':
-                prettify_markdown(response)
-            else:
-                print(response)
+            print(response)
             
     # Offer to copy to clipboard if not in a redirected output
-    if not args.display_mode == 'no-stream' and response:
+    if not args.plaintext and response:
         copy_to_clipboard(response) 

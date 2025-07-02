@@ -86,8 +86,8 @@ def setup_argument_parser():
 
     # Output display options
     output_group = parser.add_argument_group('Output Display Options')
-    output_group.add_argument('--display-mode', choices=['no-stream', 'prettify', 'stream-prettify'], default=None,
-                      help='Set display mode: no-stream (plain text), prettify (formatted non-streaming), stream-prettify (live markdown)')
+    output_group.add_argument('--plaintext', action='store_true',
+                      help='Disable streaming and markdown rendering (plain text output)')
     
     # Code Mode Options
     code_group = parser.add_argument_group('Code Mode Options')
@@ -154,10 +154,6 @@ def validate_args(args):
     if args.remove and (not args.config or (args.config_index == 0 and not args.provider)):
         raise ValueError("--remove requires --config and either --config-index or --provider")
     
-    # Handle display mode
-    if not args.display_mode:
-        # Default to stream-prettify since rich is a required dependency
-        args.display_mode = 'stream-prettify'
     
     # Check for incompatible --pipe flag with certain modes
     if args.pipe and (args.text or args.interactive):

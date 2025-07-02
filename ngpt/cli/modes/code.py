@@ -1,5 +1,5 @@
 from ..formatters import COLORS
-from ..renderers import prettify_markdown, prettify_streaming_markdown, TERMINAL_RENDER_LOCK
+from ..renderers import prettify_markdown, prettify_streaming_markdown, TERMINAL_RENDER_LOCK, setup_plaintext_spinner, cleanup_plaintext_spinner
 from ..ui import spinner, copy_to_clipboard
 from ...utils import enhance_prompt_with_web_search, process_piped_input
 import sys
@@ -145,7 +145,7 @@ def code_mode(client, args, logger=None):
             # Continue with the original prompt if web search fails
 
     # Set up display mode based on args
-    should_stream = True  # Default behavior
+    should_stream = True  # Default behavior (stream-prettify)
     stream_callback = None
     live_display = None
     stop_spinner_func = None
@@ -153,27 +153,26 @@ def code_mode(client, args, logger=None):
     first_content_received = False
     
     # Handle display mode based on parameters
-    if args.display_mode == 'no-stream':
-        # No streaming mode - just get the response at once
+    if args.plaintext:
+        # Plain text mode - no streaming, no markdown rendering
         should_stream = False
-    elif args.display_mode == 'prettify':
-        # Regular prettify mode - no streaming, format afterwards
-        should_stream = False
-    elif args.display_mode == 'stream-prettify':
-        # Stream prettify mode - stream with live markdown rendering
+    else:
+        # Default stream-prettify mode - stream with live markdown rendering
         live_display, stream_callback, setup_spinner = prettify_streaming_markdown()
         if not live_display:
             # Fallback if display creation fails
             print(f"{COLORS['yellow']}Warning: Live display setup failed. Falling back to plain streaming.{COLORS['reset']}")
     
-    print("\nGenerating code...")
+    # Set up spinner for plaintext mode or when no live display
+    processing_spinner_thread = None
+    processing_stop_event = None
     
-    # Show a static message if streaming without prettify
-    if should_stream and not live_display and args.display_mode != 'no-stream':
-        print("Waiting for AI response...")
+    if args.plaintext or (should_stream and not live_display):
+        # Use spinner for plaintext mode or fallback scenarios
+        processing_spinner_thread, processing_stop_event = setup_plaintext_spinner("Generating code...", COLORS['cyan'])
     
     # Set up the spinner if we have a live display and stream-prettify is enabled
-    if should_stream and args.display_mode == 'stream-prettify' and live_display:
+    if should_stream and not args.plaintext and live_display:
         stop_spinner_event = threading.Event()
         stop_spinner_func = setup_spinner(stop_spinner_event, color=COLORS['cyan'])
     
@@ -210,7 +209,7 @@ def code_mode(client, args, logger=None):
             logger.log("system", f"Preprompt: {args.preprompt}")
             
         # Use preprompt template with high-priority formatting
-        if args.display_mode in ['prettify', 'stream-prettify']:
+        if not args.plaintext:
             system_prompt = CODE_PREPROMPT_MARKDOWN.format(
                 preprompt=args.preprompt,
                 language=args.language,
@@ -224,7 +223,7 @@ def code_mode(client, args, logger=None):
             )
     else:
         # Use standard template
-        if args.display_mode in ['prettify', 'stream-prettify']:
+        if not args.plaintext:
             system_prompt = CODE_SYSTEM_PROMPT_MARKDOWN.format(
                 language=args.language,
                 prompt=prompt
@@ -253,19 +252,22 @@ def code_mode(client, args, logger=None):
             temperature=args.temperature,
             top_p=args.top_p,
             max_tokens=args.max_tokens,
-            markdown_format=args.display_mode in ['prettify', 'stream-prettify'],
+            markdown_format=not args.plaintext,
             stream_callback=stream_callback
         )
     except Exception as e:
         print(f"Error generating code: {e}")
         generated_code = ""
     
+    # Stop processing spinner if it was started
+    cleanup_plaintext_spinner(processing_spinner_thread, processing_stop_event)
+    
     # Ensure spinner is stopped if no content was received
     if stop_spinner_event and not first_content_received:
         stop_spinner_event.set()
     
     # Stop live display if using stream-prettify
-    if args.display_mode == 'stream-prettify' and live_display:
+    if not args.plaintext and live_display:
         # Before stopping the live display, update with complete=True to show final formatted content
         if stream_callback and generated_code:
             stream_callback(generated_code, complete=True)
@@ -277,12 +279,11 @@ def code_mode(client, args, logger=None):
     # Print non-streamed output if needed
     if generated_code and not should_stream:
         with TERMINAL_RENDER_LOCK:
-            if args.display_mode == 'prettify':
+            if args.plaintext:
+                print(generated_code)
+            else:
                 print("\nGenerated code:")
                 prettify_markdown(generated_code)
-            else:
-                # Should only happen if --display-mode no-stream was used without prettify
-                print(f"\nGenerated code:\n{generated_code}")
             
     # Offer to copy to clipboard
     if generated_code and should_stream:
