@@ -268,68 +268,466 @@ def interactive_chat_session(client, args, logger=None):
         print(f"\n{COLORS['green']}Session saved as: {current_session_name}{COLORS['reset']}")
 
     def list_sessions():
-        """List all saved sessions, sorted by last_modified ascending."""
+        """Interactive session manager with enhanced visuals for the /sessions command."""
         index = get_session_index()
         if not index["sessions"]:
             print(f"\n{COLORS['yellow']}No saved sessions found.{COLORS['reset']}")
             return
-        # Sort by last_modified (or created_at if missing)
+        
         def get_last_modified(session):
             return session.get("last_modified") or session.get("created_at") or ""
-        sorted_sessions = sorted(index["sessions"], key=get_last_modified)
-        print(f"\n{COLORS['cyan']}{COLORS['bold']}Saved Sessions:{COLORS['reset']}")
-        for i, session in enumerate(sorted_sessions):
-            name = session['name']
-            # Use last_modified if available, else created_at
+        
+        # Sort sessions by last modified time (newest first)
+        sorted_sessions = sorted(index["sessions"], key=get_last_modified, reverse=True)
+        
+        # Format dates nicely and calculate session sizes
+        for session in sorted_sessions:
+            # Format the date
             last = session.get('last_modified') or session.get('created_at', 'N/A')
-            # Format to 12-hour with AM/PM if possible
             try:
                 last_fmt = datetime.strptime(last, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M %p')
+                session['last_modified_fmt'] = last_fmt
             except Exception:
-                last_fmt = last
-            print(f"  [{i}] {name} | Last: {last_fmt}")
-
-    def load_session():
-        """Load a conversation from a saved session file."""
-        nonlocal conversation, current_session_id, current_session_filepath, current_session_name
-        index = get_session_index()
-
-        if not index["sessions"]:
-            print(f"\n{COLORS['yellow']}No saved sessions to load.{COLORS['reset']}")
-            return
-
-        list_sessions()
-        
-        try:
-            choice = input("Enter the number of the session to load: ")
-            choice_index = int(choice)
+                session['last_modified_fmt'] = last
             
-            if 0 <= choice_index < len(index["sessions"]):
-                session = index["sessions"][choice_index]
+            # Calculate session size
+            history_dir = get_history_dir()
+            session_file = history_dir / f"session_{session['id']}.json"
+            size_indicator = "•"
+            size_color = COLORS['green']
+            if session_file.exists():
+                size = os.path.getsize(session_file)
+                if size < 10000:  # Small session
+                    size_indicator = "•"
+                    size_color = COLORS['green']
+                elif size < 50000:  # Medium session
+                    size_indicator = "••"
+                    size_color = COLORS['yellow']
+                else:  # Large session
+                    size_indicator = "•••"
+                    size_color = COLORS['red']
+            session['size_indicator'] = size_indicator
+            session['size_color'] = size_color
+        
+        # Define modes
+        MODES = {
+            'list': 'List Sessions',
+            'preview': 'Preview Session',
+            'help': 'Help'
+        }
+        
+        current_mode = 'list'
+        current_session_idx = 0 if sorted_sessions else -1
+        preview_mode = 'tail'
+        preview_count = 5
+        filtered_sessions = sorted_sessions.copy()
+        search_query = ""
+        
+        # Terminal width for better formatting
+        try:
+            term_width = shutil.get_terminal_size().columns
+        except:
+            term_width = 80
+        
+        # Separator for visual separation
+        separator = f"{COLORS['gray']}{'─' * min(term_width - 4, 50)}{COLORS['reset']}"
+        
+        def print_header():
+            """Print a nice header with current mode."""
+            mode_name = MODES.get(current_mode, 'Sessions')
+            print(f"\n{COLORS['cyan']}{COLORS['bold']}🤖 nGPT Session Manager - {mode_name} 🤖{COLORS['reset']}")
+            print(separator)
+        
+        def print_help():
+            """Print help information."""
+            nonlocal current_mode
+            
+            current_mode = 'help'
+            print_header()
+            print(f"\n{COLORS['cyan']}{COLORS['bold']}Available Commands:{COLORS['reset']}")
+            print(f"  {COLORS['yellow']}list{COLORS['reset']}                 Show session list")
+            print(f"  {COLORS['yellow']}preview <idx>{COLORS['reset']}        Show preview of session messages")
+            print(f"  {COLORS['yellow']}load <idx>{COLORS['reset']}           Load a session")
+            print(f"  {COLORS['yellow']}rename <idx> <name>{COLORS['reset']}  Rename a session")
+            print(f"  {COLORS['yellow']}delete <idx>{COLORS['reset']}         Delete a session")
+            print(f"  {COLORS['yellow']}search <query>{COLORS['reset']}       Search sessions by name")
+            print(f"  {COLORS['yellow']}help{COLORS['reset']}                 Show this help")
+            print(f"  {COLORS['yellow']}exit{COLORS['reset']}                 Exit session manager")
+            
+            print(f"\n{COLORS['cyan']}{COLORS['bold']}Preview Commands:{COLORS['reset']}")
+            print(f"  {COLORS['yellow']}head <idx> [count]{COLORS['reset']}   Show first messages in session")
+            print(f"  {COLORS['yellow']}tail <idx> [count]{COLORS['reset']}   Show last messages in session")
+            
+            print(f"\n{COLORS['cyan']}{COLORS['bold']}Session Size Legend:{COLORS['reset']}")
+            print(f"  {COLORS['green']}•{COLORS['reset']}    Small session")
+            print(f"  {COLORS['yellow']}••{COLORS['reset']}   Medium session")
+            print(f"  {COLORS['red']}•••{COLORS['reset']}  Large session")
+            print(separator)
+        
+        def print_session_list():
+            """Print session list with enhancements."""
+            nonlocal filtered_sessions, current_mode
+            
+            current_mode = 'list'
+            
+            # Apply search filter if needed
+            if search_query:
+                filtered_sessions = [s for s in sorted_sessions if search_query.lower() in s['name'].lower()]
+            else:
+                filtered_sessions = sorted_sessions.copy()
+            
+            print_header()
+            
+            # Show search status if filtering
+            if search_query:
+                print(f"{COLORS['yellow']}Filtered by: \"{search_query}\" ({len(filtered_sessions)} results){COLORS['reset']}")
+            
+            # Header row
+            print(f"\n {COLORS['cyan']}#{COLORS['reset']}  {COLORS['cyan']}Size{COLORS['reset']}  {COLORS['cyan']}Session Name{COLORS['reset']}                        {COLORS['cyan']}Last Modified{COLORS['reset']}")
+            print(f" {COLORS['gray']}─{COLORS['reset']}  {COLORS['gray']}────{COLORS['reset']}  {COLORS['gray']}────────────────────────────────────{COLORS['reset']}  {COLORS['gray']}─────────────────{COLORS['reset']}")
+            
+            # Session rows
+            if not filtered_sessions:
+                print(f"\n  {COLORS['yellow']}No sessions found.{COLORS['reset']}")
+            else:
+                for i, session in enumerate(filtered_sessions):
+                    name = session['name']
+                    last_fmt = session.get('last_modified_fmt', 'Unknown')
+                    size_indicator = session.get('size_indicator', '•')
+                    size_color = session.get('size_color', COLORS['green'])
+                    
+                    # Truncate name if too long
+                    if len(name) > 30:
+                        name = name[:27] + "..."
+                    
+                    # Highlight current session
+                    if i == current_session_idx and current_mode == 'list':
+                        print(f" {COLORS['cyan']}{COLORS['bold']}▶ {i:<2}{COLORS['reset']} {size_color}{size_indicator:<4}{COLORS['reset']} {COLORS['white']}{COLORS['bold']}{name:<35}{COLORS['reset']} {COLORS['white']}{last_fmt}{COLORS['reset']}")
+                    else:
+                        print(f"  {COLORS['yellow']}{i:<2}{COLORS['reset']} {size_color}{size_indicator:<4}{COLORS['reset']} {COLORS['white']}{name:<35}{COLORS['reset']} {COLORS['gray']}{last_fmt}{COLORS['reset']}")
+            
+            print(separator)
+            print(f"{COLORS['green']}Enter command: {COLORS['reset']}(Type 'help' for available commands)")
+        
+        def show_session_preview(idx, mode='tail', count=5):
+            """Show preview of session content."""
+            nonlocal filtered_sessions, current_mode
+            
+            if not filtered_sessions:
+                print(f"{COLORS['red']}No sessions available.{COLORS['reset']}")
+                return
+                
+            if idx < 0 or idx >= len(filtered_sessions):
+                print(f"{COLORS['red']}Invalid session index.{COLORS['reset']}")
+                return
+            
+            current_mode = 'preview'
+            session = filtered_sessions[idx]
+            history_dir = get_history_dir()
+            session_file = history_dir / f"session_{session['id']}.json"
+            
+            if not session_file.exists():
+                print(f"{COLORS['red']}Session file not found.{COLORS['reset']}")
+                return
+            
+            try:
+                with open(session_file, "r") as f:
+                    loaded_conversation = json.load(f)
+                    
+                # Extract user/assistant pairs
+                pairs = []
+                current_pair = []
+                for msg in loaded_conversation:
+                    if msg['role'] == 'user':
+                        if current_pair:
+                            pairs.append(current_pair)
+                        current_pair = [msg]
+                    elif msg['role'] == 'assistant' and current_pair:
+                        current_pair.append(msg)
+                if current_pair:
+                    pairs.append(current_pair)
+                    
+                # Get preview based on mode
+                if mode == 'tail':
+                    to_show = pairs[-count:]
+                    mode_desc = f"last {len(to_show)}"
+                else:  # head
+                    to_show = pairs[:count]
+                    mode_desc = f"first {len(to_show)}"
+                    
+                print_header()
+                print(f"\n{COLORS['cyan']}{COLORS['bold']}Preview of {mode_desc} messages from:{COLORS['reset']} {COLORS['white']}{session['name']}{COLORS['reset']}")
+                print(separator)
+                
+                if not to_show:
+                    print(f"\n{COLORS['yellow']}No messages found in this session.{COLORS['reset']}")
+                
+                # Show pairs with nice formatting
+                for i, pair in enumerate(to_show):
+                    # User message
+                    print(f"\n{COLORS['cyan']}{COLORS['bold']}╭─ 👤 User {i+1}{COLORS['reset']}")
+                    
+                    # Truncate if very long
+                    user_content = pair[0]['content']
+                    if len(user_content) > 500:
+                        user_content = user_content[:497] + "..."
+                        
+                    print(f"{COLORS['cyan']}│{COLORS['reset']} {user_content}")
+                    
+                    # Assistant message if available
+                    if len(pair) > 1:
+                        print(f"\n{COLORS['green']}{COLORS['bold']}╭─ 🤖 AI{COLORS['reset']}")
+                        
+                        # Truncate if very long
+                        ai_content = pair[1]['content']
+                        if len(ai_content) > 500:
+                            ai_content = ai_content[:497] + "..."
+                            
+                        print(f"{COLORS['green']}│{COLORS['reset']} {ai_content}")
+                
+                print(separator)
+                print(f"{COLORS['green']}Enter command: {COLORS['reset']}(Type 'list' to return to session list)")
+                
+            except Exception as e:
+                print(f"{COLORS['red']}Error reading session: {str(e)}{COLORS['reset']}")
+        
+        def process_command(command):
+            """Process a command entered by the user."""
+            nonlocal current_mode, current_session_idx, preview_mode, preview_count, search_query
+            nonlocal filtered_sessions, sorted_sessions, conversation, current_session_id, current_session_filepath, current_session_name
+            
+            if not command.strip():
+                return True
+            
+            parts = command.strip().split()
+            cmd = parts[0].lower()
+            
+            # Exit commands
+            if cmd in ('exit', 'quit', 'q'):
+                print(f"{COLORS['green']}Exiting session manager.{COLORS['reset']}")
+                return False
+            
+            # Help command
+            if cmd == 'help':
+                print_help()
+                return True
+            
+            # List command
+            if cmd == 'list':
+                current_mode = 'list'
+                search_query = ""  # Clear any search
+                print_session_list()
+                return True
+            
+            # Preview commands
+            if cmd in ('head', 'tail'):
+                if len(parts) < 2:
+                    print(f"{COLORS['red']}Usage: {cmd} <idx> [count]{COLORS['reset']}")
+                    return True
+                
+                try:
+                    idx = int(parts[1])
+                    count = int(parts[2]) if len(parts) > 2 else 5
+                except ValueError:
+                    print(f"{COLORS['red']}Invalid index or count.{COLORS['reset']}")
+                    return True
+                
+                current_mode = 'preview'
+                preview_mode = cmd
+                preview_count = max(1, count)
+                show_session_preview(idx, preview_mode, preview_count)
+                return True
+            
+            # Preview shorthand
+            if cmd == 'preview':
+                if len(parts) < 2:
+                    print(f"{COLORS['red']}Usage: preview <idx>{COLORS['reset']}")
+                    return True
+                
+                try:
+                    idx = int(parts[1])
+                except ValueError:
+                    print(f"{COLORS['red']}Invalid index.{COLORS['reset']}")
+                    return True
+                
+                current_mode = 'preview'
+                show_session_preview(idx, preview_mode, preview_count)
+                return True
+            
+            # Search command
+            if cmd == 'search':
+                if len(parts) < 2:
+                    search_query = ""  # Clear search
+                    print(f"{COLORS['green']}Search cleared.{COLORS['reset']}")
+                else:
+                    search_query = ' '.join(parts[1:])
+                    print(f"{COLORS['green']}Searching for: {search_query}{COLORS['reset']}")
+                
+                current_mode = 'list'
+                print_session_list()
+                return True
+            
+            # Load command
+            if cmd == 'load':
+                if len(parts) < 2:
+                    print(f"{COLORS['red']}Usage: load <idx>{COLORS['reset']}")
+                    return True
+                
+                try:
+                    idx = int(parts[1])
+                except ValueError:
+                    print(f"{COLORS['red']}Invalid index.{COLORS['reset']}")
+                    return True
+                
+                # Make sure we have filtered sessions
+                if not filtered_sessions:
+                    print_session_list()
+                
+                if idx < 0 or idx >= len(filtered_sessions):
+                    print(f"{COLORS['red']}Invalid session index.{COLORS['reset']}")
+                    return True
+                
+                session = filtered_sessions[idx]
+                
+                # Actually load session
+                nonlocal conversation, current_session_id, current_session_filepath, current_session_name
                 history_dir = get_history_dir()
                 session_file = history_dir / f"session_{session['id']}.json"
                 
                 if not session_file.exists():
-                    print(f"\n{COLORS['red']}Error: Session file not found. The index may be out of sync.{COLORS['reset']}")
-                    return
+                    print(f"{COLORS['red']}Session file not found.{COLORS['reset']}")
+                    return True
                 
-                with open(session_file, "r") as f:
-                    loaded_conversation = json.load(f)
+                try:
+                    with open(session_file, "r") as f:
+                        loaded_conversation = json.load(f)
+                        
+                    if isinstance(loaded_conversation, list) and all(isinstance(item, dict) for item in loaded_conversation):
+                        conversation = loaded_conversation
+                        current_session_filepath = session_file
+                        current_session_id = session["id"]
+                        current_session_name = session["name"]
+                        print(f"\n{COLORS['green']}Session loaded: {current_session_name}{COLORS['reset']}")
+                        return False  # Exit session manager and return to chat
+                    else:
+                        print(f"{COLORS['red']}Invalid session file format.{COLORS['reset']}")
+                except Exception as e:
+                    print(f"{COLORS['red']}Error loading session: {str(e)}{COLORS['reset']}")
                 
-                # Basic validation
-                if isinstance(loaded_conversation, list) and all(isinstance(item, dict) for item in loaded_conversation):
-                    conversation = loaded_conversation
-                    current_session_filepath = session_file
-                    current_session_id = session["id"]
-                    current_session_name = session["name"]
-                    print(f"\n{COLORS['green']}Session loaded: {current_session_name}{COLORS['reset']}")
-                    display_history()
+                return True
+            
+            # Rename command
+            if cmd == 'rename':
+                if len(parts) < 3:
+                    print(f"{COLORS['red']}Usage: rename <idx> <new name>{COLORS['reset']}")
+                    return True
+                
+                try:
+                    idx = int(parts[1])
+                except ValueError:
+                    print(f"{COLORS['red']}Invalid index.{COLORS['reset']}")
+                    return True
+                
+                # Make sure we have filtered sessions
+                if not filtered_sessions:
+                    print_session_list()
+                
+                if idx < 0 or idx >= len(filtered_sessions):
+                    print(f"{COLORS['red']}Invalid session index.{COLORS['reset']}")
+                    return True
+                
+                new_name = ' '.join(parts[2:])
+                session = filtered_sessions[idx]
+                old_name = session['name']
+                
+                session['name'] = new_name
+                save_session_index({'sessions': sorted_sessions})
+                print(f"{COLORS['green']}Renamed session from '{old_name}' to '{new_name}'{COLORS['reset']}")
+                
+                current_mode = 'list'
+                print_session_list()
+                return True
+            
+            # Delete command
+            if cmd == 'delete':
+                if len(parts) < 2:
+                    print(f"{COLORS['red']}Usage: delete <idx>{COLORS['reset']}")
+                    return True
+                
+                try:
+                    idx = int(parts[1])
+                except ValueError:
+                    print(f"{COLORS['red']}Invalid index.{COLORS['reset']}")
+                    return True
+                
+                # Make sure we have filtered sessions
+                if not filtered_sessions:
+                    print_session_list()
+                    
+                if idx < 0 or idx >= len(filtered_sessions):
+                    print(f"{COLORS['red']}Invalid session index.{COLORS['reset']}")
+                    return True
+                
+                session = filtered_sessions[idx]
+                confirm = input(f"Are you sure you want to delete session '{session['name']}'? (y/N): ")
+                
+                if confirm.strip().lower() == 'y':
+                    # Remove from index and delete file
+                    history_dir = get_history_dir()
+                    session_file = history_dir / f"session_{session['id']}.json"
+                    
+                    try:
+                        if session_file.exists():
+                            os.remove(session_file)
+                    except Exception as e:
+                        print(f"{COLORS['red']}Error deleting file: {str(e)}{COLORS['reset']}")
+                    
+                    # Remove from main list
+                    session_id = session['id']
+                    for i, s in enumerate(sorted_sessions):
+                        if s['id'] == session_id:
+                            sorted_sessions.pop(i)
+                            break
+                    
+                    save_session_index({'sessions': sorted_sessions})
+                    print(f"{COLORS['green']}Deleted session: {session['name']}{COLORS['reset']}")
+                    
+                    # Reset filter
+                    search_query = ""
+                    filtered_sessions = sorted_sessions.copy()
+                    if current_session_idx >= len(filtered_sessions):
+                        current_session_idx = max(0, len(filtered_sessions) - 1)
                 else:
-                    print(f"\n{COLORS['red']}Error: Invalid session file format.{COLORS['reset']}")
-            else:
-                print(f"\n{COLORS['red']}Error: Invalid selection.{COLORS['reset']}")
-        except (ValueError, IndexError):
-            print(f"\n{COLORS['red']}Error: Invalid input. Please enter a number from the list.{COLORS['reset']}")
+                    print(f"{COLORS['yellow']}Delete cancelled.{COLORS['reset']}")
+                
+                current_mode = 'list'
+                print_session_list()
+                return True
+            
+            # Unknown command
+            print(f"{COLORS['red']}Unknown command: {cmd}. Type 'help' for available commands.{COLORS['reset']}")
+            return True
+        
+        # Start with the session list
+        print_session_list()
+        
+        # Command loop
+        while True:
+            try:
+                if HAS_PROMPT_TOOLKIT:
+                    command = pt_prompt(HTML(f"<ansigreen>command</ansigreen>: "))
+                else:
+                    command = input(f"{COLORS['green']}command:{COLORS['reset']} ")
+                    
+                if not process_command(command):
+                    break
+            except KeyboardInterrupt:
+                print(f"\n{COLORS['yellow']}Session manager interrupted.{COLORS['reset']}")
+                break
+            except Exception as e:
+                print(f"{COLORS['red']}Error: {str(e)}{COLORS['reset']}")
+                if os.environ.get("NGPT_DEBUG"):
+                    traceback.print_exc()
 
     try:
         while True:
@@ -391,7 +789,7 @@ def interactive_chat_session(client, args, logger=None):
                 continue
 
             if user_input.lower() == '/load':
-                load_session()
+                list_sessions()
                 continue
 
             if user_input.lower() == '/help':
