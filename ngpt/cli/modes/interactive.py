@@ -274,6 +274,9 @@ def interactive_chat_session(client, args, logger=None):
             print(f"\n{COLORS['yellow']}No saved sessions found.{COLORS['reset']}")
             return
         
+        # Create command history for session manager
+        session_command_history = InMemoryHistory() if HAS_PROMPT_TOOLKIT else None
+        
         def get_last_modified(session):
             return session.get("last_modified") or session.get("created_at") or ""
         
@@ -357,6 +360,9 @@ def interactive_chat_session(client, args, logger=None):
             print(f"\n{COLORS['cyan']}{COLORS['bold']}Preview Commands:{COLORS['reset']}")
             print(f"  {COLORS['yellow']}head <idx> [count]{COLORS['reset']}   Show first messages in session")
             print(f"  {COLORS['yellow']}tail <idx> [count]{COLORS['reset']}   Show last messages in session")
+            
+            print(f"\n{COLORS['cyan']}{COLORS['bold']}Navigation:{COLORS['reset']}")
+            print(f"  {COLORS['yellow']}↑/↓{COLORS['reset']}                  Browse command history")
             
             print(f"\n{COLORS['cyan']}{COLORS['bold']}Session Size Legend:{COLORS['reset']}")
             print(f"  {COLORS['green']}•{COLORS['reset']}    Small session")
@@ -715,7 +721,24 @@ def interactive_chat_session(client, args, logger=None):
         while True:
             try:
                 if HAS_PROMPT_TOOLKIT:
-                    command = pt_prompt(HTML(f"<ansigreen>command</ansigreen>: "))
+                    # Create key bindings for prompt_toolkit
+                    kb = KeyBindings()
+                    
+                    # Add Ctrl+C handler
+                    @kb.add('c-c')
+                    def _(event):
+                        event.app.exit(result=None)
+                        raise KeyboardInterrupt()
+                    
+                    # Use HTML formatting for better styling
+                    prompt_prefix = HTML(f"<ansigreen>command</ansigreen>: ")
+                    
+                    # Use prompt_toolkit with history and key bindings
+                    command = pt_prompt(
+                        prompt_prefix,
+                        history=session_command_history,
+                        key_bindings=kb
+                    )
                 else:
                     command = input(f"{COLORS['green']}command:{COLORS['reset']} ")
                     
