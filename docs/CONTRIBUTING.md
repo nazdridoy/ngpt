@@ -23,46 +23,6 @@ Thank you for your interest in contributing to NGPT! This document provides guid
 5. Install dependencies: `pip install -e .` 
 6. Open the project in your preferred code editor
 
-## Code Structure
-
-- `ngpt/` - Main package directory
-  - `__init__.py` - Package initialization and public API exports
-  - `__main__.py` - Entry point when run as a module
-  - `client.py` - Client implementation for API interaction
-  - `cli/` - Command-line interface implementation
-    - `__init__.py` - CLI package initialization
-    - `main.py` - Main CLI application logic
-    - `args.py` - Argument parsing setup
-    - `pipe.py` - Utilities for handling piped input
-    - `modes/` - Different operational modes
-      - `__init__.py` - Modes initialization
-      - `chat.py` - Chat mode functionality
-      - `code.py` - Code generation mode
-      - `gitcommsg.py` - Git commit message generation
-      - `interactive.py` - Interactive mode implementation
-      - `rewrite.py` - Text rewriting mode
-      - `shell.py` - Shell command generation
-      - `text.py` - Text generation mode
-    - `ui/` - User interface components
-      - `__init__.py` - UI package initialization
-      - `formatters.py` - Output formatting logic and color definitions
-      - `renderers.py` - Markdown rendering using Rich
-      - `ui.py` - User interface elements (prompts, spinners, input handling)
-  - `core/` - Core functionality modules
-    - `__init__.py` - Core package initialization
-    - `config.py` - API endpoint and general configuration management
-    - `cli_config.py` - CLI-specific option configuration management
-    - `log.py` - Logging setup and utilities
-  - `utils/` - Utility modules
-    - `__init__.py` - Utils package initialization
-    - `roles.py` - Role management functionality
-    - `web_search.py` - Web search functionality
-- `docs/` - Documentation files
-  - `examples/` - Example usage
-  - `usage/` - Usage guides and tutorials
-- `.github/` - GitHub workflows and templates
-- `pyproject.toml` - Project configuration and dependencies
-
 ## Code Style Guidelines
 
 - Follow PEP 8 style guidelines for Python code
