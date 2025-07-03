@@ -66,7 +66,6 @@ def interactive_chat_session(client, args, logger=None):
         print(f"\n{COLORS['cyan']}Session Commands (prefix with '/'):{COLORS['reset']}")
         print(f"  {COLORS['yellow']}/clear{COLORS['reset']}   : Reset conversation")
         print(f"  {COLORS['yellow']}/exit{COLORS['reset']}    : End session")
-        print(f"  {COLORS['yellow']}/save [name]{COLORS['reset']} : Save session (with optional custom name)")
         print(f"  {COLORS['yellow']}/sessions{COLORS['reset']}: List saved sessions")
         print(f"  {COLORS['yellow']}/help{COLORS['reset']}    : Show this help message")
         
@@ -205,7 +204,7 @@ def interactive_chat_session(client, args, logger=None):
         current_session_filepath = None
         current_session_name = None
         with TERMINAL_RENDER_LOCK:
-            print(f"\n{COLORS['yellow']}Conversation history cleared. A new session will be created on next save.{COLORS['reset']}")
+            print(f"\n{COLORS['yellow']}Conversation history cleared. A new session will be created on next exchange.{COLORS['reset']}")
             print(separator)
     
     # --- Session Management Functions ---
@@ -276,7 +275,7 @@ def interactive_chat_session(client, args, logger=None):
             })
         save_session_index(index)
 
-    def save_session(session_name=None):
+    def save_session(session_name=None, silent=False):
         """Save the current conversation to a JSON file, creating a new session or updating the current one."""
         nonlocal current_session_id, current_session_filepath, current_session_name, first_user_prompt
         history_dir = get_history_dir()
@@ -295,15 +294,17 @@ def interactive_chat_session(client, args, logger=None):
                 current_session_name = session_name
             # Add to index
             update_session_in_index(current_session_id, current_session_name)
-            print(f"\n{COLORS['green']}Starting new session: {current_session_name}{COLORS['reset']}")
+            if not silent:
+                print(f"{COLORS['green']}Session: {current_session_name}{COLORS['reset']}")
         else:
             # Always update last_modified, and optionally name
             if session_name:
                 current_session_name = session_name
+                if not silent:
+                    print(f"{COLORS['green']}Session renamed: {current_session_name}{COLORS['reset']}")
             update_session_in_index(current_session_id, current_session_name, update_existing=True)
         with open(current_session_filepath, "w") as f:
             json.dump(conversation, f, indent=2)
-        print(f"\n{COLORS['green']}Session saved as: {current_session_name}{COLORS['reset']}")
 
     def list_sessions():
         """Interactive session manager with enhanced visuals for the /sessions command."""
@@ -828,7 +829,7 @@ def interactive_chat_session(client, args, logger=None):
                 
                 # Define reserved keywords
                 reserved_commands = [
-                    '/clear', '/save', '/sessions', '/help', '/ml',
+                    '/clear', '/sessions', '/help', '/ml',
                     '/exit', '/quit', '/bye'
                 ]
                 
@@ -850,7 +851,7 @@ def interactive_chat_session(client, args, logger=None):
                 break
             
             # Define reserved slash commands
-            reserved_commands = ['/clear', '/save', '/sessions', '/help', '/ml', '/exit', '/quit', '/bye']
+            reserved_commands = ['/clear', '/sessions', '/help', '/ml', '/exit', '/quit', '/bye']
             
             # Check if input starts with / but is not a reserved command
             if user_input.startswith('/') and not any(user_input.lower().startswith(cmd.lower()) for cmd in reserved_commands):
@@ -862,15 +863,6 @@ def interactive_chat_session(client, args, logger=None):
                 clear_history()
                 continue
             
-            if user_input.lower().startswith('/save'):
-                # Check if a session name was provided
-                parts = user_input.strip().split(' ', 1)
-                if len(parts) > 1 and parts[1].strip():
-                    save_session(parts[1].strip())
-                else:
-                    save_session()
-                continue
-
             if user_input.lower() == '/sessions':
                 list_sessions()
                 continue
@@ -1051,12 +1043,21 @@ def interactive_chat_session(client, args, logger=None):
                 if logger:
                     logger.log("assistant", response)
             
+            # Auto-save conversation after each exchange
+            if current_session_id is None:
+                save_session(silent=True)  # This will create a new session on first exchange
+            else:
+                # Update existing session silently (without printing message)
+                with open(current_session_filepath, "w") as f:
+                    json.dump(conversation, f, indent=2)
+                update_session_in_index(current_session_id, current_session_name, update_existing=True)
+        
             # Print separator between exchanges
             print_separator()
             
             # Add a small delay to ensure terminal stability
             time.sleep(0.1)
-            
+
     except KeyboardInterrupt:
         print(f"\n\n{COLORS['yellow']}Chat session interrupted by user.{COLORS['reset']}")
     except Exception as e:
