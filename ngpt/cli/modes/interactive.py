@@ -125,6 +125,10 @@ def interactive_chat_session(client, args, logger=None):
         elif hasattr(args, 'model') and args.model:
             model_name = args.model
             
+        # Truncate model name if it's too long (max 40 characters)
+        if model_name and len(model_name) > 40:
+            model_name = model_name[:37] + "..."
+        
         model_info = f"Model: {model_name}" if model_name else "Default model"
         status_line = f"Temperature: {temperature} | {model_info}"
         if len(status_line) > box_width:
