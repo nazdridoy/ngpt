@@ -42,7 +42,7 @@ You can set configuration options directly via command-line arguments:
 usage: ngpt [-h] [-v] [--api-key API_KEY] [--base-url BASE_URL] [--model MODEL] [--web-search] [--pipe]
             [--temperature TEMPERATURE] [--top_p TOP_P] [--max_tokens MAX_TOKENS] [--log [FILE]]
             [--preprompt PREPROMPT | --role ROLE] [--config [CONFIG]] [--config-index CONFIG_INDEX]
-            [--provider PROVIDER] [--remove] [--show-config] [--all] [--list-models] [--cli-config [COMMAND ...]]
+            [--provider PROVIDER] [--remove] [--show-config] [--list-models] [--cli-config [COMMAND ...]]
             [--role-config [ACTION ...]] [--plaintext] [--language LANGUAGE] [--rec-chunk] [--diff [FILE]]
             [--chunk-size CHUNK_SIZE] [--analyses-chunk-size ANALYSES_CHUNK_SIZE] [--max-msg-lines MAX_MSG_LINES]
             [--max-recursion-depth MAX_RECURSION_DEPTH] [--humanize] [-i | -s | -c | -t | -r | -g]
@@ -84,7 +84,6 @@ Configuration Options::
 --remove                            Remove the configuration at the specified index (requires --config and
                                     --config-index or --provider)
 --show-config                       Show the current configuration(s) and exit
---all                               Show details for all configurations (requires --show-config)
 --list-models                       List all available models for the current configuration and exit
 --cli-config [COMMAND ...]          Manage CLI configuration (set, get, unset, list, help)
 --role-config [ACTION ...]          Manage custom roles (help, create, show, edit, list, remove) [role_name]

@@ -243,8 +243,10 @@ ngpt --cli-config set max-msg-lines 15
 CLI configuration values are applied with this priority (highest to lowest):
 
 1. Command-line arguments (directly passed to ngpt)
-2. CLI configuration settings (from ngpt-cli.conf)
-3. Built-in defaults
+2. Environment variables (`OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL`)
+3. CLI configuration settings (from ngpt-cli.conf)
+4. Main configuration file (`ngpt.conf` or custom config file)
+5. Built-in defaults
 
 This means you can always override your configured defaults by specifying options directly on the command line.
 

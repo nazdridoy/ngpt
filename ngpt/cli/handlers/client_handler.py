@@ -16,8 +16,10 @@ def process_config_selection(args, cli_config):
     """
     # Priority order for config selection:
     # 1. Command-line arguments (args.provider, args.config_index)
-    # 2. CLI configuration (cli_config["provider"], cli_config["config-index"])
-    # 3. Default values (None, 0)
+    # 2. Environment variables (OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL)
+    # 3. CLI configuration (cli_config["provider"], cli_config["config-index"])
+    # 4. Main configuration file (ngpt.conf or custom config file)
+    # 5. Default values (None, 0)
     
     # Get provider/config-index from CLI config if not specified in args
     effective_provider = args.provider
