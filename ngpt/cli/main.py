@@ -56,7 +56,7 @@ def main():
     
     # Show config if requested
     if args.show_config:
-        show_config(args.config, args.config_index, args.provider, args.all)
+        show_config(args.config, args.config_index, args.provider)
         return
     
     # For interactive mode, we'll allow continuing without a specific prompt

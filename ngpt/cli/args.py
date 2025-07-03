@@ -76,8 +76,6 @@ def setup_argument_parser():
                               help='Remove the configuration at the specified index (requires --config and --config-index or --provider)')
     config_group.add_argument('--show-config', action='store_true', 
                               help='Show the current configuration(s) and exit')
-    config_group.add_argument('--all', action='store_true', 
-                              help='Show details for all configurations (requires --show-config)')
     config_group.add_argument('--list-models', action='store_true', 
                               help='List all available models for the current configuration and exit')
     config_group.add_argument('--cli-config', nargs='*', metavar='COMMAND', 
@@ -147,10 +145,6 @@ def parse_args():
 
 def validate_args(args):
     """Validate parsed arguments for correctness and compatibility."""
-    # Validate --all usage
-    if args.all and not args.show_config:
-        raise ValueError("--all can only be used with --show-config")
-    
     # Validate --remove usage
     if args.remove and (not args.config or (args.config_index == 0 and not args.provider)):
         raise ValueError("--remove requires --config and either --config-index or --provider")

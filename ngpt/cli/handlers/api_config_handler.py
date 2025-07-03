@@ -138,14 +138,13 @@ def handle_config_command(config_file: Union[str, bool, None], config_index: int
     
     add_config_entry(config_path, config_idx)
 
-def show_config(config_file: Union[str, bool, None], config_index: int, provider: Optional[str], show_all: bool = False) -> None:
+def show_config(config_file: Union[str, bool, None], config_index: int, provider: Optional[str]) -> None:
     """Show configuration information.
     
     Args:
         config_file: Path to config file, None, or boolean True when --config is used without a path
         config_index: Index of the config to show
         provider: Provider name to use
-        show_all: Whether to show all configurations
     """
     # Convert bool to None to handle --config flag without value
     if isinstance(config_file, bool):
@@ -154,57 +153,69 @@ def show_config(config_file: Union[str, bool, None], config_index: int, provider
     config_path = get_config_path(config_file)
     configs = load_configs(config_file)
     
+    # First show a list of all available configurations
     print(f"Configuration file: {config_path}")
     print(f"Total configurations: {len(configs)}")
     
-    # Determine active configuration and display identifier
-    active_identifier = f"index {config_index}"
-    if provider:
-        active_identifier = f"provider '{provider}'"
-    print(f"Active configuration: {active_identifier}")
-
-    if show_all:
-        # Show details for all configurations
-        print("\nAll configuration details:")
-        for i, cfg in enumerate(configs):
-            cfg_provider = cfg.get('provider', 'N/A')
-            active_str = '(Active)' if (
-                (provider and cfg_provider.lower() == provider.lower()) or 
-                (not provider and i == config_index)
-            ) else ''
-            print(f"\n--- Configuration Index {i} / Provider: {COLORS['green']}{cfg_provider}{COLORS['reset']} {active_str} ---")
-            print(f"  API Key: {'[Set]' if cfg.get('api_key') else '[Not Set]'}")
-            print(f"  Base URL: {cfg.get('base_url', 'N/A')}")
-            print(f"  Model: {cfg.get('model', 'N/A')}")
-    else:
-        # Show active config details and summary list
-        active_config = load_config(config_file, config_index, provider)
-        print("\nActive configuration details:")
-        print(f"  Provider: {COLORS['green']}{active_config.get('provider', 'N/A')}{COLORS['reset']}")
-        print(f"  API Key: {'[Set]' if active_config.get('api_key') else '[Not Set]'}")
-        print(f"  Base URL: {active_config.get('base_url', 'N/A')}")
-        print(f"  Model: {active_config.get('model', 'N/A')}")
+    # Check for duplicate provider names for warning
+    provider_counts = {}
+    for cfg in configs:
+        cfg_provider = cfg.get('provider', 'N/A').lower()
+        provider_counts[cfg_provider] = provider_counts.get(cfg_provider, 0) + 1
+    
+    print("\nAvailable configurations:")
+    for i, cfg in enumerate(configs):
+        cfg_provider = cfg.get('provider', 'N/A')
+        provider_display = cfg_provider
+        # Add warning for duplicate providers
+        if provider_counts.get(cfg_provider.lower(), 0) > 1:
+            provider_display = f"{cfg_provider} {COLORS['yellow']}(duplicate){COLORS['reset']}"
         
-        if len(configs) > 1:
-            print("\nAvailable configurations:")
-            # Check for duplicate provider names for warning
-            provider_counts = {}
-            for cfg in configs:
-                cfg_provider = cfg.get('provider', 'N/A').lower()
-                provider_counts[cfg_provider] = provider_counts.get(cfg_provider, 0) + 1
+        active_marker = "*" if (
+            (provider and cfg_provider.lower() == provider.lower()) or 
+            (not provider and i == config_index)
+        ) else " "
+        print(f"[{i}]{active_marker} {COLORS['green']}{provider_display}{COLORS['reset']} - {cfg.get('model', 'N/A')} ({'[API Key Set]' if cfg.get('api_key') else '[API Key Not Set]'})")
+    
+    # Interactive provider selection
+    try:
+        print(f"\n{COLORS['cyan']}Enter index number or press Enter for active:{COLORS['reset']} ", end='')
+        choice = input().strip()
+        
+        # Determine which configuration to show
+        selected_index = config_index
+        if choice and choice.isdigit():
+            idx = int(choice)
+            if 0 <= idx < len(configs):
+                selected_index = idx
+            else:
+                print(f"{COLORS['red']}Invalid index. Showing active configuration.{COLORS['reset']}")
+        
+        # Get the configuration to display
+        selected_config = configs[selected_index]
+        selected_provider = selected_config.get('provider', 'N/A')
+        is_active = (selected_index == config_index) or (provider and selected_provider.lower() == provider.lower())
+        
+        # Clear a few lines and show the selected configuration details
+        print("\n" + "-" * 50)
+        if is_active:
+            print(f"\n{COLORS['green']}{COLORS['bold']}Active Configuration Details:{COLORS['reset']}")
+        else:
+            print(f"\n{COLORS['cyan']}{COLORS['bold']}Configuration Details (Index {selected_index}):{COLORS['reset']}")
+        
+        print(f"  Provider: {COLORS['green']}{selected_config.get('provider', 'N/A')}{COLORS['reset']}")
+        print(f"  API Key: {'[Set]' if selected_config.get('api_key') else '[Not Set]'}")
+        print(f"  Base URL: {selected_config.get('base_url', 'N/A')}")
+        print(f"  Model: {selected_config.get('model', 'N/A')}")
+        
+        # If not the active configuration, show how to use it
+        if not is_active:
+            print(f"\n{COLORS['yellow']}To use this configuration:{COLORS['reset']}")
+            print(f"  {COLORS['green']}ngpt --provider {selected_config.get('provider')} \"Your prompt\"{COLORS['reset']}  {COLORS['gray']}or{COLORS['reset']}")
+            print(f"  {COLORS['green']}ngpt --config-index {selected_index} \"Your prompt\"{COLORS['reset']}")
             
-            for i, cfg in enumerate(configs):
-                cfg_provider = cfg.get('provider', 'N/A')
-                provider_display = cfg_provider
-                # Add warning for duplicate providers
-                if provider_counts.get(cfg_provider.lower(), 0) > 1:
-                    provider_display = f"{cfg_provider} {COLORS['yellow']}(duplicate){COLORS['reset']}"
-                
-                active_marker = "*" if (
-                    (provider and cfg_provider.lower() == provider.lower()) or 
-                    (not provider and i == config_index)
-                ) else " "
-                print(f"[{i}]{active_marker} {COLORS['green']}{provider_display}{COLORS['reset']} - {cfg.get('model', 'N/A')} ({'[API Key Set]' if cfg.get('api_key') else '[API Key Not Set]'})")
-            
-            # Show instruction for using --provider
-            print(f"\nTip: Use {COLORS['yellow']}--provider NAME{COLORS['reset']} to select a configuration by provider name.") 
+    except KeyboardInterrupt:
+        print("\nInteractive selection cancelled.")
+    
+    # Show instruction for using --provider
+    print(f"\nTip: Use {COLORS['yellow']}--provider NAME{COLORS['reset']} to select a configuration by provider name.") 
