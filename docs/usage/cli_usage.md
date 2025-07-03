@@ -172,8 +172,7 @@ This makes it easy to repeat or modify previous prompts.
 In interactive mode, you can manage your chat sessions with the following commands:
 
 - **`/save [name]`**: Saves the current conversation with an optional custom name.
-- **`/load`**: Opens the interactive session manager to browse and load previous sessions.
-- **`/sessions`**: Displays a list of all saved sessions.
+- **`/sessions`**: Opens the interactive session manager to browse, manage sessions.
 - **`/clear`**: Clears the current conversation history.
 - **`/exit`**: Exits the interactive session (also works with `exit`, `quit`, or `bye` without the slash).
 - **`/help`**: Shows the help menu with all available commands.
@@ -210,7 +209,7 @@ Sessions display:
 
 Example:
 ```
-> /load
+> /sessions
 🤖 nGPT Session Manager - List Sessions 🤖
 ────────────────────────────────────
 

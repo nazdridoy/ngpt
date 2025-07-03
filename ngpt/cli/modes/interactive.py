@@ -67,7 +67,6 @@ def interactive_chat_session(client, args, logger=None):
         print(f"  {COLORS['yellow']}/clear{COLORS['reset']}   : Reset conversation")
         print(f"  {COLORS['yellow']}/exit{COLORS['reset']}    : End session")
         print(f"  {COLORS['yellow']}/save [name]{COLORS['reset']} : Save session (with optional custom name)")
-        print(f"  {COLORS['yellow']}/load{COLORS['reset']}    : Load a previous session")
         print(f"  {COLORS['yellow']}/sessions{COLORS['reset']}: List saved sessions")
         print(f"  {COLORS['yellow']}/help{COLORS['reset']}    : Show this help message")
         
@@ -548,6 +547,11 @@ def interactive_chat_session(client, args, logger=None):
             parts = command.strip().split()
             cmd = parts[0].lower()
             
+            # Check if the command has a slash prefix but is not a valid command
+            if cmd.startswith('/'):
+                print(f"{COLORS['red']}Unknown command: {cmd}. Commands in the session manager don't use slash prefix.{COLORS['reset']}")
+                return True
+            
             # Exit commands
             if cmd in ('exit', 'quit', 'q'):
                 print(f"{COLORS['green']}Exiting session manager.{COLORS['reset']}")
@@ -822,17 +826,20 @@ def interactive_chat_session(client, args, logger=None):
                     # We don't print any message here as it will be handled in the main loop
                     event.app.exit(result="/ml")
                 
+                # Define reserved keywords
+                reserved_commands = [
+                    '/clear', '/save', '/sessions', '/help', '/ml',
+                    '/exit', '/quit', '/bye'
+                ]
+                
                 # Get user input with styled prompt - using proper HTML formatting
                 user_input = pt_prompt(
                     HTML("<ansicyan><b>╭─ 👤 You:</b></ansicyan> "),
                     style=style,
                     key_bindings=kb,
                     history=prompt_history,
-                    # Add completer for fuzzy suggestions
-                    completer=WordCompleter([
-                        '/clear', '/save', '/load', '/sessions', '/help', '/ml',
-                        '/exit'
-                    ], ignore_case=True, sentence=True)
+                    # Add completer for fuzzy suggestions with reserved commands only
+                    completer=WordCompleter(reserved_commands, ignore_case=True, sentence=True)
                 )
             else:
                 user_input = input(f"{user_header()}: {COLORS['reset']}")
@@ -841,6 +848,14 @@ def interactive_chat_session(client, args, logger=None):
             if user_input.lower() in ('/exit', '/quit', '/bye', 'exit', 'quit', 'bye'):
                 print(f"\n{COLORS['green']}Ending chat session. Goodbye!{COLORS['reset']}")
                 break
+            
+            # Define reserved slash commands
+            reserved_commands = ['/clear', '/save', '/sessions', '/help', '/ml', '/exit', '/quit', '/bye']
+            
+            # Check if input starts with / but is not a reserved command
+            if user_input.startswith('/') and not any(user_input.lower().startswith(cmd.lower()) for cmd in reserved_commands):
+                print(f"{COLORS['red']}Unknown command: {user_input}{COLORS['reset']}")
+                continue
             
             # Check for special commands (now require a '/' prefix)
             if user_input.lower() == '/clear':
@@ -857,10 +872,6 @@ def interactive_chat_session(client, args, logger=None):
                 continue
 
             if user_input.lower() == '/sessions':
-                list_sessions()
-                continue
-
-            if user_input.lower() == '/load':
                 list_sessions()
                 continue
 

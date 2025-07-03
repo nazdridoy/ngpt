@@ -106,11 +106,10 @@ ngpt -i
 # Inside interactive mode, you can use commands like:
 # /help     - Show help menu
 # /save     - Save the current session
-# /load     - Load a previous session through interactive session manager
 # /sessions - List saved sessions
 # /clear    - Clear the conversation
 # /exit     - Exit the session (also 'exit', 'quit', 'bye' without '/')
-# 
+
 # Keyboard shortcuts:
 # Ctrl+E    - Open multiline editor for complex inputs
 # Ctrl+C    - Exit the session
