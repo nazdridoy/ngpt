@@ -10,6 +10,13 @@ from ngpt.cli.handlers.log_handler import setup_logger, cleanup_logger
 from ngpt.cli.handlers.modes_handler import dispatch_mode
 from ngpt.cli.handlers.client_handler import process_config_selection, initialize_client
 from ngpt.cli.handlers.error_handler import handle_validation_error, handle_keyboard_interrupt, handle_exception
+from ngpt.cli.handlers.session_handler import (
+    handle_session_management, 
+    clear_conversation_history, 
+    auto_save_session,
+    SessionManager,
+    SessionUI
+)
 
 __all__ = [
     'handle_role_config',
@@ -25,5 +32,10 @@ __all__ = [
     'initialize_client',
     'handle_validation_error',
     'handle_keyboard_interrupt',
-    'handle_exception'
+    'handle_exception',
+    'handle_session_management',
+    'clear_conversation_history',
+    'auto_save_session',
+    'SessionManager',
+    'SessionUI'
 ] 
