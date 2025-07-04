@@ -53,12 +53,12 @@ class SessionManager:
         else:
             return {"sessions": []}
     
-    def validate_session_index(self, silent: bool = True) -> int:
+    def validate_session_index(self, logger=None) -> int:
         """
         Validates the session index against actual files and repairs any discrepancies.
         
         Args:
-            silent: If False, print status messages about repairs
+            logger: Optional logger instance for logging errors
             
         Returns:
             int: Number of fixes made
@@ -73,8 +73,11 @@ class SessionManager:
             if session_file.exists():
                 valid_sessions.append(session)
             else:
-                if not silent:
-                    print(f"{COLORS['yellow']}Removing invalid session from index: {session['name']}{COLORS['reset']}")
+                # Record removing the invalid session
+                error_msg = f"Removing invalid session from index: {session['name']} (file not found)"
+                print(f"{COLORS['yellow']}{error_msg}{COLORS['reset']}")
+                if logger:
+                    logger.log("session_index", error_msg)
                 fixes += 1
         
         # 2. Add entries for files not in the index
@@ -100,9 +103,11 @@ class SessionManager:
                                 if msg.get("role") == "user":
                                     name = self.generate_session_name(msg.get("content", ""))
                                     break
-                    except Exception:
-                        # Use default name if we can't read the file
-                        pass
+                    except Exception as e:
+                        error_msg = f"Could not read content from {file_path.name}: {str(e)}"
+                        print(f"{COLORS['yellow']}{error_msg}{COLORS['reset']}")
+                        if logger:
+                            logger.log("session_index", error_msg)
                     
                     # Create metadata for the orphaned file
                     valid_sessions.append({
@@ -112,24 +117,38 @@ class SessionManager:
                         "last_modified": datetime.fromtimestamp(file_path.stat().st_mtime).strftime('%Y-%m-%d %H:%M:%S')
                     })
                     
-                    if not silent:
-                        print(f"{COLORS['green']}Added orphaned session to index: {name}{COLORS['reset']}")
+                    # Record adding the orphaned session
+                    add_msg = f"Added orphaned session to index: {name}"
+                    print(f"{COLORS['green']}{add_msg}{COLORS['reset']}")
+                    if logger:
+                        logger.log("session_index", add_msg)
+                    
                     fixes += 1
             except Exception as e:
-                if not silent:
-                    print(f"{COLORS['red']}Error processing file {file_path}: {str(e)}{COLORS['reset']}")
+                error_msg = f"Error processing file {file_path}: {str(e)}"
+                print(f"{COLORS['red']}{error_msg}{COLORS['reset']}")
+                if logger:
+                    logger.log("session_index", error_msg)
                 continue
         
         # Update the index if fixes were made
         if fixes > 0:
-            index["sessions"] = valid_sessions
-            self.save_session_index(index)
-            if not silent:
-                print(f"{COLORS['green']}Session index repaired. {fixes} issues fixed.{COLORS['reset']}")
+            try:
+                index["sessions"] = valid_sessions
+                self.save_session_index(index, logger)
+                msg = f"Session index repaired. {fixes} {'issue' if fixes == 1 else 'issues'} fixed."
+                print(f"{COLORS['green']}{msg}{COLORS['reset']}")
+                if logger:
+                    logger.log("session_index", msg)
+            except Exception as e:
+                error_msg = f"Error saving session index: {str(e)}"
+                print(f"{COLORS['red']}{error_msg}{COLORS['reset']}")
+                if logger:
+                    logger.log("session_index", error_msg)
         
         return fixes
     
-    def save_session_index(self, index: Dict[str, List[Dict[str, str]]]) -> None:
+    def save_session_index(self, index: Dict[str, List[Dict[str, str]]], logger=None) -> None:
         """Save the session index to session-index.json."""
         # Clean the index to only include core session data
         clean_index = {"sessions": []}
@@ -142,8 +161,17 @@ class SessionManager:
             }
             clean_index["sessions"].append(clean_session)
         
-        with open(self.index_path, "w") as f:
-            json.dump(clean_index, f, indent=2)
+        try:
+            with open(self.index_path, "w") as f:
+                json.dump(clean_index, f, indent=2)
+                
+            if logger:
+                logger.log("session_index", f"Saved session index with {len(clean_index['sessions'])} sessions")
+        except Exception as e:
+            error_msg = f"Failed to save session index: {str(e)}"
+            print(f"{COLORS['red']}{error_msg}{COLORS['reset']}")
+            if logger:
+                logger.log("session_index", error_msg)
     
     def generate_session_name(self, content: str) -> str:
         """Generate a session name from the first user prompt."""
@@ -159,7 +187,7 @@ class SessionManager:
         
         return name or "Untitled Session"
     
-    def update_session_in_index(self, session_id: str, session_name: str, update_existing: bool = False) -> None:
+    def update_session_in_index(self, session_id: str, session_name: str, update_existing: bool = False, logger=None) -> None:
         """Add or update a session in the index."""
         index = self.get_session_index()
         now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -182,11 +210,11 @@ class SessionManager:
                 "last_modified": now_str
             })
         
-        self.save_session_index(index)
+        self.save_session_index(index, logger)
     
     def save_session(self, conversation: List[Dict[str, str]], session_id: Optional[str] = None, 
                     session_name: Optional[str] = None, first_user_prompt: Optional[str] = None,
-                    silent: bool = False) -> Tuple[str, Path, str]:
+                    verbose: bool = False, logger=None) -> Tuple[str, Path, str]:
         """Save the current conversation to a JSON file, creating a new session or updating the current one."""
         if session_id is None:
             # Generate a new session ID if not already set (new session or cleared)
@@ -201,27 +229,46 @@ class SessionManager:
                     session_name = "Untitled Session"
             
             # Add to index
-            self.update_session_in_index(session_id, session_name)
-            if not silent:
+            self.update_session_in_index(session_id, session_name, logger=logger)
+            if verbose:
                 print(f"{COLORS['green']}Session: {session_name}{COLORS['reset']}")
+            
+            if logger:
+                logger.log("session_manager", f"Created new session: {session_name} (ID: {session_id})")
         else:
             session_filepath = self.history_dir / f"session_{session_id}.json"
             # Always update last_modified, and optionally name
             if session_name:
-                if not silent:
+                if verbose:
                     print(f"{COLORS['green']}Session renamed: {session_name}{COLORS['reset']}")
-            self.update_session_in_index(session_id, session_name or "Untitled Session", update_existing=True)
+                if logger:
+                    logger.log("session_manager", f"Renamed session to: {session_name} (ID: {session_id})")
+            self.update_session_in_index(session_id, session_name or "Untitled Session", update_existing=True, logger=logger)
         
-        with open(session_filepath, "w") as f:
-            json.dump(conversation, f, indent=2)
+        try:
+            with open(session_filepath, "w") as f:
+                json.dump(conversation, f, indent=2)
+            
+            if logger:
+                msg_count = sum(1 for msg in conversation if msg.get("role") in ["user", "assistant"])
+                logger.log("session_manager", f"Saved session {session_id} with {msg_count} messages")
+        except Exception as e:
+            error_msg = f"Error saving session {session_id}: {str(e)}"
+            print(f"{COLORS['red']}{error_msg}{COLORS['reset']}")
+            if logger:
+                logger.log("session_manager", error_msg)
         
         return session_id, session_filepath, session_name or "Untitled Session"
     
-    def load_session(self, session_id: str) -> Optional[List[Dict[str, str]]]:
+    def load_session(self, session_id: str, logger=None) -> Optional[List[Dict[str, str]]]:
         """Load a session by ID."""
         session_file = self.history_dir / f"session_{session_id}.json"
         
         if not session_file.exists():
+            error_msg = f"Session file for {session_id} not found"
+            print(f"{COLORS['red']}{error_msg}{COLORS['reset']}")
+            if logger:
+                logger.log("session_manager", error_msg)
             return None
         
         try:
@@ -229,27 +276,54 @@ class SessionManager:
                 conversation = json.load(f)
                 
             if isinstance(conversation, list) and all(isinstance(item, dict) for item in conversation):
+                if logger:
+                    msg_count = sum(1 for msg in conversation if msg.get("role") in ["user", "assistant"])
+                    logger.log("session_manager", f"Loaded session {session_id} with {msg_count} messages")
                 return conversation
             else:
+                error_msg = f"Invalid session format in {session_id}"
+                print(f"{COLORS['red']}{error_msg}{COLORS['reset']}")
+                if logger:
+                    logger.log("session_manager", error_msg)
                 return None
-        except Exception:
+        except Exception as e:
+            error_msg = f"Error loading session {session_id}: {str(e)}"
+            print(f"{COLORS['red']}{error_msg}{COLORS['reset']}")
+            if logger:
+                logger.log("session_manager", error_msg)
             return None
     
-    def delete_session(self, session_id: str) -> bool:
+    def delete_session(self, session_id: str, logger=None) -> bool:
         """Delete a session by ID."""
         session_file = self.history_dir / f"session_{session_id}.json"
         
         try:
             if session_file.exists():
                 os.remove(session_file)
+                if logger:
+                    logger.log("session_manager", f"Deleted session file for {session_id}")
             
             # Remove from index
             index = self.get_session_index()
+            # Find session name before deleting for logging purposes
+            session_name = "Unknown"
+            for session in index["sessions"]:
+                if session["id"] == session_id:
+                    session_name = session["name"]
+                    break
+                    
             index["sessions"] = [s for s in index["sessions"] if s["id"] != session_id]
-            self.save_session_index(index)
+            self.save_session_index(index, logger)
+            
+            if logger:
+                logger.log("session_manager", f"Removed session '{session_name}' (ID: {session_id}) from index")
             
             return True
-        except Exception:
+        except Exception as e:
+            error_msg = f"Error deleting session {session_id}: {str(e)}"
+            print(f"{COLORS['red']}{error_msg}{COLORS['reset']}")
+            if logger:
+                logger.log("session_manager", error_msg)
             return False
     
     def get_session_info(self, session_id: str) -> Optional[Dict[str, Any]]:
@@ -465,10 +539,13 @@ class SessionUI:
             print(f"{COLORS['red']}Error reading session: {str(e)}{COLORS['reset']}")
 
 
-def handle_session_management() -> Optional[Tuple[str, Path, str, List[Dict[str, str]]]]:
+def handle_session_management(logger=None) -> Optional[Tuple[str, Path, str, List[Dict[str, str]]]]:
     """
     Handle the interactive session management.
     
+    Args:
+        logger: Optional logger instance for logging operations
+        
     Returns:
         Optional[Tuple[str, Path, str, List[Dict[str, str]]]]: 
         (session_id, session_filepath, session_name, conversation) if a session was loaded,
@@ -478,7 +555,7 @@ def handle_session_management() -> Optional[Tuple[str, Path, str, List[Dict[str,
     session_ui = SessionUI(session_manager)
     
     # Get sessions and validate index first to avoid missing files
-    fixes = session_manager.validate_session_index(silent=True)
+    fixes = session_manager.validate_session_index(logger=logger)
     
     index = session_manager.get_session_index()
     if not index["sessions"]:
@@ -501,7 +578,10 @@ def handle_session_management() -> Optional[Tuple[str, Path, str, List[Dict[str,
     
     # Show subtle notification if fixes were made
     if fixes > 0:
-        print(f"\n{COLORS['gray']}Note: {fixes} session index inconsistencies were automatically repaired.{COLORS['reset']}")
+        if fixes == 1:
+            print(f"\n{COLORS['gray']}Note: 1 session index inconsistency was automatically repaired.{COLORS['reset']}")
+        else:
+            print(f"\n{COLORS['gray']}Note: {fixes} session index inconsistencies were automatically repaired.{COLORS['reset']}")
     
     # Flag to track if we've already validated the index in this session
     index_validated = True  # We just validated it above
@@ -530,12 +610,16 @@ def handle_session_management() -> Optional[Tuple[str, Path, str, List[Dict[str,
         # Help command
         if cmd == 'help':
             session_ui.print_help()
+            if logger:
+                logger.log("session_manager", "Displayed help information")
             return True
         
         # List command
         if cmd == 'list':
             current_mode = 'list'
             search_query = ""  # Clear any search
+            filtered_sessions = sorted_sessions.copy()  # Reset filtered sessions to show all
+            current_session_idx = len(sorted_sessions) - 1 if sorted_sessions else -1  # Reset to last session
             session_ui.print_session_list(sorted_sessions, filtered_sessions, current_session_idx, search_query)
             return True
         
@@ -560,6 +644,12 @@ def handle_session_management() -> Optional[Tuple[str, Path, str, List[Dict[str,
                 print(f"{COLORS['red']}Invalid session index.{COLORS['reset']}")
                 return True
             
+            session = filtered_sessions[idx]
+            
+            # Log preview operation
+            if logger:
+                logger.log("session_manager", f"Previewing {cmd} of session: {session['name']} (ID: {session['id']}, count: {preview_count})")
+                
             session_ui.show_session_preview(filtered_sessions[idx], preview_mode, preview_count)
             return True
         
@@ -581,6 +671,12 @@ def handle_session_management() -> Optional[Tuple[str, Path, str, List[Dict[str,
                 print(f"{COLORS['red']}Invalid session index.{COLORS['reset']}")
                 return True
             
+            session = filtered_sessions[idx]
+            
+            # Log preview operation
+            if logger:
+                logger.log("session_manager", f"Previewing session: {session['name']} (ID: {session['id']}, mode: {preview_mode}, count: {preview_count})")
+                
             session_ui.show_session_preview(filtered_sessions[idx], preview_mode, preview_count)
             return True
         
@@ -589,10 +685,27 @@ def handle_session_management() -> Optional[Tuple[str, Path, str, List[Dict[str,
             if len(parts) < 2:
                 search_query = ""  # Clear search
                 print(f"{COLORS['green']}Search cleared.{COLORS['reset']}")
+                filtered_sessions = sorted_sessions.copy()  # Reset to all sessions
+                
+                if logger:
+                    logger.log("session_manager", "Search filter cleared")
             else:
                 search_query = ' '.join(parts[1:])
                 print(f"{COLORS['green']}Searching for: {search_query}{COLORS['reset']}")
-            
+                
+                # Actually filter the sessions by name (case-insensitive)
+                filtered_sessions = [s for s in sorted_sessions if search_query.lower() in s['name'].lower()]
+                
+                # Reset current session index to last item in filtered list
+                if filtered_sessions:
+                    current_session_idx = len(filtered_sessions) - 1
+                else:
+                    current_session_idx = -1
+                
+                # Log search operation
+                if logger:
+                    logger.log("session_manager", f"Searching sessions for: '{search_query}' (found {len(filtered_sessions)} results)")
+                
             current_mode = 'list'
             session_ui.print_session_list(sorted_sessions, filtered_sessions, current_session_idx, search_query)
             return True
@@ -614,12 +727,16 @@ def handle_session_management() -> Optional[Tuple[str, Path, str, List[Dict[str,
                 return True
             
             session = filtered_sessions[idx]
-            conversation = session_manager.load_session(session['id'])
+            conversation = session_manager.load_session(session['id'], logger)
             
             if conversation is None:
                 print(f"{COLORS['red']}Error loading session.{COLORS['reset']}")
                 return True
             
+            # Log explicit load command
+            if logger:
+                logger.log("session_manager", f"User explicitly loaded session: {session['name']} (ID: {session['id']})")
+                
             session_filepath = session_manager.history_dir / f"session_{session['id']}.json"
             print(f"\n{COLORS['green']}Session loaded: {session['name']}{COLORS['reset']}")
             return False  # Exit session manager and return to chat
@@ -645,8 +762,12 @@ def handle_session_management() -> Optional[Tuple[str, Path, str, List[Dict[str,
             old_name = session['name']
             
             session['name'] = new_name
-            session_manager.update_session_in_index(session['id'], new_name, update_existing=True)
+            session_manager.update_session_in_index(session['id'], new_name, update_existing=True, logger=logger)
             print(f"{COLORS['green']}Renamed session from '{old_name}' to '{new_name}'{COLORS['reset']}")
+            
+            # Log the rename operation explicitly
+            if logger:
+                logger.log("session_manager", f"Renamed session from '{old_name}' to '{new_name}' (ID: {session['id']})")
             
             current_mode = 'list'
             session_ui.print_session_list(sorted_sessions, filtered_sessions, current_session_idx, search_query)
@@ -669,10 +790,15 @@ def handle_session_management() -> Optional[Tuple[str, Path, str, List[Dict[str,
                 return True
             
             session = filtered_sessions[idx]
+            
+            # Log delete attempt
+            if logger:
+                logger.log("session_manager", f"Attempting to delete session: {session['name']} (ID: {session['id']})")
+                
             confirm = input(f"Are you sure you want to delete session '{session['name']}'? (y/N): ")
             
             if confirm.strip().lower() == 'y':
-                if session_manager.delete_session(session['id']):
+                if session_manager.delete_session(session['id'], logger):
                     print(f"{COLORS['green']}Deleted session: {session['name']}{COLORS['reset']}")
                     
                     # Refresh sessions
@@ -687,6 +813,8 @@ def handle_session_management() -> Optional[Tuple[str, Path, str, List[Dict[str,
                     print(f"{COLORS['red']}Error deleting session.{COLORS['reset']}")
             else:
                 print(f"{COLORS['yellow']}Delete cancelled.{COLORS['reset']}")
+                if logger:
+                    logger.log("session_manager", f"Delete cancelled for session: {session['name']} (ID: {session['id']})")
             
             current_mode = 'list'
             session_ui.print_session_list(sorted_sessions, filtered_sessions, current_session_idx, search_query)
@@ -755,7 +883,7 @@ def clear_conversation_history(conversation: List[Dict[str, str]], system_prompt
 
 def auto_save_session(conversation: List[Dict[str, str]], session_id: Optional[str], 
                      session_filepath: Optional[Path], session_name: Optional[str],
-                     first_user_prompt: Optional[str]) -> Tuple[str, Path, str]:
+                     first_user_prompt: Optional[str], logger=None) -> Tuple[str, Path, str]:
     """Auto-save conversation after each exchange."""
     session_manager = SessionManager()
     
@@ -764,7 +892,8 @@ def auto_save_session(conversation: List[Dict[str, str]], session_id: Optional[s
         return session_manager.save_session(
             conversation=conversation,
             first_user_prompt=first_user_prompt,
-            silent=True
+            verbose=False,
+            logger=logger
         )
     else:
         # Update existing session
@@ -772,6 +901,7 @@ def auto_save_session(conversation: List[Dict[str, str]], session_id: Optional[s
             conversation=conversation,
             session_id=session_id,
             session_name=session_name,
-            silent=True
+            verbose=False,
+            logger=logger
         )
         return session_id, session_filepath, session_name or "Untitled Session" 

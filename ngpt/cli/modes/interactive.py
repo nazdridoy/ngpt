@@ -221,7 +221,7 @@ def interactive_chat_session(client, args, logger=None):
         nonlocal conversation, current_session_id, current_session_filepath, current_session_name
         
         # Call the session management handler
-        result = handle_session_management()
+        result = handle_session_management(logger=logger)
         
         # If a session was loaded, update our local variables
         if result is not None:
@@ -467,7 +467,8 @@ def interactive_chat_session(client, args, logger=None):
                 session_id=current_session_id,
                 session_filepath=current_session_filepath,
                 session_name=current_session_name,
-                first_user_prompt=first_user_prompt
+                first_user_prompt=first_user_prompt,
+                logger=logger
             )
         
             # Print separator between exchanges
