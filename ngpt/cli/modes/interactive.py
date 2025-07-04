@@ -65,7 +65,7 @@ def interactive_chat_session(client, args, logger=None):
         print(f"  {COLORS['yellow']}↑/↓{COLORS['reset']} : Browse input history")
         
         print(f"\n{COLORS['cyan']}Session Commands (prefix with '/'):{COLORS['reset']}")
-        print(f"  {COLORS['yellow']}/clear{COLORS['reset']}   : Reset conversation")
+        print(f"  {COLORS['yellow']}/reset{COLORS['reset']}   : Reset Session")
         print(f"  {COLORS['yellow']}/exit{COLORS['reset']}    : End session")
         print(f"  {COLORS['yellow']}/sessions{COLORS['reset']}: List saved sessions")
         print(f"  {COLORS['yellow']}/help{COLORS['reset']}    : Show this help message")
@@ -251,8 +251,8 @@ def interactive_chat_session(client, args, logger=None):
                 
                 # Define reserved keywords
                 reserved_commands = [
-                    '/clear', '/sessions', '/help', '/ml',
-                    '/exit', '/quit', '/bye'
+                    '/reset', '/sessions', '/help', '/ml',
+                    '/exit'
                 ]
                 
                 # Get user input with styled prompt - using proper HTML formatting
@@ -268,12 +268,12 @@ def interactive_chat_session(client, args, logger=None):
                 user_input = input(f"{user_header()}: {COLORS['reset']}")
             
             # Check for exit commands (no prefix for these for convenience)
-            if user_input.lower() in ('/exit', '/quit', '/bye', 'exit', 'quit', 'bye'):
+            if user_input.lower() in ('/exit', 'exit', 'quit', 'bye'):
                 print(f"\n{COLORS['green']}Ending chat session. Goodbye!{COLORS['reset']}")
                 break
             
             # Define reserved slash commands
-            reserved_commands = ['/clear', '/sessions', '/help', '/ml', '/exit', '/quit', '/bye']
+            reserved_commands = ['/reset', '/sessions', '/help', '/ml', '/exit']
             
             # Check if input starts with / but is not a reserved command
             if user_input.startswith('/') and not any(user_input.lower().startswith(cmd.lower()) for cmd in reserved_commands):
@@ -281,7 +281,7 @@ def interactive_chat_session(client, args, logger=None):
                 continue
             
             # Check for special commands (now require a '/' prefix)
-            if user_input.lower() == '/clear':
+            if user_input.lower() == '/reset':
                 clear_history()
                 continue
             

@@ -173,7 +173,7 @@ In interactive mode, you can manage your chat sessions with the following comman
 
 - **`/save [name]`**: Saves the current conversation with an optional custom name.
 - **`/sessions`**: Opens the interactive session manager to browse, manage sessions.
-- **`/clear`**: Clears the current conversation history.
+- **`/reset`**: Resets the current conversation history.
 - **`/exit`**: Exits the interactive session (also works with `exit`, `quit`, or `bye` without the slash).
 - **`/help`**: Shows the help menu with all available commands.
 

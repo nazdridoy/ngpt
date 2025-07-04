@@ -58,7 +58,7 @@ ngpt --interactive
 # /save     - Save the current session
 # /load     - Load a previous session through interactive session manager
 # /sessions - List saved sessions
-# /clear    - Clear the conversation
+# /reset    - Reset the conversation
 # /exit     - Exit the session (also 'exit', 'quit', 'bye' without '/')
 #
 # Keyboard shortcuts:
