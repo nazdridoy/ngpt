@@ -197,6 +197,12 @@ def interactive_chat_session(client, args, logger=None):
     def ngpt_header():
         return f"{COLORS['green']}{COLORS['bold']}╭─ 🤖 nGPT {COLORS['reset']}"
     
+    # Define reserved commands once - moved out of conditional blocks
+    reserved_commands = [
+        '/reset', '/sessions', '/help', '/ml',
+        '/exit'
+    ]
+    
     # Function to clear conversation history
     def clear_history():
         nonlocal conversation, current_session_id, current_session_filepath, current_session_name
@@ -224,7 +230,7 @@ def interactive_chat_session(client, args, logger=None):
             current_session_id = session_id
             current_session_filepath = session_filepath
             current_session_name = session_name
-
+            
     try:
         while True:
             # Get user input
@@ -246,14 +252,7 @@ def interactive_chat_session(client, args, logger=None):
                 @kb.add('c-e')
                 def open_multiline_editor(event):
                     # Exit the prompt and return a special value that indicates we want multiline
-                    # We don't print any message here as it will be handled in the main loop
                     event.app.exit(result="/ml")
-                
-                # Define reserved keywords
-                reserved_commands = [
-                    '/reset', '/sessions', '/help', '/ml',
-                    '/exit'
-                ]
                 
                 # Get user input with styled prompt - using proper HTML formatting
                 user_input = pt_prompt(
@@ -271,9 +270,6 @@ def interactive_chat_session(client, args, logger=None):
             if user_input.lower() in ('/exit', 'exit', 'quit', 'bye'):
                 print(f"\n{COLORS['green']}Ending chat session. Goodbye!{COLORS['reset']}")
                 break
-            
-            # Define reserved slash commands
-            reserved_commands = ['/reset', '/sessions', '/help', '/ml', '/exit']
             
             # Check if input starts with / but is not a reserved command
             if user_input.startswith('/') and not any(user_input.lower().startswith(cmd.lower()) for cmd in reserved_commands):
@@ -294,7 +290,7 @@ def interactive_chat_session(client, args, logger=None):
                 continue
                 
             # Handle multiline input from either /ml command or Ctrl+E shortcut
-            if multiline_enabled and user_input == "/ml":
+            if multiline_enabled and user_input.lower() == "/ml":
                 print(f"{COLORS['cyan']}Opening multiline editor. Press Ctrl+D to submit.{COLORS['reset']}")
                 multiline_input = get_multiline_input()
                 if multiline_input is None:

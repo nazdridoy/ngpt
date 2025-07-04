@@ -53,6 +53,82 @@ class SessionManager:
         else:
             return {"sessions": []}
     
+    def validate_session_index(self, silent: bool = True) -> int:
+        """
+        Validates the session index against actual files and repairs any discrepancies.
+        
+        Args:
+            silent: If False, print status messages about repairs
+            
+        Returns:
+            int: Number of fixes made
+        """
+        index = self.get_session_index()
+        fixes = 0
+        
+        # 1. Remove index entries for missing files
+        valid_sessions = []
+        for session in index["sessions"]:
+            session_file = self.history_dir / f"session_{session['id']}.json"
+            if session_file.exists():
+                valid_sessions.append(session)
+            else:
+                if not silent:
+                    print(f"{COLORS['yellow']}Removing invalid session from index: {session['name']}{COLORS['reset']}")
+                fixes += 1
+        
+        # 2. Add entries for files not in the index
+        existing_ids = {s["id"] for s in valid_sessions}
+        for file_path in self.history_dir.glob("session_*.json"):
+            try:
+                # Skip the index file itself
+                if file_path.name == "session-index.json":
+                    continue
+                
+                # Extract session_id from filename
+                session_id = file_path.stem.replace("session_", "")
+                if session_id and session_id not in existing_ids:
+                    # Default name in case we can't extract one from file
+                    name = "Recovered Session"
+                    
+                    # Always try to extract a meaningful name from the file content
+                    try:
+                        with open(file_path, "r") as f:
+                            conversation = json.load(f)
+                            # Find the first user message to use as a title
+                            for msg in conversation:
+                                if msg.get("role") == "user":
+                                    name = self.generate_session_name(msg.get("content", ""))
+                                    break
+                    except Exception:
+                        # Use default name if we can't read the file
+                        pass
+                    
+                    # Create metadata for the orphaned file
+                    valid_sessions.append({
+                        "id": session_id,
+                        "name": name,
+                        "created_at": datetime.fromtimestamp(file_path.stat().st_ctime).strftime('%Y-%m-%d %H:%M:%S'),
+                        "last_modified": datetime.fromtimestamp(file_path.stat().st_mtime).strftime('%Y-%m-%d %H:%M:%S')
+                    })
+                    
+                    if not silent:
+                        print(f"{COLORS['green']}Added orphaned session to index: {name}{COLORS['reset']}")
+                    fixes += 1
+            except Exception as e:
+                if not silent:
+                    print(f"{COLORS['red']}Error processing file {file_path}: {str(e)}{COLORS['reset']}")
+                continue
+        
+        # Update the index if fixes were made
+        if fixes > 0:
+            index["sessions"] = valid_sessions
+            self.save_session_index(index)
+            if not silent:
+                print(f"{COLORS['green']}Session index repaired. {fixes} issues fixed.{COLORS['reset']}")
+        
+        return fixes
+    
     def save_session_index(self, index: Dict[str, List[Dict[str, str]]]) -> None:
         """Save the session index to session-index.json."""
         # Clean the index to only include core session data
@@ -401,7 +477,9 @@ def handle_session_management() -> Optional[Tuple[str, Path, str, List[Dict[str,
     session_manager = SessionManager()
     session_ui = SessionUI(session_manager)
     
-    # Get sessions
+    # Get sessions and validate index first to avoid missing files
+    fixes = session_manager.validate_session_index(silent=True)
+    
     index = session_manager.get_session_index()
     if not index["sessions"]:
         print(f"\n{COLORS['yellow']}No saved sessions found.{COLORS['reset']}")
@@ -420,6 +498,13 @@ def handle_session_management() -> Optional[Tuple[str, Path, str, List[Dict[str,
     preview_count = 5
     filtered_sessions = sorted_sessions.copy()
     search_query = ""
+    
+    # Show subtle notification if fixes were made
+    if fixes > 0:
+        print(f"\n{COLORS['gray']}Note: {fixes} session index inconsistencies were automatically repaired.{COLORS['reset']}")
+    
+    # Flag to track if we've already validated the index in this session
+    index_validated = True  # We just validated it above
     
     def process_command(command: str) -> bool:
         """Process a command entered by the user."""
