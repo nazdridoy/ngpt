@@ -235,8 +235,19 @@ def interactive_chat_session(client, args, logger=None):
         history_dir = get_history_dir()
         index_path = history_dir / "session-index.json"
         
+        # Clean the index to only include core session data
+        clean_index = {"sessions": []}
+        for session in index["sessions"]:
+            clean_session = {
+                "id": session["id"],
+                "name": session["name"],
+                "created_at": session.get("created_at", ""),
+                "last_modified": session.get("last_modified", "")
+            }
+            clean_index["sessions"].append(clean_session)
+        
         with open(index_path, "w") as f:
-            json.dump(index, f, indent=2)
+            json.dump(clean_index, f, indent=2)
     
     def generate_session_name(content):
         """Generate a session name from the first user prompt."""
@@ -692,7 +703,17 @@ def interactive_chat_session(client, args, logger=None):
                 old_name = session['name']
                 
                 session['name'] = new_name
-                save_session_index({'sessions': sorted_sessions})
+                # Clean the sessions before saving to remove display metadata
+                clean_sessions = []
+                for s in sorted_sessions:
+                    clean_session = {
+                        "id": s["id"],
+                        "name": s["name"],
+                        "created_at": s.get("created_at", ""),
+                        "last_modified": s.get("last_modified", "")
+                    }
+                    clean_sessions.append(clean_session)
+                save_session_index({'sessions': clean_sessions})
                 print(f"{COLORS['green']}Renamed session from '{old_name}' to '{new_name}'{COLORS['reset']}")
                 
                 current_mode = 'list'
@@ -740,7 +761,17 @@ def interactive_chat_session(client, args, logger=None):
                             sorted_sessions.pop(i)
                             break
                     
-                    save_session_index({'sessions': sorted_sessions})
+                    # Clean the sessions before saving to remove display metadata
+                    clean_sessions = []
+                    for s in sorted_sessions:
+                        clean_session = {
+                            "id": s["id"],
+                            "name": s["name"],
+                            "created_at": s.get("created_at", ""),
+                            "last_modified": s.get("last_modified", "")
+                        }
+                        clean_sessions.append(clean_session)
+                    save_session_index({'sessions': clean_sessions})
                     print(f"{COLORS['green']}Deleted session: {session['name']}{COLORS['reset']}")
                     
                     # Reset filter
@@ -1047,10 +1078,17 @@ def interactive_chat_session(client, args, logger=None):
             if current_session_id is None:
                 save_session(silent=True)  # This will create a new session on first exchange
             else:
-                # Update existing session silently (without printing message)
-                with open(current_session_filepath, "w") as f:
-                    json.dump(conversation, f, indent=2)
-                update_session_in_index(current_session_id, current_session_name, update_existing=True)
+                # Check if the file still exists (handle case where file was deleted manually)
+                if not os.path.exists(current_session_filepath):
+                    # File was deleted, create a new session
+                    current_session_id = None
+                    current_session_filepath = None
+                    save_session(silent=True)
+                else:
+                    # Update existing session silently (without printing message)
+                    with open(current_session_filepath, "w") as f:
+                        json.dump(conversation, f, indent=2)
+                    update_session_in_index(current_session_id, current_session_name, update_existing=True)
         
             # Print separator between exchanges
             print_separator()
