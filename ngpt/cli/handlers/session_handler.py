@@ -382,10 +382,10 @@ class SessionUI:
         self.print_header("Help")
         print(f"\n{COLORS['cyan']}{COLORS['bold']}Available Commands:{COLORS['reset']}")
         print(f"  {COLORS['yellow']}list{COLORS['reset']}                 Show session list")
-        print(f"  {COLORS['yellow']}preview <idx>{COLORS['reset']}        Show preview of session messages")
-        print(f"  {COLORS['yellow']}load <idx>{COLORS['reset']}           Load a session")
-        print(f"  {COLORS['yellow']}rename <idx> <name>{COLORS['reset']}  Rename a session")
-        print(f"  {COLORS['yellow']}delete <idx>{COLORS['reset']}         Delete a single session")
+        print(f"  {COLORS['yellow']}preview [idx]{COLORS['reset']}        Show preview of session messages (defaults to latest)")
+        print(f"  {COLORS['yellow']}load [idx]{COLORS['reset']}           Load a session (defaults to latest)")
+        print(f"  {COLORS['yellow']}rename [idx] <name>{COLORS['reset']}  Rename a session (defaults to latest)")
+        print(f"  {COLORS['yellow']}delete [idx]{COLORS['reset']}         Delete a single session (defaults to latest)")
         print(f"  {COLORS['yellow']}delete <idx1>,<idx2>{COLORS['reset']} Delete multiple sessions")
         print(f"  {COLORS['yellow']}delete <idx1>-<idx5>{COLORS['reset']} Delete a range of sessions")
         print(f"  {COLORS['yellow']}search <query>{COLORS['reset']}       Search sessions by name")
@@ -393,8 +393,8 @@ class SessionUI:
         print(f"  {COLORS['yellow']}exit{COLORS['reset']}                 Exit session manager")
         
         print(f"\n{COLORS['cyan']}{COLORS['bold']}Preview Commands:{COLORS['reset']}")
-        print(f"  {COLORS['yellow']}head <idx> [count]{COLORS['reset']}   Show first messages in session")
-        print(f"  {COLORS['yellow']}tail <idx> [count]{COLORS['reset']}   Show last messages in session")
+        print(f"  {COLORS['yellow']}head [idx] [count]{COLORS['reset']}   Show first messages in session (defaults to latest)")
+        print(f"  {COLORS['yellow']}tail [idx] [count]{COLORS['reset']}   Show last messages in session (defaults to latest)")
         
         print(f"\n{COLORS['cyan']}{COLORS['bold']}Navigation:{COLORS['reset']}")
         print(f"  {COLORS['yellow']}↑/↓{COLORS['reset']}                  Browse command history")
@@ -599,6 +599,12 @@ def handle_session_management(logger=None) -> Optional[Tuple[str, Path, str, Lis
         parts = command.strip().split()
         cmd = parts[0].lower()
         
+        # Check if there are any sessions to work with
+        if len(filtered_sessions) == 0:
+            if cmd not in ('list', 'search', 'help', 'exit', 'quit', 'q'):
+                print(f"{COLORS['red']}No sessions available. Use 'list' to refresh or 'search' to find sessions.{COLORS['reset']}")
+                return True
+        
         # Check if the command has a slash prefix but is not a valid command
         if cmd.startswith('/'):
             print(f"{COLORS['red']}Unknown command: {cmd}. Commands in the session manager don't use slash prefix.{COLORS['reset']}")
@@ -607,7 +613,7 @@ def handle_session_management(logger=None) -> Optional[Tuple[str, Path, str, Lis
         # Exit commands
         if cmd in ('exit', 'quit', 'q'):
             print(f"{COLORS['green']}Exiting session manager.{COLORS['reset']}")
-            return False
+            return {'action': 'exit'}  # Return a dict with action 'exit'
         
         # Help command
         if cmd == 'help':
@@ -625,18 +631,36 @@ def handle_session_management(logger=None) -> Optional[Tuple[str, Path, str, Lis
             session_ui.print_session_list(sorted_sessions, filtered_sessions, current_session_idx, search_query)
             return True
         
-        # Preview commands
+        # Preview commands (head/tail)
         if cmd in ('head', 'tail'):
-            if len(parts) < 2:
-                print(f"{COLORS['red']}Usage: {cmd} <idx> [count]{COLORS['reset']}")
-                return True
+            # Use default index if not provided
+            idx = None
+            count = 5  # Default count
             
-            try:
-                idx = int(parts[1])
-                count = int(parts[2]) if len(parts) > 2 else 5
-            except ValueError:
-                print(f"{COLORS['red']}Invalid index or count.{COLORS['reset']}")
-                return True
+            # Parse arguments based on number of parts
+            if len(parts) > 1:
+                # Try to parse first argument as index
+                try:
+                    idx = int(parts[1])
+                    # If we have a third part, it's the count
+                    if len(parts) > 2:
+                        try:
+                            count = int(parts[2])
+                        except ValueError:
+                            print(f"{COLORS['red']}Invalid count. Using default count of 5.{COLORS['reset']}")
+                except ValueError:
+                    # First argument might be count instead of index
+                    try:
+                        count = int(parts[1])
+                    except ValueError:
+                        print(f"{COLORS['red']}Invalid index or count. Using latest session and default count.{COLORS['reset']}")
+            
+            # If no valid index was provided, use current_session_idx
+            if idx is None:
+                if current_session_idx < 0 or current_session_idx >= len(filtered_sessions):
+                    print(f"{COLORS['red']}No valid session selected. Please specify an index.{COLORS['reset']}")
+                    return True
+                idx = current_session_idx
             
             current_mode = 'preview'
             preview_mode = cmd
@@ -657,15 +681,20 @@ def handle_session_management(logger=None) -> Optional[Tuple[str, Path, str, Lis
         
         # Preview shorthand
         if cmd == 'preview':
-            if len(parts) < 2:
-                print(f"{COLORS['red']}Usage: preview <idx>{COLORS['reset']}")
-                return True
+            idx = None
             
-            try:
-                idx = int(parts[1])
-            except ValueError:
-                print(f"{COLORS['red']}Invalid index.{COLORS['reset']}")
-                return True
+            if len(parts) > 1:
+                try:
+                    idx = int(parts[1])
+                except ValueError:
+                    print(f"{COLORS['red']}Invalid index. Using latest session.{COLORS['reset']}")
+            
+            # Use current_session_idx if no index provided or invalid index
+            if idx is None:
+                if current_session_idx < 0 or current_session_idx >= len(filtered_sessions):
+                    print(f"{COLORS['red']}No valid session selected. Please specify an index.{COLORS['reset']}")
+                    return True
+                idx = current_session_idx
             
             current_mode = 'preview'
             
@@ -714,15 +743,21 @@ def handle_session_management(logger=None) -> Optional[Tuple[str, Path, str, Lis
         
         # Load command
         if cmd == 'load':
-            if len(parts) < 2:
-                print(f"{COLORS['red']}Usage: load <idx>{COLORS['reset']}")
-                return True
+            idx = None
             
-            try:
-                idx = int(parts[1])
-            except ValueError:
-                print(f"{COLORS['red']}Invalid index.{COLORS['reset']}")
-                return True
+            if len(parts) > 1:
+                try:
+                    idx = int(parts[1])
+                except ValueError:
+                    print(f"{COLORS['red']}Invalid index. Using latest session.{COLORS['reset']}")
+            
+            # Use current_session_idx if no index provided or invalid index
+            if idx is None:
+                if current_session_idx < 0 or current_session_idx >= len(filtered_sessions):
+                    print(f"{COLORS['red']}No valid session selected. Please specify an index.{COLORS['reset']}")
+                    return True
+                idx = current_session_idx
+                print(f"{COLORS['green']}Using latest session (index: {idx}).{COLORS['reset']}")
             
             if idx < 0 or idx >= len(filtered_sessions):
                 print(f"{COLORS['red']}Invalid session index.{COLORS['reset']}")
@@ -737,29 +772,48 @@ def handle_session_management(logger=None) -> Optional[Tuple[str, Path, str, Lis
             
             # Log explicit load command
             if logger:
-                logger.log("session_manager", f"User explicitly loaded session: {session['name']} (ID: {session['id']})")
+                logger.log("session_manager", f"User loaded session: {session['name']} (ID: {session['id']})")
                 
             session_filepath = session_manager.history_dir / f"session_{session['id']}.json"
             print(f"\n{COLORS['green']}Session loaded: {session['name']}{COLORS['reset']}")
-            return False  # Exit session manager and return to chat
+            
+            # Return a dictionary with action 'load' and the necessary session data
+            return {
+                'action': 'load',
+                'session_id': session['id'],
+                'session_filepath': session_filepath,
+                'session_name': session['name'],
+                'conversation': conversation
+            }
         
         # Rename command
         if cmd == 'rename':
-            if len(parts) < 3:
-                print(f"{COLORS['red']}Usage: rename <idx> <new name>{COLORS['reset']}")
-                return True
+            idx = None
+            new_name = None
             
+            # Parse arguments: rename [idx] <new name>
+            if len(parts) < 2:
+                print(f"{COLORS['red']}Usage: rename [idx] <new name>{COLORS['reset']}")
+                return True
+                
+            # Check if the first argument is an index
             try:
                 idx = int(parts[1])
+                # If we have an index, the rest is the name
+                if len(parts) < 3:
+                    print(f"{COLORS['red']}Please provide a new name for the session.{COLORS['reset']}")
+                    return True
+                new_name = ' '.join(parts[2:])
             except ValueError:
-                print(f"{COLORS['red']}Invalid index.{COLORS['reset']}")
-                return True
+                # First argument is not an index, so use current session and all arguments as name
+                idx = current_session_idx
+                new_name = ' '.join(parts[1:])
             
+            # Validate the index
             if idx < 0 or idx >= len(filtered_sessions):
                 print(f"{COLORS['red']}Invalid session index.{COLORS['reset']}")
                 return True
             
-            new_name = ' '.join(parts[2:])
             session = filtered_sessions[idx]
             old_name = session['name']
             
@@ -778,126 +832,177 @@ def handle_session_management(logger=None) -> Optional[Tuple[str, Path, str, Lis
         # Delete command
         if cmd == 'delete':
             if len(parts) < 2:
-                print(f"{COLORS['red']}Usage: delete <idx> or delete <idx1>,<idx2> or delete <idx1>-<idx5>{COLORS['reset']}")
-                return True
-            
-            # Parse indices to delete - support multiple formats:
-            # 1. Single index: "delete 3"
-            # 2. Comma-separated indices: "delete 1,3,5"
-            # 3. Range notation: "delete 1-5"
-            # 4. Mixed format: "delete 1-3,5,7-9"
-            indices_to_delete = []
-            input_indices = ' '.join(parts[1:])
-            invalid_segments = []
-            
-            # Split by commas first
-            segments = [s.strip() for s in input_indices.split(',')]
-            
-            for segment in segments:
-                try:
-                    if '-' in segment:
-                        # Handle range notation (e.g., "1-5")
-                        start_str, end_str = segment.split('-')
-                        start, end = int(start_str), int(end_str)
-                        
-                        # Handle reversed ranges (e.g., "5-2")
-                        if start > end:
-                            invalid_segments.append(f"{segment} (reversed range)")
-                            continue
-                            
-                        indices_to_delete.extend(range(start, end + 1))
-                    else:
-                        # Handle single index
-                        indices_to_delete.append(int(segment))
-                except ValueError:
-                    invalid_segments.append(segment)
-            
-            # Report invalid segments if any
-            if invalid_segments:
-                print(f"{COLORS['yellow']}Warning: Ignoring invalid segments: {', '.join(invalid_segments)}{COLORS['reset']}")
-            
-            if not indices_to_delete:
-                print(f"{COLORS['red']}No valid indices provided.{COLORS['reset']}")
-                return True
-                
-            # Validate all indices are in range
-            valid_indices = []
-            out_of_range_indices = []
-            
-            for idx in indices_to_delete:
-                if 0 <= idx < len(filtered_sessions):
-                    valid_indices.append(idx)
-                else:
-                    out_of_range_indices.append(idx)
-            
-            if out_of_range_indices:
-                print(f"{COLORS['yellow']}Warning: Ignoring out-of-range indices: {out_of_range_indices}{COLORS['reset']}")
-                
-            if not valid_indices:
-                print(f"{COLORS['red']}No valid indices to delete.{COLORS['reset']}")
-                return True
-                
-            # Remove duplicates and sort for consistent deletion
-            indices_to_delete = sorted(set(valid_indices))
-            
-            # Get session names for confirmation
-            sessions_to_delete = [filtered_sessions[idx] for idx in indices_to_delete]
-            session_names = [f"'{s['name']}'" for s in sessions_to_delete]
-            
-            # Format confirmation message based on number of sessions
-            if len(sessions_to_delete) == 1:
-                confirm_msg = f"Are you sure you want to delete session {session_names[0]}? (y/N): "
-            else:
-                confirm_msg = f"Are you sure you want to delete {len(sessions_to_delete)} sessions?\n"
-                for i, name in enumerate(session_names[:5]):  # Show first 5 sessions
-                    confirm_msg += f"  {i+1}. {name}\n"
-                if len(session_names) > 5:
-                    confirm_msg += f"  ... and {len(session_names) - 5} more\n"
-                confirm_msg += "(y/N): "
-            
-            # Log delete attempt
-            if logger:
-                if len(sessions_to_delete) == 1:
-                    logger.log("session_manager", f"Attempting to delete session: {sessions_to_delete[0]['name']} (ID: {sessions_to_delete[0]['id']})")
-                else:
-                    logger.log("session_manager", f"Attempting to delete {len(sessions_to_delete)} sessions")
-                
-            confirm = input(confirm_msg)
-            
-            if confirm.strip().lower() == 'y':
-                success_count = 0
-                for session in sessions_to_delete:
-                    if session_manager.delete_session(session['id'], logger):
-                        success_count += 1
-                
-                # Provide feedback based on deletion results
-                if success_count == len(sessions_to_delete):
-                    if len(sessions_to_delete) == 1:
-                        print(f"{COLORS['green']}Deleted session: {sessions_to_delete[0]['name']}{COLORS['reset']}")
-                    else:
-                        print(f"{COLORS['green']}Successfully deleted {success_count} sessions.{COLORS['reset']}")
-                else:
-                    print(f"{COLORS['yellow']}Deleted {success_count} of {len(sessions_to_delete)} sessions.{COLORS['reset']}")
+                # No index provided, use current session index
+                if current_session_idx < 0 or current_session_idx >= len(filtered_sessions):
+                    print(f"{COLORS['red']}No valid session selected. Please specify an index.{COLORS['reset']}")
+                    return True
                     
-                # Refresh sessions
-                index = session_manager.get_session_index()
-                sorted_sessions = session_ui.format_sessions_for_display(index["sessions"])
-                filtered_sessions = sorted_sessions.copy()
-                search_query = ""
+                # Use single session deletion with current_session_idx
+                idx = current_session_idx
+                print(f"{COLORS['green']}Using latest session (index: {idx}).{COLORS['reset']}")
                 
-                if current_session_idx >= len(filtered_sessions):
-                    current_session_idx = max(0, len(filtered_sessions) - 1)
+                # Handle single session deletion
+                session = filtered_sessions[idx]
+                
+                # Log delete attempt
+                if logger:
+                    logger.log("session_manager", f"Attempting to delete latest session: {session['name']} (ID: {session['id']})")
+                    
+                confirm = input(f"Are you sure you want to delete session '{session['name']}'? (y/N): ")
+                
+                if confirm.strip().lower() == 'y':
+                    if session_manager.delete_session(session['id'], logger):
+                        print(f"{COLORS['green']}Deleted session: {session['name']}{COLORS['reset']}")
+                        
+                        # Refresh sessions
+                        index = session_manager.get_session_index()
+                        sorted_sessions = session_ui.format_sessions_for_display(index["sessions"])
+                        filtered_sessions = sorted_sessions.copy()
+                        search_query = ""
+                        
+                        if current_session_idx >= len(filtered_sessions):
+                            current_session_idx = max(0, len(filtered_sessions) - 1)
+                    else:
+                        print(f"{COLORS['red']}Error deleting session.{COLORS['reset']}")
+                else:
+                    print(f"{COLORS['yellow']}Delete cancelled.{COLORS['reset']}")
+                    if logger:
+                        logger.log("session_manager", f"Delete cancelled for session: {session['name']} (ID: {session['id']})")
+                
+                current_mode = 'list'
+                session_ui.print_session_list(sorted_sessions, filtered_sessions, current_session_idx, search_query)
+                return True
             else:
-                print(f"{COLORS['yellow']}Delete cancelled.{COLORS['reset']}")
+                # Check if it's a multi-session delete pattern
+                input_indices = ' '.join(parts[1:])
+                if ',' in input_indices or '-' in input_indices:
+                    # Parse indices to delete - support multiple formats:
+                    # 1. Single index: "delete 3"
+                    # 2. Comma-separated indices: "delete 1,3,5"
+                    # 3. Range notation: "delete 1-5"
+                    # 4. Mixed format: "delete 1-3,5,7-9"
+                    indices_to_delete = []
+                    invalid_segments = []
+                    
+                    # Split by commas first
+                    segments = [s.strip() for s in input_indices.split(',')]
+                    
+                    for segment in segments:
+                        try:
+                            if '-' in segment:
+                                # Handle range notation (e.g., "1-5")
+                                start_str, end_str = segment.split('-')
+                                start, end = int(start_str), int(end_str)
+                                
+                                # Handle reversed ranges (e.g., "5-2")
+                                if start > end:
+                                    invalid_segments.append(f"{segment} (reversed range)")
+                                    continue
+                                    
+                                indices_to_delete.extend(range(start, end + 1))
+                            else:
+                                # Handle single index
+                                indices_to_delete.append(int(segment))
+                        except ValueError:
+                            invalid_segments.append(segment)
+                    
+                    # Report invalid segments if any
+                    if invalid_segments:
+                        print(f"{COLORS['yellow']}Warning: Ignoring invalid segments: {', '.join(invalid_segments)}{COLORS['reset']}")
+                    
+                    if not indices_to_delete:
+                        print(f"{COLORS['red']}No valid indices provided.{COLORS['reset']}")
+                        return True
+                        
+                    # Validate all indices are in range
+                    valid_indices = []
+                    out_of_range_indices = []
+                    
+                    for idx in indices_to_delete:
+                        if 0 <= idx < len(filtered_sessions):
+                            valid_indices.append(idx)
+                        else:
+                            out_of_range_indices.append(idx)
+                    
+                    if out_of_range_indices:
+                        print(f"{COLORS['yellow']}Warning: Ignoring out-of-range indices: {out_of_range_indices}{COLORS['reset']}")
+                        
+                    if not valid_indices:
+                        print(f"{COLORS['red']}No valid indices to delete.{COLORS['reset']}")
+                        return True
+                        
+                    # Remove duplicates and sort for consistent deletion
+                    indices_to_delete = sorted(set(valid_indices))
+                else:
+                    # Single index deletion
+                    try:
+                        idx = int(parts[1])
+                        if idx < 0 or idx >= len(filtered_sessions):
+                            print(f"{COLORS['red']}Invalid session index.{COLORS['reset']}")
+                            return True
+                        indices_to_delete = [idx]
+                    except ValueError:
+                        print(f"{COLORS['red']}Invalid index format. Please provide a number.{COLORS['reset']}")
+                        return True
+                
+                # Get session names for confirmation
+                sessions_to_delete = [filtered_sessions[idx] for idx in indices_to_delete]
+                session_names = [f"'{s['name']}'" for s in sessions_to_delete]
+                
+                # Format confirmation message based on number of sessions
+                if len(sessions_to_delete) == 1:
+                    confirm_msg = f"Are you sure you want to delete session {session_names[0]}? (y/N): "
+                else:
+                    confirm_msg = f"Are you sure you want to delete {len(sessions_to_delete)} sessions?\n"
+                    for i, name in enumerate(session_names[:5]):  # Show first 5 sessions
+                        confirm_msg += f"  {i+1}. {name}\n"
+                    if len(session_names) > 5:
+                        confirm_msg += f"  ... and {len(session_names) - 5} more\n"
+                    confirm_msg += "(y/N): "
+                
+                # Log delete attempt
                 if logger:
                     if len(sessions_to_delete) == 1:
-                        logger.log("session_manager", f"Delete cancelled for session: {sessions_to_delete[0]['name']} (ID: {sessions_to_delete[0]['id']})")
+                        logger.log("session_manager", f"Attempting to delete session: {sessions_to_delete[0]['name']} (ID: {sessions_to_delete[0]['id']})")
                     else:
-                        logger.log("session_manager", f"Delete cancelled for {len(sessions_to_delete)} sessions")
-            
-            current_mode = 'list'
-            session_ui.print_session_list(sorted_sessions, filtered_sessions, current_session_idx, search_query)
-            return True
+                        logger.log("session_manager", f"Attempting to delete {len(sessions_to_delete)} sessions")
+                    
+                confirm = input(confirm_msg)
+                
+                if confirm.strip().lower() == 'y':
+                    success_count = 0
+                    for session in sessions_to_delete:
+                        if session_manager.delete_session(session['id'], logger):
+                            success_count += 1
+                    
+                    # Provide feedback based on deletion results
+                    if success_count == len(sessions_to_delete):
+                        if len(sessions_to_delete) == 1:
+                            print(f"{COLORS['green']}Deleted session: {sessions_to_delete[0]['name']}{COLORS['reset']}")
+                        else:
+                            print(f"{COLORS['green']}Successfully deleted {success_count} sessions.{COLORS['reset']}")
+                    else:
+                        print(f"{COLORS['yellow']}Deleted {success_count} of {len(sessions_to_delete)} sessions.{COLORS['reset']}")
+                        
+                    # Refresh sessions
+                    index = session_manager.get_session_index()
+                    sorted_sessions = session_ui.format_sessions_for_display(index["sessions"])
+                    filtered_sessions = sorted_sessions.copy()
+                    search_query = ""
+                    
+                    if current_session_idx >= len(filtered_sessions):
+                        current_session_idx = max(0, len(filtered_sessions) - 1)
+                else:
+                    print(f"{COLORS['yellow']}Delete cancelled.{COLORS['reset']}")
+                    if logger:
+                        if len(sessions_to_delete) == 1:
+                            logger.log("session_manager", f"Delete cancelled for session: {sessions_to_delete[0]['name']} (ID: {sessions_to_delete[0]['id']})")
+                        else:
+                            logger.log("session_manager", f"Delete cancelled for {len(sessions_to_delete)} sessions")
+                
+                current_mode = 'list'
+                session_ui.print_session_list(sorted_sessions, filtered_sessions, current_session_idx, search_query)
+                return True
         
         # Unknown command
         print(f"{COLORS['red']}Unknown command: {cmd}. Type 'help' for available commands.{COLORS['reset']}")
@@ -937,12 +1042,23 @@ def handle_session_management(logger=None) -> Optional[Tuple[str, Path, str, Lis
             else:
                 command = input(f"{COLORS['green']}command:{COLORS['reset']} ")
                 
-            if not process_command(command):
-                # Session was loaded, return the session data
-                session = filtered_sessions[int(command.split()[1])]
-                conversation = session_manager.load_session(session['id'])
-                session_filepath = session_manager.history_dir / f"session_{session['id']}.json"
-                return session['id'], session_filepath, session['name'], conversation
+            result = process_command(command)
+            
+            # Check if result is a dictionary (indicating a special action)
+            if isinstance(result, dict) and 'action' in result:
+                action = result['action']
+                
+                if action == 'exit':
+                    # Exit session manager without returning a session
+                    break
+                elif action == 'load':
+                    # Load session and return its data
+                    return (
+                        result['session_id'],
+                        result['session_filepath'], 
+                        result['session_name'], 
+                        result['conversation']
+                    )
                 
         except KeyboardInterrupt:
             print(f"\n{COLORS['yellow']}Session manager interrupted.{COLORS['reset']}")
