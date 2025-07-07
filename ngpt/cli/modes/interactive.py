@@ -10,7 +10,7 @@ import re
 from datetime import datetime
 from ngpt.core.config import get_config_dir
 from ngpt.ui.colors import COLORS
-from ngpt.ui.renderers import prettify_streaming_markdown, TERMINAL_RENDER_LOCK, setup_plaintext_spinner, cleanup_plaintext_spinner, create_spinner_handling_callback
+from ngpt.ui.renderers import prettify_streaming_markdown, TERMINAL_RENDER_LOCK, create_spinner_handling_callback
 from ngpt.ui.tui import spinner, get_multiline_input
 from ngpt.utils.web_search import enhance_prompt_with_web_search
 from ngpt.cli.handlers.session_handler import handle_session_management, clear_conversation_history, auto_save_session
@@ -149,9 +149,6 @@ def interactive_chat_session(client, args, logger=None):
         if web_search:
             print(f"{COLORS['green']}Web search capability is enabled.{COLORS['reset']}")
         
-        # Display a note about markdown rendering
-        if args.plaintext:
-            print(f"{COLORS['yellow']}Note: Using plain text mode (--plaintext). For markdown rendering, remove --plaintext flag.{COLORS['reset']}")
     
     # Show the welcome screen
     show_welcome()
@@ -168,11 +165,10 @@ def interactive_chat_session(client, args, logger=None):
     system_prompt = preprompt if preprompt else "You are a helpful assistant."
     
     # Add markdown formatting instruction to system prompt if not in plaintext mode
-    if not args.plaintext:
-        if system_prompt:
-            system_prompt += " You can use markdown formatting in your responses where appropriate."
-        else:
-            system_prompt = "You are a helpful assistant. You can use markdown formatting in your responses where appropriate."
+    if system_prompt:
+        system_prompt += " You can use markdown formatting in your responses where appropriate."
+    else:
+        system_prompt = "You are a helpful assistant. You can use markdown formatting in your responses where appropriate."
     
     conversation = []
     system_message = {"role": "system", "content": system_prompt}
@@ -431,27 +427,10 @@ def interactive_chat_session(client, args, logger=None):
                     print(f"{COLORS['yellow']}Warning: Failed to enhance prompt with web search: {str(e)}{COLORS['reset']}")
                     # Continue with the original prompt if web search fails
             
-            # Print assistant indicator with formatting - but only if we're not going to show a rich formatted box
             # With Rich prettify, no header should be printed as the Rich panel already includes it
-            should_print_header = True
-
-            # Determine if we should print a header based on formatting options
-            if not args.plaintext:
-                # Don't print header for stream-prettify
-                should_print_header = False
-            else:
-                should_print_header = True
-            
-            # Print the header if needed
-            if should_print_header:
-                with TERMINAL_RENDER_LOCK:
-                    if not args.plaintext:
-                        print(f"\n{ngpt_header()}: {COLORS['reset']}", end="", flush=True)
-                    else:
-                        print(f"\n{ngpt_header()}: {COLORS['reset']}", flush=True)
             
             # Determine streaming behavior
-            should_stream = not args.plaintext
+            should_stream = True
             
             # Setup for stream-prettify
             stream_callback = None
@@ -460,15 +439,7 @@ def interactive_chat_session(client, args, logger=None):
             stop_spinner_event = None
             first_content_received = False
             
-            # Set up spinner for plaintext mode
-            plaintext_spinner_thread = None
-            plaintext_stop_event = None
-            
-            if args.plaintext:
-                # Use spinner for plaintext mode
-                plaintext_spinner_thread, plaintext_stop_event = setup_plaintext_spinner("Waiting for response...", COLORS['green'])
-            
-            if not args.plaintext and should_stream:
+            if should_stream:
                 # Set up streaming markdown (same as other modes)
                 live_display, stream_callback, setup_spinner = prettify_streaming_markdown()
                 
@@ -495,19 +466,16 @@ def interactive_chat_session(client, args, logger=None):
                 temperature=temperature,
                 top_p=top_p,
                 max_tokens=max_tokens,
-                markdown_format=not args.plaintext,
+                markdown_format=True,
                 stream_callback=stream_callback
             )
-            
-            # Stop plaintext spinner if it was started
-            cleanup_plaintext_spinner(plaintext_spinner_thread, plaintext_stop_event)
             
             # Ensure spinner is stopped if no content was received
             if stop_spinner_event and not first_content_received_ref[0]:
                 stop_spinner_event.set()
             
             # Stop live display if using stream-prettify
-            if not args.plaintext and live_display and first_content_received_ref[0]:
+            if live_display and first_content_received_ref[0]:
                 # Before stopping the live display, update with complete=True to show final formatted content
                 if stream_callback and response:
                     stream_callback(response, complete=True)
@@ -517,8 +485,8 @@ def interactive_chat_session(client, args, logger=None):
                 assistant_message = {"role": "assistant", "content": response}
                 conversation.append(assistant_message)
                 
-                # Print response if not streamed (plaintext mode)
-                if args.plaintext:
+                # Print response if not streamed
+                if not should_stream:
                     with TERMINAL_RENDER_LOCK:
                         print(response)
                 

@@ -144,7 +144,19 @@ def parse_args():
     return parser.parse_args()
 
 def validate_args(args):
-    """Validate parsed arguments for correctness and compatibility."""
+    """Validate arguments and handle any inconsistencies."""
+    # Check if a prompt is provided when needed
+    if not (args.shell or args.code or args.text or args.interactive or args.show_config or args.list_models or args.rewrite or args.gitcommsg) and not getattr(args, 'prompt', None):
+        return args  # Let main handle printing help
+
+    # If interactive mode is enabled, warn about --plaintext
+    if args.interactive and args.plaintext:
+        print(f"{COLORS['yellow']}Warning: The --plaintext flag is ignored in interactive mode, which always uses markdown rendering.{COLORS['reset']}")
+
+    # Validate temperature
+    if not (0.0 <= args.temperature <= 2.0):
+        raise ValueError("Temperature must be between 0.0 and 2.0")
+    
     # Validate --remove usage
     if args.remove and (not args.config or (args.config_index == 0 and not args.provider)):
         raise ValueError("--remove requires --config and either --config-index or --provider")
