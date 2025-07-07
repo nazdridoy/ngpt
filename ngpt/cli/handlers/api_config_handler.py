@@ -251,7 +251,7 @@ def show_config(config_file: Union[str, bool, None], config_index: int, provider
     
     # Interactive provider selection
     try:
-        print(f"\n{COLORS['cyan']}Enter index number to view details (or press Enter to confirm):{COLORS['reset']} ", end='')
+        print(f"\n{COLORS['cyan']}Enter index number to view details or press Enter to exit:{COLORS['reset']} ", end='')
         choice = input().strip()
         
         # Skip if user just pressed Enter
