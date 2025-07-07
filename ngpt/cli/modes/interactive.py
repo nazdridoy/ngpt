@@ -65,13 +65,14 @@ def interactive_chat_session(client, args, logger=None):
         print(f"  {COLORS['yellow']}↑/↓{COLORS['reset']} : Browse input history")
         
         print(f"\n{COLORS['cyan']}Session Commands (prefix with '/'):{COLORS['reset']}")
-        print(f"  {COLORS['yellow']}/reset{COLORS['reset']}   : Reset Session")
-        print(f"  {COLORS['yellow']}/exit{COLORS['reset']}    : End session")
-        print(f"  {COLORS['yellow']}/sessions{COLORS['reset']}: List saved sessions")
-        print(f"  {COLORS['yellow']}/help{COLORS['reset']}    : Show this help message")
+        print(f"  {COLORS['yellow']}/reset{COLORS['reset']}     : Reset Session")
+        print(f"  {COLORS['yellow']}/exit{COLORS['reset']}      : End session")
+        print(f"  {COLORS['yellow']}/sessions{COLORS['reset']}  : List saved sessions")
+        print(f"  {COLORS['yellow']}/transcript{COLORS['reset']}: Show recent conversation exchanges")
+        print(f"  {COLORS['yellow']}/help{COLORS['reset']}      : Show this help message")
         
         if multiline_enabled:
-            print(f"  {COLORS['yellow']}/ml{COLORS['reset']}      : Open multiline editor")
+            print(f"  {COLORS['yellow']}/ml{COLORS['reset']}        : Open multiline editor")
         
         # Add a dedicated keyboard shortcuts section
         print(f"\n{COLORS['cyan']}Keyboard Shortcuts:{COLORS['reset']}")
@@ -200,7 +201,7 @@ def interactive_chat_session(client, args, logger=None):
     # Define reserved commands once - moved out of conditional blocks
     reserved_commands = [
         '/reset', '/sessions', '/help', '/ml',
-        '/exit'
+        '/exit', '/transcript'
     ]
     
     # Function to clear conversation history
@@ -213,6 +214,64 @@ def interactive_chat_session(client, args, logger=None):
         with TERMINAL_RENDER_LOCK:
             print(f"\n{COLORS['yellow']}Conversation history cleared. A new session will be created on next exchange.{COLORS['reset']}")
             print(separator)
+
+    # Function to show conversation history preview
+    def show_conversation_preview():
+        """Shows a preview of the current conversation history."""
+        # Extract user/assistant pairs from conversation
+        pairs = []
+        current_pair = []
+        count = 5  # Fixed count of exchanges to show
+        
+        # Skip the system message
+        for msg in conversation[1:]:
+            if msg['role'] == 'user':
+                if current_pair:
+                    pairs.append(current_pair)
+                current_pair = [msg]
+            elif msg['role'] == 'assistant' and current_pair:
+                current_pair.append(msg)
+                
+        # Add the last pair if it exists
+        if current_pair:
+            pairs.append(current_pair)
+        
+        # Get the last N pairs
+        pairs_to_show = pairs[-count:] if count < len(pairs) else pairs
+        
+        print(f"\n{COLORS['cyan']}{COLORS['bold']}🤖 Conversation Transcript{COLORS['reset']}")
+        print(f"{COLORS['gray']}Showing the last {len(pairs_to_show)} of {len(pairs)} exchanges{COLORS['reset']}")
+        print(separator)
+        
+        if not pairs_to_show:
+            print(f"\n{COLORS['yellow']}No conversation history yet.{COLORS['reset']}")
+            print(separator)
+            return
+        
+        # Show pairs with nice formatting
+        for i, pair in enumerate(pairs_to_show):
+            # User message
+            print(f"\n{COLORS['cyan']}{COLORS['bold']}╭─ 👤 You {i+1}{COLORS['reset']}")
+            
+            # Truncate if very long
+            user_content = pair[0]['content']
+            if len(user_content) > 500:
+                user_content = user_content[:497] + "..."
+                
+            print(f"{COLORS['cyan']}│{COLORS['reset']} {user_content}")
+            
+            # Assistant message if available
+            if len(pair) > 1:
+                print(f"\n{COLORS['green']}{COLORS['bold']}╭─ 🤖 nGPT{COLORS['reset']}")
+                
+                # Truncate if very long
+                ai_content = pair[1]['content']
+                if len(ai_content) > 500:
+                    ai_content = ai_content[:497] + "..."
+                    
+                print(f"{COLORS['green']}│{COLORS['reset']} {ai_content}")
+        
+        print(separator)
     
     # --- Session Management Functions ---
 
@@ -287,6 +346,12 @@ def interactive_chat_session(client, args, logger=None):
 
             if user_input.lower() == '/help':
                 show_help()
+                continue
+            
+            # Handle transcript/history commands
+            if user_input.lower().startswith('/transcript'):
+                # Show the conversation preview
+                show_conversation_preview() # Always show 5 exchanges
                 continue
                 
             # Handle multiline input from either /ml command or Ctrl+E shortcut
