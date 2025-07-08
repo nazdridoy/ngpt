@@ -12,6 +12,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple, Any
 
+# Import Rich components
+from rich.console import Console
+from rich.table import Table
+from rich import box
+from rich.text import Text
+
 # Optional imports for enhanced UI
 try:
     from prompt_toolkit import prompt as pt_prompt
@@ -27,6 +33,8 @@ except ImportError:
 from ngpt.core.config import get_config_dir
 from ngpt.ui.colors import COLORS
 
+# Create a Rich console instance
+console = Console()
 
 class SessionManager:
     """Manages chat session persistence and retrieval."""
@@ -337,21 +345,26 @@ class SessionManager:
             size = os.path.getsize(session_file)
             size_indicator = "•"
             size_color = COLORS['green']
+            color_name = "green"
             
             if size < 10000:  # Small session
                 size_indicator = "•"
                 size_color = COLORS['green']
+                color_name = "green"
             elif size < 50000:  # Medium session
                 size_indicator = "••"
                 size_color = COLORS['yellow']
+                color_name = "yellow"
             else:  # Large session
                 size_indicator = "•••"
                 size_color = COLORS['red']
+                color_name = "red"
             
             return {
                 "size": size,
                 "size_indicator": size_indicator,
-                "size_color": size_color
+                "size_color": size_color,
+                "color_name": color_name
             }
         except Exception:
             return None
@@ -428,9 +441,11 @@ class SessionUI:
             if session_info:
                 session['size_indicator'] = session_info['size_indicator']
                 session['size_color'] = session_info['size_color']
+                session['color_name'] = session_info['color_name']
             else:
                 session['size_indicator'] = "•"
                 session['size_color'] = COLORS['green']
+                session['color_name'] = "green"
         
         return sorted_sessions
     
@@ -444,30 +459,59 @@ class SessionUI:
         if search_query:
             print(f"{COLORS['yellow']}Filtered by: \"{search_query}\" ({len(filtered_sessions)} results){COLORS['reset']}")
         
-        # Header row
-        print(f"\n  {COLORS['cyan']}#{COLORS['reset']}  {COLORS['cyan']}Size{COLORS['reset']}  {COLORS['cyan']}Session Name{COLORS['reset']}                        {COLORS['cyan']}Last Modified{COLORS['reset']}")
-        print(f"  {COLORS['gray']}─{COLORS['reset']}  {COLORS['gray']}────{COLORS['reset']}  {COLORS['gray']}────────────────────────────────────{COLORS['reset']}  {COLORS['gray']}─────────────────{COLORS['reset']}")
+        # Create a Rich table
+        table = Table(box=box.SIMPLE, show_header=True, pad_edge=False)
         
-        # Session rows
+        # Add columns
+        table.add_column("idx", style="cyan", justify="left")
+        table.add_column("Size", style="cyan", justify="left")
+        table.add_column("Session Name", style="cyan", justify="left")
+        table.add_column("Last Modified", style="cyan", justify="left")
+        
+        # Add rows
         if not filtered_sessions:
-            print(f"\n  {COLORS['yellow']}No sessions found.{COLORS['reset']}")
+            # Empty row with message
+            table.add_row("", "", "No sessions found.", "", style="yellow")
         else:
             for i, session in enumerate(filtered_sessions):
                 name = session['name']
                 last_fmt = session.get('last_modified_fmt', 'Unknown')
                 size_indicator = session.get('size_indicator', '•')
-                size_color = session.get('size_color', COLORS['green'])
                 
                 # Truncate name if too long
                 if len(name) > 30:
                     name = name[:27] + "..."
                 
-                # Display sessions with consistent formatting
-                if i == current_session_idx:
-                    print(f"  {COLORS['cyan']}{COLORS['bold']}{i:<2}{COLORS['reset']} {size_color}{size_indicator:<4}{COLORS['reset']} {COLORS['white']}{COLORS['bold']}{name:<35}{COLORS['reset']} {COLORS['white']}{last_fmt}{COLORS['reset']}")
-                else:
-                    print(f"  {COLORS['yellow']}{i:<2}{COLORS['reset']} {size_color}{size_indicator:<4}{COLORS['reset']} {COLORS['white']}{name:<35}{COLORS['reset']} {COLORS['gray']}{last_fmt}{COLORS['reset']}")
+                # Row style based on selection
+                row_style = "bold" if i == current_session_idx else None
+                
+                # Set colors for individual cells
+                idx_text = Text(str(i), style="cyan bold" if i == current_session_idx else "yellow")
+                
+                # Get size color directly from session
+                size_style = session.get('color_name', 'green')
+                size_text = Text(size_indicator, style=size_style)
+                
+                # Set name and date styles
+                name_style = "white bold" if i == current_session_idx else "white"
+                date_style = "white" if i == current_session_idx else "dim white"
+                
+                name_text = Text(name, style=name_style)
+                date_text = Text(last_fmt, style=date_style)
+                
+                # Add the row with all styled elements
+                table.add_row(
+                    idx_text, 
+                    size_text, 
+                    name_text,
+                    date_text,
+                    end_section=(i == len(filtered_sessions) - 1)  # Add separator after last row
+                )
         
+        # Print the table
+        console.print(table)
+        
+        # Print command prompt
         print(self.separator)
         print(f"{COLORS['green']}Enter command: {COLORS['reset']}(Type 'help' for available commands)")
     
