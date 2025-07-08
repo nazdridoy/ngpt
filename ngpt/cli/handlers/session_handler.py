@@ -852,6 +852,13 @@ def handle_session_management(logger=None) -> Optional[Tuple[str, Path, str, Lis
                     # Exit the prompt and return a special value that indicates we want multiline
                     event.app.exit(result="/ml")
                 
+                # Define session commands for autocompletion
+                session_commands = [
+                    'list', 'search', 'load', 'preview', 'rename', 'delete', 
+                    'help', 'exit', 'quit', 'q'
+                ]
+                session_completer = WordCompleter(session_commands, ignore_case=True)
+
                 # Use HTML formatting for better styling
                 prompt_prefix = HTML(f"<ansigreen>command</ansigreen>: ")
                 
@@ -859,7 +866,8 @@ def handle_session_management(logger=None) -> Optional[Tuple[str, Path, str, Lis
                 command = pt_prompt(
                     prompt_prefix,
                     history=session_command_history,
-                    key_bindings=kb
+                    key_bindings=kb,
+                    completer=session_completer
                 )
             else:
                 command = input(f"{COLORS['green']}command:{COLORS['reset']} ")
@@ -872,7 +880,7 @@ def handle_session_management(logger=None) -> Optional[Tuple[str, Path, str, Lis
                 
                 if action == 'exit':
                     # Exit session manager without returning a session
-                    break
+                    return None
                 elif action == 'load':
                     # Load session and return its data
                     return (
@@ -881,11 +889,12 @@ def handle_session_management(logger=None) -> Optional[Tuple[str, Path, str, Lis
                         result['session_name'], 
                         result['conversation']
                     )
-                
+
         except KeyboardInterrupt:
-            print(f"\n{COLORS['yellow']}Session manager interrupted.{COLORS['reset']}")
-            break
+            print(f"\n{COLORS['yellow']}Exiting session manager due to user interruption.{COLORS['reset']}")
+            return None
         except Exception as e:
+            # Log and print any other exceptions
             print(f"{COLORS['red']}Error: {str(e)}{COLORS['reset']}")
             if os.environ.get("NGPT_DEBUG"):
                 traceback.print_exc()
