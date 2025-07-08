@@ -70,16 +70,10 @@ class SessionUI:
         # Available Commands section
         help_table.add_row(Text("Available Commands:", style=section_style), "")
         help_table.add_row("list", "Show session list")
-        help_table.add_row(
-            "preview [idx]", "Show preview of session messages (defaults to latest)"
-        )
-        help_table.add_row("load [idx]", "Load a session (defaults to latest)")
-        help_table.add_row(
-            "rename [idx] <name>", "Rename a session (defaults to latest)"
-        )
-        help_table.add_row(
-            "delete [idx]", "Delete a single session (defaults to latest)"
-        )
+        help_table.add_row("preview \\[idx]", "Show preview of session messages (defaults to latest)")
+        help_table.add_row("load \\[idx]", "Load a session (defaults to latest)")
+        help_table.add_row("rename \\[idx] <name>", "Rename a session (defaults to latest)")
+        help_table.add_row("delete \\[idx]", "Delete a single session (defaults to latest)")
         help_table.add_row("delete <idx1>,<idx2>", "Delete multiple sessions")
         help_table.add_row("delete <idx1>-<idx5>", "Delete a range of sessions")
         help_table.add_row("search <query>", "Search sessions by name")
@@ -89,12 +83,8 @@ class SessionUI:
         # Preview Commands section
         help_table.add_row("", "")  # Empty row as spacer
         help_table.add_row(Text("Preview Commands:", style=section_style), "")
-        help_table.add_row(
-            "head [idx] [count]", "Show first messages in session (defaults to latest)"
-        )
-        help_table.add_row(
-            "tail [idx] [count]", "Show last messages in session (defaults to latest)"
-        )
+        help_table.add_row("head \\[idx] \\[count]", "Show first messages in session (defaults to latest)")
+        help_table.add_row("tail \\[idx] \\[count]", "Show last messages in session (defaults to latest)")
 
         # Navigation section
         help_table.add_row("", "")  # Empty row as spacer
