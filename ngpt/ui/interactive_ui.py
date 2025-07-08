@@ -84,6 +84,10 @@ class InteractiveUI:
         """Shows a welcome screen with enhanced Rich formatting."""
         from ngpt.version import __version__
 
+        # Set a fixed width for the logo panel
+        panel_width = min(self.table_width, 100)
+        console.print("\n")
+
         version_info = f"v{__version__}"
 
         # Detect model
@@ -104,8 +108,6 @@ class InteractiveUI:
             f"Temperature: {self.args.temperature} | {model_info}"
         )
 
-        # Set a fixed width for the logo panel (wider than the separator)
-        panel_width = min(self.table_width, 100)
 
         # Manually center the content
         logo_lines = [
@@ -141,23 +143,15 @@ class InteractiveUI:
         )
 
         # Print the welcome panel with proper centering
-        console.print("\n")
         console.print(Align.center(welcome_panel))
-
-        # Create a header for the session
-        header_text = Text("🤖 nGPT Interactive Chat Session 🤖", style="cyan bold")
-        console.print("\n")
-        console.print(header_text, justify="center")
-
-        # Print separator after header - make it narrower than the panel width
-        separator_width = min(
-            self.table_width, 76
-        )  # Narrower than the panel but still substantial
-        console.print(Text("─" * separator_width, style="dim"), justify="center")
         console.print("\n")
 
         # Show help info after the welcome panel
-        self.show_help()
+        console.print(
+            Text("Type '/help' to see a list of commands.", style="dim"),
+            justify="center",
+        )
+        console.print("")
 
         # Show logging info if logger is available
         if self.logger:
