@@ -14,6 +14,19 @@ from ngpt.ui.renderers import prettify_streaming_markdown, TERMINAL_RENDER_LOCK,
 from ngpt.ui.tui import spinner, get_multiline_input
 from ngpt.utils.web_search import enhance_prompt_with_web_search
 from ngpt.cli.handlers.session_handler import handle_session_management, clear_conversation_history, auto_save_session
+from ngpt.ui.tables import get_table_config
+
+# Import Rich components
+from rich.console import Console
+from rich.panel import Panel
+from rich.text import Text
+from rich.table import Table
+from rich import box
+from rich.align import Align
+from rich.layout import Layout
+
+# Create a Rich console instance
+console = Console()
 
 # Optional imports for enhanced UI
 try:
@@ -43,21 +56,18 @@ def interactive_chat_session(client, args, logger=None):
     preprompt = args.preprompt
     
     # Get terminal width for better formatting
-    try:
-        term_width = shutil.get_terminal_size().columns
-    except:
-        term_width = 80  # Default fallback
+    table_config = get_table_config()
+    table_width = table_config["table_width"]
     
     # Define header for later use
     header = f"🤖 nGPT Interactive Chat Session 🤖"
     
     # Create a full-width separator line based on box width
-    box_width = min(term_width - 4, 80)  # Limit box width for better appearance
-    separator_length = box_width
+    separator_length = table_width
     separator = f"{COLORS['gray']}{'─' * separator_length}{COLORS['reset']}"
     
     # Define middle point for aligning colons
-    middle_point = box_width // 2
+    middle_point = table_width // 2
     
     # Helper functions to reduce code repetition
     def print_centered_line(text, box_width, color=None):
@@ -79,11 +89,29 @@ def interactive_chat_session(client, args, logger=None):
         print(f"\n{color}{title}{COLORS['reset']}")
 
     def show_help():
-        """Displays the help menu."""
-        # Group commands into categories with better formatting
-        print_section_header("Session Commands (prefix with '/'):")
+        """Displays the help menu using Rich components."""
+        # Create a table for command categories with fixed width
+        help_table_config = get_table_config(is_help_table=True)
+        table_width = help_table_config["table_width"]
+        help_table = Table(
+            show_header=False, 
+            box=None,
+            padding=(0, 2),  # Add padding between columns
+            width=table_width
+        )
         
-        # Define commands with descriptions - no need to manually sort
+        # Add columns for command and description with fixed width ratio
+        cmd_width = help_table_config["help_cmd_width"]
+        help_table.add_column("Command", style="yellow", width=cmd_width)
+        help_table.add_column("Description", style="white")
+        
+        # Section headers
+        section_style = "cyan bold"
+        
+        # Session Commands section
+        help_table.add_row(Text("Session Commands (prefix with '/'):", style=section_style), "")
+        
+        # Sort commands alphabetically
         commands = [
             ("/editor", "Open multiline editor"),
             ("/exit", "End session"),
@@ -92,105 +120,110 @@ def interactive_chat_session(client, args, logger=None):
             ("/sessions", "List saved sessions"),
             ("/transcript", "Show recent conversation exchanges")
         ]
-        
-        # Sort commands alphabetically
         commands.sort(key=lambda x: x[0])
         
-        # Format with alignment - align colons at the middle point
+        # Add command rows
         for cmd, desc in commands:
-            print_aligned_item(cmd, desc)
+            help_table.add_row(cmd, desc)
         
-        # Add a dedicated keyboard shortcuts section
-        print_section_header("Keyboard Shortcuts:")
-        shortcuts = [
-            ("Ctrl+E", "Open multiline editor"),
-            ("Ctrl+C", "Interrupt/exit session")
-        ]
+        # Keyboard Shortcuts section
+        help_table.add_row("", "")  # Empty row as spacer
+        help_table.add_row(Text("Keyboard Shortcuts:", style=section_style), "")
+        help_table.add_row("Ctrl+E", "Open multiline editor")
+        help_table.add_row("Ctrl+C", "Interrupt/exit session")
         
-        # Format with alignment - align colons at the middle point
-        for shortcut, desc in shortcuts:
-            print_aligned_item(shortcut, desc)
+        # Navigation section
+        help_table.add_row("", "")  # Empty row as spacer
+        help_table.add_row(Text("Navigation:", style=section_style), "")
+        help_table.add_row("↑/↓", "Browse input history")
         
-        # Move Navigation section after Keyboard Shortcuts and align colon consistently
-        print_section_header("Navigation:")
-        print_aligned_item("↑/↓", "Browse input history")
+        # Print the help table
+        console.print(help_table)
         
-        print(f"\n{separator}\n")
+        # Print a separator line at the end
+        console.print(Text("─" * separator_length, style="dim"))
 
     def show_welcome():
-        # Enhanced welcome screen with better visual structure
-        print(f"\n{COLORS['cyan']}{COLORS['bold']}╭{'─' * box_width}╮{COLORS['reset']}")
-        
-        # Logo and welcome message
-        logo_lines = [
-            " ███╗   ██╗ ██████╗ ██████╗ ████████╗",
-            " ████╗  ██║██╔════╝ ██╔══██╗╚══██╔══╝",
-            " ██╔██╗ ██║██║  ███╗██████╔╝   ██║   ",
-            " ██║╚██╗██║██║   ██║██╔═══╝    ██║   ",
-            " ██║ ╚████║╚██████╔╝██║        ██║   ",
-            " ╚═╝  ╚═══╝ ╚═════╝ ╚═╝        ╚═╝   "
-        ]
-        
-        # Print logo with proper centering
-        for line in logo_lines:
-            padding = (box_width - len(line)) // 2
-            print(f"{COLORS['cyan']}{COLORS['bold']}│{COLORS['reset']}{' ' * padding}{COLORS['green']}{line}{' ' * (box_width - len(line) - padding)}{COLORS['cyan']}{COLORS['bold']}│{COLORS['reset']}")
-        
-        # Add a blank line after logo
-        print(f"{COLORS['cyan']}{COLORS['bold']}│{' ' * box_width}│{COLORS['reset']}")
-        
-        # Version info
+        """Shows a welcome screen with enhanced Rich formatting."""
+        # Get version info
         from ngpt.version import __version__
         version_info = f"v{__version__}"
-        version_padding = (box_width - len(version_info)) // 2
-        print(f"{COLORS['cyan']}{COLORS['bold']}│{COLORS['reset']}{' ' * version_padding}{COLORS['yellow']}{version_info}{' ' * (box_width - len(version_info) - version_padding)}{COLORS['cyan']}{COLORS['bold']}│{COLORS['reset']}")
         
-        # Status line - improved model detection
+        # Detect model
         model_name = None
-        
-        # Try to get model from client object
         if hasattr(client, 'model'):
             model_name = client.model
-        # Try to get from client config
         elif hasattr(client, 'config') and hasattr(client.config, 'model'):
             model_name = client.config.model
-        # Fallback to args
         elif hasattr(args, 'model') and args.model:
             model_name = args.model
             
-        # Truncate model name if it's too long (max 40 characters)
+        # Truncate model name if it's too long
         if model_name and len(model_name) > 40:
             model_name = model_name[:37] + "..."
         
         model_info = f"Model: {model_name}" if model_name else "Default model"
         status_line = f"Temperature: {temperature} | {model_info}"
-        if len(status_line) > box_width:
-            status_line = f"Temp: {temperature} | {model_info}"  # Shorten if needed
-        status_padding = (box_width - len(status_line)) // 2
-        print(f"{COLORS['cyan']}{COLORS['bold']}│{COLORS['reset']}{' ' * status_padding}{COLORS['gray']}{status_line}{' ' * (box_width - len(status_line) - status_padding)}{COLORS['cyan']}{COLORS['bold']}│{COLORS['reset']}")
         
-        print(f"{COLORS['cyan']}{COLORS['bold']}╰{'─' * box_width}╯{COLORS['reset']}")
+        # Set a fixed width for the logo panel (wider than the separator)
+        panel_width = min(table_width - 4, 100)
         
-        # Display the title after the logo box with decorative dashes
-        print("")
-        title = f"{COLORS['cyan']}{COLORS['bold']}{header}{COLORS['reset']}"
-        title_text_length = len(header)
-        dashes_each_side = (box_width - title_text_length) // 2 - 1
+        # Manually center the content
+        logo_lines = [
+            "███╗   ██╗ ██████╗ ██████╗ ████████╗",
+            "████╗  ██║██╔════╝ ██╔══██╗╚══██╔══╝",
+            "██╔██╗ ██║██║  ███╗██████╔╝   ██║   ",
+            "██║╚██╗██║██║   ██║██╔═══╝    ██║   ",
+            "██║ ╚████║╚██████╔╝██║        ██║   ",
+            "╚═╝  ╚═══╝ ╚═════╝ ╚═╝        ╚═╝   "
+        ]
+
+        content_width = panel_width - 4  # Inner width of the panel
         
-        centered_title = f"{COLORS['gray']}{'─' * dashes_each_side}{COLORS['reset']}{title}{COLORS['gray']}{'─' * dashes_each_side}{COLORS['reset']}"
-        print(centered_title)
+        # Build the final text block with manual centering
+        final_text = "\n"
+        for line in logo_lines:
+            final_text += line.center(content_width) + "\n"
         
-        # We don't need any separator lines after the title, the help function will add spacing
-        # Show help info after the welcome box and title
+        final_text += "\n"
+        final_text += version_info.center(content_width) + "\n"
+        final_text += "\n"
+        final_text += status_line.center(content_width) + "\n"
+
+        # Create a welcome panel with the manually centered text
+        welcome_panel = Panel(
+            Text(final_text, style="green"),
+            box=box.ROUNDED,
+            border_style="cyan",
+            width=panel_width,
+            title="nGPT",
+            title_align="center"
+        )
+        
+        # Print the welcome panel with proper centering
+        console.print("\n")
+        console.print(Align.center(welcome_panel))
+        
+        # Create a header for the session
+        header_text = Text("🤖 nGPT Interactive Chat Session 🤖", style="cyan bold")
+        console.print("\n")
+        console.print(header_text, justify="center")
+        
+        # Print separator after header - make it narrower than the panel width
+        separator_width = min(table_width, 76)
+        console.print(Text("─" * separator_width, style="dim"), justify="center")
+        console.print("\n")
+        
+        # Show help info after the welcome panel
         show_help()
         
         # Show logging info if logger is available
         if logger:
-            print(f"{COLORS['green']}Logging conversation to: {logger.get_log_path()}{COLORS['reset']}")
+            console.print(Text(f"Logging conversation to: {logger.get_log_path()}", style="green"))
         
         # Display a note about web search if enabled
         if web_search:
-            print(f"{COLORS['green']}Web search capability is enabled.{COLORS['reset']}")
+            console.print(Text("Web search capability is enabled.", style="green"))
     
     # Show the welcome screen
     show_welcome()

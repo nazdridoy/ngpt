@@ -17,6 +17,7 @@ from rich.console import Console
 from rich.table import Table
 from rich import box
 from rich.text import Text
+from rich.panel import Panel
 
 # Optional imports for enhanced UI
 try:
@@ -32,6 +33,7 @@ except ImportError:
 
 from ngpt.core.config import get_config_dir
 from ngpt.ui.colors import COLORS
+from ngpt.ui.tables import get_table_config
 
 # Create a Rich console instance
 console = Console()
@@ -375,48 +377,93 @@ class SessionUI:
     
     def __init__(self, session_manager: SessionManager):
         self.session_manager = session_manager
-        self.term_width = self._get_terminal_width()
-        self.separator = f"{COLORS['gray']}{'─' * min(self.term_width - 4, 50)}{COLORS['reset']}"
-    
-    def _get_terminal_width(self) -> int:
-        """Get terminal width for better formatting."""
-        try:
-            return shutil.get_terminal_size().columns
-        except:
-            return 80
+        self.table_config = get_table_config(is_help_table=False)
+        self.term_width = self.table_config["table_width"]
+        self.separator = f"{COLORS['gray']}{'─' * min(self.term_width, 50)}{COLORS['reset']}"
     
     def print_header(self, mode_name: str = "Sessions") -> None:
-        """Print a nice header with current mode."""
-        print(f"\n{COLORS['cyan']}{COLORS['bold']}🤖 nGPT Session Manager - {mode_name} 🤖{COLORS['reset']}")
-        print(self.separator)
-    
+        """Print a nice header with current mode using Rich."""
+        # Create a title with emoji and styling
+        title = Text()
+        title.append("🤖 ", style="")
+        title.append("nGPT Session Manager - ", style="cyan bold")
+        title.append(mode_name, style="cyan bold")
+        title.append(" 🤖", style="")
+        
+        # Print the header with proper centering
+        console.print("\n")
+        console.print(title, justify="center")
+        
+        # Print separator
+        separator_width = min(self.term_width, 50)
+        console.print(Text("─" * separator_width, style="dim"), justify="center")
+        console.print("")  # Add a blank line
+
     def print_help(self) -> None:
-        """Print help information."""
+        """Print help information using Rich formatting."""
         self.print_header("Help")
-        print(f"\n{COLORS['cyan']}{COLORS['bold']}Available Commands:{COLORS['reset']}")
-        print(f"  {COLORS['yellow']}list{COLORS['reset']}                 Show session list")
-        print(f"  {COLORS['yellow']}preview [idx]{COLORS['reset']}        Show preview of session messages (defaults to latest)")
-        print(f"  {COLORS['yellow']}load [idx]{COLORS['reset']}           Load a session (defaults to latest)")
-        print(f"  {COLORS['yellow']}rename [idx] <name>{COLORS['reset']}  Rename a session (defaults to latest)")
-        print(f"  {COLORS['yellow']}delete [idx]{COLORS['reset']}         Delete a single session (defaults to latest)")
-        print(f"  {COLORS['yellow']}delete <idx1>,<idx2>{COLORS['reset']} Delete multiple sessions")
-        print(f"  {COLORS['yellow']}delete <idx1>-<idx5>{COLORS['reset']} Delete a range of sessions")
-        print(f"  {COLORS['yellow']}search <query>{COLORS['reset']}       Search sessions by name")
-        print(f"  {COLORS['yellow']}help{COLORS['reset']}                 Show this help")
-        print(f"  {COLORS['yellow']}exit{COLORS['reset']}                 Exit session manager")
         
-        print(f"\n{COLORS['cyan']}{COLORS['bold']}Preview Commands:{COLORS['reset']}")
-        print(f"  {COLORS['yellow']}head [idx] [count]{COLORS['reset']}   Show first messages in session (defaults to latest)")
-        print(f"  {COLORS['yellow']}tail [idx] [count]{COLORS['reset']}   Show last messages in session (defaults to latest)")
+        # Create a table for command categories with fixed width
+        help_table_config = get_table_config(is_help_table=True)
+        table_width = help_table_config["table_width"]
         
-        print(f"\n{COLORS['cyan']}{COLORS['bold']}Navigation:{COLORS['reset']}")
-        print(f"  {COLORS['yellow']}↑/↓{COLORS['reset']}                  Browse command history")
+        help_table = Table(
+            show_header=False,
+            box=None,
+            padding=(0, 2),  # Add padding between columns
+            width=table_width
+        )
         
-        print(f"\n{COLORS['cyan']}{COLORS['bold']}Session Size Legend:{COLORS['reset']}")
-        print(f"  {COLORS['green']}•{COLORS['reset']}    Small session")
-        print(f"  {COLORS['yellow']}••{COLORS['reset']}   Medium session")
-        print(f"  {COLORS['red']}•••{COLORS['reset']}  Large session")
-        print(self.separator)
+        # Add columns for command and description with fixed width ratio
+        cmd_width = help_table_config["help_cmd_width"]
+        help_table.add_column("Command", style="yellow", width=cmd_width)
+        help_table.add_column("Description", style="white")
+        
+        # Section headers and command rows
+        section_style = "cyan bold"
+        
+        # Available Commands section
+        help_table.add_row(Text("Available Commands:", style=section_style), "")
+        help_table.add_row("list", "Show session list")
+        help_table.add_row("preview [idx]", "Show preview of session messages (defaults to latest)")
+        help_table.add_row("load [idx]", "Load a session (defaults to latest)")
+        help_table.add_row("rename [idx] <name>", "Rename a session (defaults to latest)")
+        help_table.add_row("delete [idx]", "Delete a single session (defaults to latest)")
+        help_table.add_row("delete <idx1>,<idx2>", "Delete multiple sessions")
+        help_table.add_row("delete <idx1>-<idx5>", "Delete a range of sessions")
+        help_table.add_row("search <query>", "Search sessions by name")
+        help_table.add_row("help", "Show this help")
+        help_table.add_row("exit", "Exit session manager")
+        
+        # Preview Commands section
+        help_table.add_row("", "")  # Empty row as spacer
+        help_table.add_row(Text("Preview Commands:", style=section_style), "")
+        help_table.add_row("head [idx] [count]", "Show first messages in session (defaults to latest)")
+        help_table.add_row("tail [idx] [count]", "Show last messages in session (defaults to latest)")
+        
+        # Navigation section
+        help_table.add_row("", "")  # Empty row as spacer
+        help_table.add_row(Text("Navigation:", style=section_style), "")
+        help_table.add_row("↑/↓", "Browse command history")
+        
+        # Session Size Legend section with colored bullets
+        help_table.add_row("", "")  # Empty row as spacer
+        help_table.add_row(Text("Session Size Legend:", style=section_style), "")
+        
+        # Create special rows for the bullets with correct colors
+        bullet_small = Text("•", style="green")
+        bullet_medium = Text("••", style="yellow")
+        bullet_large = Text("•••", style="red")
+        
+        help_table.add_row(bullet_small, "Small session")
+        help_table.add_row(bullet_medium, "Medium session")
+        help_table.add_row(bullet_large, "Large session")
+        
+        # Print the help table
+        console.print(help_table)
+        
+        # Print a separator line at the end
+        console.print(Text("─" * min(self.term_width, 50), style="dim"))
     
     def format_sessions_for_display(self, sessions: List[Dict[str, str]]) -> List[Dict[str, Any]]:
         """Format sessions with display metadata."""
@@ -460,13 +507,39 @@ class SessionUI:
             print(f"{COLORS['yellow']}Filtered by: \"{search_query}\" ({len(filtered_sessions)} results){COLORS['reset']}")
         
         # Create a Rich table
-        table = Table(box=box.SIMPLE, show_header=True, pad_edge=False)
+        table = Table(
+            box=box.SIMPLE,
+            show_header=True,
+            pad_edge=False,
+            width=self.table_config["table_width"],
+        )
         
         # Add columns
-        table.add_column("idx", style="cyan", justify="left")
-        table.add_column("Size", style="cyan", justify="left")
-        table.add_column("Session Name", style="cyan", justify="left")
-        table.add_column("Last Modified", style="cyan", justify="left")
+        col_widths = self.table_config["session_list_widths"]
+        table.add_column(
+            "idx",
+            style="cyan",
+            justify="left",
+            width=col_widths["idx"],
+        )
+        table.add_column(
+            "Size",
+            style="cyan",
+            justify="left",
+            width=col_widths["size"],
+        )
+        table.add_column(
+            "Session Name",
+            style="cyan",
+            justify="left",
+            width=col_widths["name"],
+        )
+        table.add_column(
+            "Last Modified",
+            style="cyan",
+            justify="left",
+            width=col_widths["date"],
+        )
         
         # Add rows
         if not filtered_sessions:
@@ -516,11 +589,11 @@ class SessionUI:
         print(f"{COLORS['green']}Enter command: {COLORS['reset']}(Type 'help' for available commands)")
     
     def show_session_preview(self, session: Dict[str, Any], mode: str = 'tail', count: int = 5) -> None:
-        """Show preview of session content."""
+        """Show preview of session content using Rich formatting."""
         session_file = self.session_manager.history_dir / f"session_{session['id']}.json"
         
         if not session_file.exists():
-            print(f"{COLORS['red']}Session file not found.{COLORS['reset']}")
+            console.print(Text("Session file not found.", style="red"))
             return
         
         try:
@@ -549,40 +622,62 @@ class SessionUI:
                 mode_desc = f"first {len(to_show)}"
                 
             self.print_header("Preview Session")
-            print(f"\n{COLORS['cyan']}{COLORS['bold']}Preview of {mode_desc} messages from:{COLORS['reset']} {COLORS['white']}{session['name']}{COLORS['reset']}")
-            print(self.separator)
+            
+            # Create a header with session name
+            preview_header = Text()
+            preview_header.append("Preview of ", style="cyan bold")
+            preview_header.append(mode_desc, style="cyan bold")
+            preview_header.append(" messages from: ", style="cyan bold")
+            preview_header.append(session['name'], style="white")
+            
+            # Print the header
+            console.print(preview_header)
+            console.print(Text("─" * min(self.term_width, 50), style="dim"))
             
             if not to_show:
-                print(f"\n{COLORS['yellow']}No messages found in this session.{COLORS['reset']}")
+                console.print(Text("No messages found in this session.", style="yellow"))
             
-            # Show pairs with nice formatting
+            # Show pairs with nice Rich formatting
             for i, pair in enumerate(to_show):
-                # User message
-                print(f"\n{COLORS['cyan']}{COLORS['bold']}╭─ 👤 User {i+1}{COLORS['reset']}")
-                
-                # Truncate if very long
+                # Create user message panel
                 user_content = pair[0]['content']
+                # Truncate if very long
                 if len(user_content) > 500:
                     user_content = user_content[:497] + "..."
-                    
-                print(f"{COLORS['cyan']}│{COLORS['reset']} {user_content}")
+                
+                user_panel = Panel(
+                    Text(user_content),
+                    title=f"👤 User {i+1}",
+                    title_align="left",
+                    border_style="cyan",
+                    padding=(0, 1),
+                    box=box.ROUNDED
+                )
+                console.print(user_panel)
                 
                 # Assistant message if available
                 if len(pair) > 1:
-                    print(f"\n{COLORS['green']}{COLORS['bold']}╭─ 🤖 AI{COLORS['reset']}")
-                    
-                    # Truncate if very long
                     ai_content = pair[1]['content']
+                    # Truncate if very long
                     if len(ai_content) > 500:
                         ai_content = ai_content[:497] + "..."
-                        
-                    print(f"{COLORS['green']}│{COLORS['reset']} {ai_content}")
+                    
+                    ai_panel = Panel(
+                        Text(ai_content),
+                        title="🤖 AI",
+                        title_align="left",
+                        border_style="green",
+                        padding=(0, 1),
+                        box=box.ROUNDED
+                    )
+                    console.print(ai_panel)
             
-            print(self.separator)
-            print(f"{COLORS['green']}Enter command: {COLORS['reset']}(Type 'list' to return to session list)")
+            # Print a separator and command prompt
+            console.print(Text("─" * min(self.term_width, 50), style="dim"))
+            console.print(Text("Enter command: (Type 'list' to return to session list)", style="green"))
             
         except Exception as e:
-            print(f"{COLORS['red']}Error reading session: {str(e)}{COLORS['reset']}")
+            console.print(Text(f"Error reading session: {str(e)}", style="red"))
 
 
 def handle_session_management(logger=None) -> Optional[Tuple[str, Path, str, List[Dict[str, str]]]]:
