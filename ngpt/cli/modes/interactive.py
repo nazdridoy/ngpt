@@ -41,7 +41,6 @@ def interactive_chat_session(client, args, logger=None):
     top_p = args.top_p
     max_tokens = args.max_tokens
     preprompt = args.preprompt
-    multiline_enabled = True  # Could be made configurable in the future
     
     # Get terminal width for better formatting
     try:
@@ -70,14 +69,11 @@ def interactive_chat_session(client, args, logger=None):
         print(f"  {COLORS['yellow']}/sessions{COLORS['reset']}  : List saved sessions")
         print(f"  {COLORS['yellow']}/transcript{COLORS['reset']}: Show recent conversation exchanges")
         print(f"  {COLORS['yellow']}/help{COLORS['reset']}      : Show this help message")
-        
-        if multiline_enabled:
-            print(f"  {COLORS['yellow']}/ml{COLORS['reset']}        : Open multiline editor")
+        print(f"  {COLORS['yellow']}/ml{COLORS['reset']}        : Open multiline editor")
         
         # Add a dedicated keyboard shortcuts section
         print(f"\n{COLORS['cyan']}Keyboard Shortcuts:{COLORS['reset']}")
-        if multiline_enabled:
-            print(f"  {COLORS['yellow']}Ctrl+E{COLORS['reset']}   : Open multiline editor")
+        print(f"  {COLORS['yellow']}Ctrl+E{COLORS['reset']}   : Open multiline editor")
         print(f"  {COLORS['yellow']}Ctrl+C{COLORS['reset']}   : Interrupt/exit session")
         
         print(f"\n{separator}\n")
@@ -351,7 +347,7 @@ def interactive_chat_session(client, args, logger=None):
                 continue
                 
             # Handle multiline input from either /ml command or Ctrl+E shortcut
-            if multiline_enabled and user_input.lower() == "/ml":
+            if user_input.lower() == "/ml":
                 print(f"{COLORS['cyan']}Opening multiline editor. Press Ctrl+D to submit.{COLORS['reset']}")
                 multiline_input = get_multiline_input()
                 if multiline_input is None:
