@@ -119,19 +119,20 @@ class InteractiveUI:
 
         content_width = panel_width - 4  # Inner width of the panel
 
-        # Build the final text block with manual centering
-        final_text = "\n"
+        # Build the final text block with manual centering and styling
+        final_text = Text()
+        final_text.append("\n")
         for line in logo_lines:
-            final_text += line.center(content_width) + "\n"
+            final_text.append(line.center(content_width) + "\n", style="green")
 
-        final_text += "\n"
-        final_text += version_info.center(content_width) + "\n"
-        final_text += "\n"
-        final_text += status_line.center(content_width) + "\n"
+        final_text.append("\n")
+        final_text.append(version_info.center(content_width) + "\n", style="yellow")
+        final_text.append("\n")
+        final_text.append(status_line.center(content_width) + "\n", style="dim")
 
         # Create a welcome panel with the manually centered text
         welcome_panel = Panel(
-            Text(final_text, style="green"),
+            final_text,
             box=box.ROUNDED,
             border_style="cyan",
             width=panel_width,
