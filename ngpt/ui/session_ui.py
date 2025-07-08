@@ -202,14 +202,15 @@ class SessionUI:
             # Empty row with message
             table.add_row("", "", "No sessions found.", "", style="yellow")
         else:
+            name_col_width = col_widths["name"]
             for i, session in enumerate(filtered_sessions):
                 name = session["name"]
                 last_fmt = session.get("last_modified_fmt", "Unknown")
                 size_indicator = session.get("size_indicator", "•")
 
                 # Truncate name if too long
-                if len(name) > 30:
-                    name = name[:27] + "..."
+                if len(name) > name_col_width:
+                    name = name[:name_col_width - 4] + "..."
 
                 # Row style based on selection
                 row_style = "bold" if i == current_session_idx else None

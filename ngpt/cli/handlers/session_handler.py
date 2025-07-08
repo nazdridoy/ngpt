@@ -179,12 +179,12 @@ class SessionManager:
         if not content:
             return "Untitled Session"
         
-        # Remove special characters and limit to 30 chars
+        # Remove special characters and limit stored name length
         name = re.sub(r'[^\w\s]', '', content).strip()
         name = re.sub(r'\s+', ' ', name)  # Replace multiple spaces with a single space
         
-        if len(name) > 30:
-            name = name[:30].strip() + "..."
+        if len(name) > 60:
+            name = name[:60].strip() + "..."
         
         return name or "Untitled Session"
     
