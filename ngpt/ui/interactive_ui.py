@@ -54,7 +54,7 @@ class InteractiveUI:
             ("/exit", "End session"),
             ("/help", "Show this help message"),
             ("/reset", "Reset Session"),
-            ("/sessions", "List saved sessions"),
+            ("/sessions", "Manage saved sessions"),
             ("/transcript", "Show recent conversation exchanges"),
         ]
         commands.sort(key=lambda x: x[0])
