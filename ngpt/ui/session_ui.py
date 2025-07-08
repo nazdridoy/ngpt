@@ -127,11 +127,21 @@ class SessionUI:
             last = session.get("last_modified") or session.get("created_at", "N/A")
             try:
                 last_fmt = datetime.strptime(last, "%Y-%m-%d %H:%M:%S").strftime(
-                    "%Y-%m-%d %I:%M %p"
+                    "%y-%m-%d %I:%M %p"
                 )
                 session["last_modified_fmt"] = last_fmt
             except Exception:
                 session["last_modified_fmt"] = last
+
+            # Format the created date
+            created = session.get("created_at", "N/A")
+            try:
+                created_fmt = datetime.strptime(
+                    created, "%Y-%m-%d %H:%M:%S"
+                ).strftime("%y-%m-%d %I:%M %p")
+                session["created_at_fmt"] = created_fmt
+            except Exception:
+                session["created_at_fmt"] = created
 
             # Calculate session size
             session_info = self.session_manager.get_session_info(session["id"])
@@ -179,6 +189,12 @@ class SessionUI:
             width=col_widths["idx"],
         )
         table.add_column(
+            "ID",
+            style="cyan",
+            justify="left",
+            width=col_widths["id"],
+        )
+        table.add_column(
             "Size",
             style="cyan",
             justify="left",
@@ -189,28 +205,36 @@ class SessionUI:
             style="cyan",
             justify="left",
             width=col_widths["name"],
+            no_wrap=True,  # Prevent wrapping
+        )
+        table.add_column(
+            "Created",
+            style="cyan",
+            justify="left",
+            width=col_widths["created"],
+            no_wrap=True,
         )
         table.add_column(
             "Last Modified",
             style="cyan",
             justify="left",
-            width=col_widths["date"],
+            width=col_widths["modified"],
+            no_wrap=True,
         )
 
         # Add rows
         if not filtered_sessions:
             # Empty row with message
-            table.add_row("", "", "No sessions found.", "", style="yellow")
+            table.add_row("", "", "", "No sessions found.", "", "", style="yellow")
         else:
-            name_col_width = col_widths["name"]
             for i, session in enumerate(filtered_sessions):
                 name = session["name"]
+                session_id_short = (
+                    session["id"].split("_")[-1] if "_" in session["id"] else session["id"]
+                )
+                created_fmt = session.get("created_at_fmt", "Unknown")
                 last_fmt = session.get("last_modified_fmt", "Unknown")
                 size_indicator = session.get("size_indicator", "•")
-
-                # Truncate name if too long
-                if len(name) > name_col_width:
-                    name = name[:name_col_width - 4] + "..."
 
                 # Row style based on selection
                 row_style = "bold" if i == current_session_idx else None
@@ -219,6 +243,7 @@ class SessionUI:
                 idx_text = Text(
                     str(i), style="cyan bold" if i == current_session_idx else "yellow"
                 )
+                id_text = Text(session_id_short, style="dim white")
 
                 # Get size color directly from session
                 size_style = session.get("color_name", "green")
@@ -229,14 +254,17 @@ class SessionUI:
                 date_style = "white" if i == current_session_idx else "dim white"
 
                 name_text = Text(name, style=name_style)
-                date_text = Text(last_fmt, style=date_style)
+                created_text = Text(created_fmt, style=date_style)
+                modified_text = Text(last_fmt, style=date_style)
 
                 # Add the row with all styled elements
                 table.add_row(
                     idx_text,
+                    id_text,
                     size_text,
                     name_text,
-                    date_text,
+                    created_text,
+                    modified_text,
                     end_section=(
                         i == len(filtered_sessions) - 1
                     ),  # Add separator after last row
