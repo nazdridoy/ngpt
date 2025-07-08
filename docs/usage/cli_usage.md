@@ -171,11 +171,13 @@ This makes it easy to repeat or modify previous prompts.
 
 In interactive mode, you can manage your chat sessions with the following commands:
 
-- **`/save [name]`**: Saves the current conversation with an optional custom name.
-- **`/sessions`**: Opens the interactive session manager to browse, manage sessions.
-- **`/reset`**: Resets the current conversation history.
+- **`/editor`**: Opens the multiline editor for complex inputs.
 - **`/exit`**: Exits the interactive session (also works with `exit`, `quit`, or `bye` without the slash).
 - **`/help`**: Shows the help menu with all available commands.
+- **`/reset`**: Resets the current conversation history.
+- **`/sessions`**: Opens the interactive session manager to browse, manage sessions.
+- **`/transcript`**: Shows recent conversation exchanges.
+
 
 #### Interactive Session Manager
 
@@ -193,11 +195,15 @@ Sessions (sorted by date, oldest first):
 
 Available commands:
 - **`list`**: Show session list (sorted by date)
-- **`preview <idx>`**: Show preview of session messages
-- **`load <idx>`**: Load a session
-- **`rename <idx> <name>`**: Rename a session
-- **`delete <idx>`**: Delete a session
+- **`preview [idx]`**: Show preview of session messages (defaults to latest)
+- **`load [idx]`**: Load a session (defaults to latest)
+- **`rename [idx] <name>`**: Rename a session (defaults to latest)
+- **`delete [idx]`**: Delete a session (defaults to latest)
+- **`delete <idx1>,<idx2>`**: Delete multiple sessions
+- **`delete <idx1>-<idx5>`**: Delete a range of sessions
 - **`search <query>`**: Search sessions by name
+- **`head [idx] [count]`**: Show first messages in session (defaults to latest)
+- **`tail [idx] [count]`**: Show last messages in session (defaults to latest)
 - **`help`**: Show available commands
 - **`exit`**: Exit session manager
 
@@ -218,18 +224,11 @@ Sessions (sorted by date, oldest first):
   [1] 2024-01-20 14:45  ••   Project Brainstorm  (15 KB) 
   [2] 2024-02-10 09:15  •••  Code Review         (35 KB)
 
-command: preview 1
-🤖 nGPT Session Manager - Preview 🤖
-────────────────────────────────────
+command: preview
+Showing preview of latest session "Code Review"...
 
-╭─ 👤 User 1
-│ How can I structure my new web application project?
-
-╭─ 🤖 AI
-│ For a well-structured web application, I recommend...
-
-command: load 1
-Loading session "Project Brainstorm"...
+command: load
+Loading session "Code Review"...
 Session loaded successfully!
 ```
 
@@ -273,7 +272,7 @@ ngpt -i
 ```
 
 In interactive mode you can:
-- Use the `/ml` command or press `Ctrl+E` to enter multiline text mode
+- Use the `/editor` command or press `Ctrl+E` to enter multiline text mode
 - Type or paste complex, multi-paragraph prompts
 - Press Ctrl+D (or Ctrl+Z on Windows) to submit the multiline input
 - Exit multiline mode anytime by typing ".exit" on a new line
@@ -286,7 +285,7 @@ This is especially useful when:
 
 Example usage:
 ```
-> /ml
+> /editor
 (multiline mode - press Ctrl+D to submit)
 Here's the error I'm getting:
 
@@ -309,12 +308,11 @@ ngpt -i --preprompt "You are a Python programming tutor"
 # Interactive mode with web search
 ngpt -i --web-search
 
-# Interactive mode with markdown formatting
-ngpt -i
-
-# Interactive mode with real-time markdown formatting (default)
+# Interactive mode with markdown rendering (always enabled)
 ngpt -i
 ```
+
+**Note:** The `--plaintext` flag is ignored in interactive mode, which always uses markdown rendering.
 
 ### Custom Roles
 
