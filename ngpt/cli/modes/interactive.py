@@ -48,40 +48,77 @@ def interactive_chat_session(client, args, logger=None):
     except:
         term_width = 80  # Default fallback
     
-    # Improved visual header with better layout
-    header = f"{COLORS['cyan']}{COLORS['bold']}🤖 nGPT Interactive Chat Session 🤖{COLORS['reset']}"
-    print(f"\n{header}")
+    # Define header for later use
+    header = f"🤖 nGPT Interactive Chat Session 🤖"
     
-    # Create a separator line - use a consistent separator length for all lines
-    separator_length = min(40, term_width - 10)
+    # Create a full-width separator line based on box width
+    box_width = min(term_width - 4, 80)  # Limit box width for better appearance
+    separator_length = box_width
     separator = f"{COLORS['gray']}{'─' * separator_length}{COLORS['reset']}"
+    
+    # Define middle point for aligning colons
+    middle_point = box_width // 2
+    
+    # Helper functions to reduce code repetition
+    def print_centered_line(text, box_width, color=None):
+        """Print text centered within a given width."""
+        if color:
+            text = f"{color}{text}{COLORS['reset']}"
+        padding = (box_width - len(text.strip())) // 2
+        print(f"{' ' * padding}{text}")
+    
+    def print_aligned_item(label, description, color=COLORS['yellow'], indent=4):
+        """Print an item with label aligned to the middle point and description after colon."""
+        padding = middle_point - len(label) - indent  # indent spaces for indent
+        if padding < 2:  # Ensure at least 2 spaces between label and colon
+            padding = 2
+        print(f"{' ' * indent}{color}{label}{' ' * padding}{COLORS['reset']}: {description}")
+    
+    def print_section_header(title, color=COLORS['cyan']):
+        """Print a section header."""
+        print(f"\n{color}{title}{COLORS['reset']}")
 
     def show_help():
         """Displays the help menu."""
-        print(separator)
         # Group commands into categories with better formatting
-        print(f"\n{COLORS['cyan']}Navigation:{COLORS['reset']}")
-        print(f"  {COLORS['yellow']}↑/↓{COLORS['reset']} : Browse input history")
+        print_section_header("Session Commands (prefix with '/'):")
         
-        print(f"\n{COLORS['cyan']}Session Commands (prefix with '/'):{COLORS['reset']}")
-        print(f"  {COLORS['yellow']}/reset{COLORS['reset']}     : Reset Session")
-        print(f"  {COLORS['yellow']}/exit{COLORS['reset']}      : End session")
-        print(f"  {COLORS['yellow']}/sessions{COLORS['reset']}  : List saved sessions")
-        print(f"  {COLORS['yellow']}/transcript{COLORS['reset']}: Show recent conversation exchanges")
-        print(f"  {COLORS['yellow']}/help{COLORS['reset']}      : Show this help message")
-        print(f"  {COLORS['yellow']}/ml{COLORS['reset']}        : Open multiline editor")
+        # Define commands with descriptions - no need to manually sort
+        commands = [
+            ("/editor", "Open multiline editor"),
+            ("/exit", "End session"),
+            ("/help", "Show this help message"),
+            ("/reset", "Reset Session"),
+            ("/sessions", "List saved sessions"),
+            ("/transcript", "Show recent conversation exchanges")
+        ]
+        
+        # Sort commands alphabetically
+        commands.sort(key=lambda x: x[0])
+        
+        # Format with alignment - align colons at the middle point
+        for cmd, desc in commands:
+            print_aligned_item(cmd, desc)
         
         # Add a dedicated keyboard shortcuts section
-        print(f"\n{COLORS['cyan']}Keyboard Shortcuts:{COLORS['reset']}")
-        print(f"  {COLORS['yellow']}Ctrl+E{COLORS['reset']}   : Open multiline editor")
-        print(f"  {COLORS['yellow']}Ctrl+C{COLORS['reset']}   : Interrupt/exit session")
+        print_section_header("Keyboard Shortcuts:")
+        shortcuts = [
+            ("Ctrl+E", "Open multiline editor"),
+            ("Ctrl+C", "Interrupt/exit session")
+        ]
+        
+        # Format with alignment - align colons at the middle point
+        for shortcut, desc in shortcuts:
+            print_aligned_item(shortcut, desc)
+        
+        # Move Navigation section after Keyboard Shortcuts and align colon consistently
+        print_section_header("Navigation:")
+        print_aligned_item("↑/↓", "Browse input history")
         
         print(f"\n{separator}\n")
 
     def show_welcome():
         # Enhanced welcome screen with better visual structure
-        box_width = min(term_width - 4, 80)  # Limit box width for better appearance
-        
         print(f"\n{COLORS['cyan']}{COLORS['bold']}╭{'─' * box_width}╮{COLORS['reset']}")
         
         # Logo and welcome message
@@ -134,7 +171,17 @@ def interactive_chat_session(client, args, logger=None):
         
         print(f"{COLORS['cyan']}{COLORS['bold']}╰{'─' * box_width}╯{COLORS['reset']}")
         
-        # Show help info after the welcome box
+        # Display the title after the logo box with decorative dashes
+        print("")
+        title = f"{COLORS['cyan']}{COLORS['bold']}{header}{COLORS['reset']}"
+        title_text_length = len(header)
+        dashes_each_side = (box_width - title_text_length) // 2 - 1
+        
+        centered_title = f"{COLORS['gray']}{'─' * dashes_each_side}{COLORS['reset']}{title}{COLORS['gray']}{'─' * dashes_each_side}{COLORS['reset']}"
+        print(centered_title)
+        
+        # We don't need any separator lines after the title, the help function will add spacing
+        # Show help info after the welcome box and title
         show_help()
         
         # Show logging info if logger is available
@@ -144,7 +191,6 @@ def interactive_chat_session(client, args, logger=None):
         # Display a note about web search if enabled
         if web_search:
             print(f"{COLORS['green']}Web search capability is enabled.{COLORS['reset']}")
-        
     
     # Show the welcome screen
     show_welcome()
@@ -192,7 +238,7 @@ def interactive_chat_session(client, args, logger=None):
     
     # Define reserved commands once - moved out of conditional blocks
     reserved_commands = [
-        '/reset', '/sessions', '/help', '/ml',
+        '/reset', '/sessions', '/help', '/editor',
         '/exit', '/transcript'
     ]
     
@@ -303,7 +349,7 @@ def interactive_chat_session(client, args, logger=None):
                 @kb.add('c-e')
                 def open_multiline_editor(event):
                     # Exit the prompt and return a special value that indicates we want multiline
-                    event.app.exit(result="/ml")
+                    event.app.exit(result="/editor")
                 
                 # Get user input with styled prompt - using proper HTML formatting
                 user_input = pt_prompt(
@@ -347,7 +393,7 @@ def interactive_chat_session(client, args, logger=None):
                 continue
                 
             # Handle multiline input from either /ml command or Ctrl+E shortcut
-            if user_input.lower() == "/ml":
+            if user_input.lower() == "/editor":
                 print(f"{COLORS['cyan']}Opening multiline editor. Press Ctrl+D to submit.{COLORS['reset']}")
                 multiline_input = get_multiline_input()
                 if multiline_input is None:
