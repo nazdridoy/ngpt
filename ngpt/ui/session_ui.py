@@ -296,13 +296,15 @@ class SessionUI:
             # Extract user/assistant pairs
             pairs = []
             current_pair = []
-            for msg in loaded_conversation:
+            # Skip system message
+            for msg in loaded_conversation[1:]:
                 if msg["role"] == "user":
                     if current_pair:
                         pairs.append(current_pair)
                     current_pair = [msg]
                 elif msg["role"] == "assistant" and current_pair:
                     current_pair.append(msg)
+
             if current_pair:
                 pairs.append(current_pair)
 
@@ -321,58 +323,58 @@ class SessionUI:
             preview_header.append("Preview of ", style="cyan bold")
             preview_header.append(mode_desc, style="cyan bold")
             preview_header.append(" messages from: ", style="cyan bold")
-            preview_header.append(session["name"], style="white")
+            preview_header.append(f'"{session["name"]}"', style="white")
 
             # Print the header
             console.print(preview_header)
-            console.print(Text("─" * min(self.term_width, 50), style="dim"))
+
+            # Separator
+            separator_width = min(self.term_width, 50)
+            console.print(Text("─" * separator_width, style="dim"))
 
             if not to_show:
-                console.print(Text("No messages found in this session.", style="yellow"))
+                console.print(
+                    Text("No conversation history to show.", style="yellow"),
+                    justify="center",
+                )
+                console.print(Text("─" * separator_width, style="dim"))
+                return
 
-            # Show pairs with nice Rich formatting
+            # Show pairs with combined formatting
             for i, pair in enumerate(to_show):
-                # Create user message panel
                 user_content = pair[0]["content"]
-                # Truncate if very long
                 if len(user_content) > 500:
                     user_content = user_content[:497] + "..."
+                
+                combined_text = Text(user_content, style="white")
 
-                user_panel = Panel(
-                    Text(user_content),
-                    title=f"👤 User {i+1}",
-                    title_align="left",
-                    border_style="cyan",
-                    padding=(0, 1),
-                    box=box.ROUNDED,
-                )
-                console.print(user_panel)
-
-                # Assistant message if available
                 if len(pair) > 1:
                     ai_content = pair[1]["content"]
-                    # Truncate if very long
                     if len(ai_content) > 500:
                         ai_content = ai_content[:497] + "..."
+                    
+                    combined_text.append("\n\n")
+                    combined_text.append("🤖 AI\n", style="bold green")
+                    combined_text.append(ai_content, style="white")
 
-                    ai_panel = Panel(
-                        Text(ai_content),
-                        title="🤖 AI",
-                        title_align="left",
-                        border_style="green",
-                        padding=(0, 1),
-                        box=box.ROUNDED,
-                    )
-                    console.print(ai_panel)
-
-            # Print a separator and command prompt
-            console.print(Text("─" * min(self.term_width, 50), style="dim"))
-            console.print(
-                Text(
-                    "Enter command: (Type 'list' to return to session list)",
-                    style="green",
+                panel = Panel(
+                    combined_text,
+                    title=f"👤 User {i + 1}",
+                    title_align="left",
+                    border_style="cyan",
+                    box=box.ROUNDED,
                 )
-            )
+                console.print(panel)
 
+            # Print footer
+            console.print(Text("─" * separator_width, style="dim"))
+            print(
+                f"{COLORS['green']}Enter command: {COLORS['reset']}(Type 'list' to return to session list)"
+            )
         except Exception as e:
-            console.print(Text(f"Error reading session: {str(e)}", style="red")) 
+            console.print(Text(f"Error loading session: {e}", style="red"))
+
+    def truncate_text(self, text: str, max_length: int) -> str:
+        if len(text) > max_length:
+            return text[:max_length] + "..."
+        return text 

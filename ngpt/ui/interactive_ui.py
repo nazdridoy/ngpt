@@ -225,14 +225,7 @@ class InteractiveUI:
             if len(user_content) > 500:
                 user_content = user_content[:497] + "..."
 
-            user_panel = Panel(
-                Text(user_content, style="white"),
-                title=f"👤 You {i + 1}",
-                title_align="left",
-                border_style="cyan",
-                box=box.ROUNDED,
-            )
-            console.print(user_panel)
+            combined_text = Text(user_content, style="white")
 
             # Assistant message if available
             if len(pair) > 1:
@@ -240,13 +233,17 @@ class InteractiveUI:
                 if len(ai_content) > 500:
                     ai_content = ai_content[:497] + "..."
 
-                ai_panel = Panel(
-                    Text(ai_content, style="white"),
-                    title="🤖 nGPT",
-                    title_align="left",
-                    border_style="green",
-                    box=box.ROUNDED,
-                )
-                console.print(ai_panel)
-        
-        console.print(Text("─" * separator_width, style="dim"), justify="center") 
+                combined_text.append("\n\n")
+                combined_text.append("🤖 nGPT\n", style="bold green")
+                combined_text.append(ai_content, style="white")
+
+            panel = Panel(
+                combined_text,
+                title=f"👤 You {i + 1}",
+                title_align="left",
+                border_style="cyan",
+                box=box.ROUNDED,
+            )
+            console.print(panel)
+
+        console.print(Text("─" * separator_width, style="dim"), justify="center")
