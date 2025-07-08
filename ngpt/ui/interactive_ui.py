@@ -194,38 +194,64 @@ class InteractiveUI:
         # Get the last N pairs
         pairs_to_show = pairs[-count:] if count < len(pairs) else pairs
 
-        print(f"\n{COLORS['cyan']}{COLORS['bold']}🤖 Conversation Transcript{COLORS['reset']}")
-        print(
-            f"{COLORS['gray']}Showing the last {len(pairs_to_show)} of {len(pairs)} exchanges{COLORS['reset']}"
+        # Create a title with emoji and styling
+        title = Text()
+        title.append("🤖 ", style="")
+        title.append("Conversation Transcript", style="cyan bold")
+        title.append(" 🤖", style="")
+
+        # Print the header with proper centering
+        console.print("\n")
+        console.print(title, justify="center")
+
+        # Create a subtitle with exchange count
+        subtitle = Text(
+            f"Showing the last {len(pairs_to_show)} of {len(pairs)} exchanges",
+            style="dim",
         )
-        print(self.separator)
+        console.print(subtitle, justify="center")
+
+        # Print separator
+        separator_width = min(self.table_width, 50)
+        console.print(Text("─" * separator_width, style="dim"), justify="center")
+        console.print("")
 
         if not pairs_to_show:
-            print(f"\n{COLORS['yellow']}No conversation history yet.{COLORS['reset']}")
-            print(self.separator)
+            console.print(
+                Text("No conversation history yet.", style="yellow"), justify="center"
+            )
+            console.print(Text("─" * separator_width, style="dim"), justify="center")
             return
 
         # Show pairs with nice formatting
         for i, pair in enumerate(pairs_to_show):
             # User message
-            print(f"\n{COLORS['cyan']}{COLORS['bold']}╭─ 👤 You {i+1}{COLORS['reset']}")
-
-            # Truncate if very long
             user_content = pair[0]["content"]
             if len(user_content) > 500:
                 user_content = user_content[:497] + "..."
 
-            print(f"{COLORS['cyan']}│{COLORS['reset']} {user_content}")
+            user_panel = Panel(
+                Text(user_content, style="white"),
+                title=f"👤 You {i + 1}",
+                title_align="left",
+                border_style="cyan",
+                box=box.ROUNDED,
+            )
+            console.print(user_panel)
 
             # Assistant message if available
             if len(pair) > 1:
-                print(f"\n{COLORS['green']}{COLORS['bold']}╭─ 🤖 nGPT{COLORS['reset']}")
-
-                # Truncate if very long
                 ai_content = pair[1]["content"]
                 if len(ai_content) > 500:
                     ai_content = ai_content[:497] + "..."
 
-                print(f"{COLORS['green']}│{COLORS['reset']} {ai_content}")
-
-        print(self.separator) 
+                ai_panel = Panel(
+                    Text(ai_content, style="white"),
+                    title="🤖 nGPT",
+                    title_align="left",
+                    border_style="green",
+                    box=box.ROUNDED,
+                )
+                console.print(ai_panel)
+        
+        console.print(Text("─" * separator_width, style="dim"), justify="center") 
