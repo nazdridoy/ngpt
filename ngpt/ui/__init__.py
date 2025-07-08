@@ -1,36 +1,34 @@
 # UI package exports
-from .formatters import COLORS, ColoredHelpFormatter
+from .colors import COLORS
 from .renderers import (
+    create_spinner_handling_callback,
     prettify_streaming_markdown,
     setup_plaintext_spinner,
     cleanup_plaintext_spinner,
-    create_spinner_handling_callback,
-    TERMINAL_RENDER_LOCK
 )
+from .tables import get_table_config
 from .tui import (
-    spinner,
     copy_to_clipboard,
     get_multiline_input,
+    spinner,
     get_terminal_input,
-    create_multiline_editor
+    create_multiline_editor,
 )
+from .interactive_ui import InteractiveUI
+from .session_ui import SessionUI
 
 __all__ = [
-    # Formatters
-    'COLORS',
-    'ColoredHelpFormatter',
-    
-    # Renderers
-    'prettify_streaming_markdown',
-    'setup_plaintext_spinner',
-    'cleanup_plaintext_spinner',
-    'create_spinner_handling_callback',
-    'TERMINAL_RENDER_LOCK',
-    
-    # UI
-    'spinner',
-    'copy_to_clipboard',
-    'get_multiline_input',
-    'get_terminal_input',
-    'create_multiline_editor'
+    "COLORS",
+    "create_spinner_handling_callback",
+    "prettify_streaming_markdown",
+    "setup_plaintext_spinner",
+    "cleanup_plaintext_spinner",
+    "get_table_config",
+    "copy_to_clipboard",
+    "get_multiline_input",
+    "spinner",
+    "get_terminal_input",
+    "create_multiline_editor",
+    "InteractiveUI",
+    "SessionUI",
 ]

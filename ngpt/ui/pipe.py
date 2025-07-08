@@ -1,5 +1,5 @@
 import sys
-from ngpt.ui.colors import COLORS
+from .colors import COLORS
 
 def process_piped_input(prompt, logger=None):
     """Process piped input to be used with a prompt.
@@ -49,3 +49,18 @@ def process_piped_input(prompt, logger=None):
     
     # If no stdin or no content in stdin, just return the original prompt
     return prompt 
+
+def pipe_exit(content: str, should_pipe: bool, is_error: bool = False):
+    """Exit the program, piping content to stdout or stderr if conditions are met.
+    
+    Args:
+        content: The content to be piped
+        should_pipe: Whether to pipe the content
+        is_error: Whether the content is an error
+    """
+    if should_pipe:
+        if is_error:
+            print(content, file=sys.stderr)
+        else:
+            print(content)
+    sys.exit(0) 

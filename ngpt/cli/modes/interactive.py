@@ -15,18 +15,9 @@ from ngpt.ui.tui import spinner, get_multiline_input
 from ngpt.utils.web_search import enhance_prompt_with_web_search
 from ngpt.cli.handlers.session_handler import handle_session_management, clear_conversation_history, auto_save_session
 from ngpt.ui.tables import get_table_config
+from ngpt.ui.interactive_ui import InteractiveUI
 
-# Import Rich components
-from rich.console import Console
-from rich.panel import Panel
-from rich.text import Text
-from rich.table import Table
-from rich import box
-from rich.align import Align
-from rich.layout import Layout
 
-# Create a Rich console instance
-console = Console()
 
 # Optional imports for enhanced UI
 try:
@@ -88,145 +79,11 @@ def interactive_chat_session(client, args, logger=None):
         """Print a section header."""
         print(f"\n{color}{title}{COLORS['reset']}")
 
-    def show_help():
-        """Displays the help menu using Rich components."""
-        # Create a table for command categories with fixed width
-        help_table_config = get_table_config(is_help_table=True)
-        table_width = help_table_config["table_width"]
-        help_table = Table(
-            show_header=False, 
-            box=None,
-            padding=(0, 2),  # Add padding between columns
-            width=table_width
-        )
-        
-        # Add columns for command and description with fixed width ratio
-        cmd_width = help_table_config["help_cmd_width"]
-        help_table.add_column("Command", style="yellow", width=cmd_width)
-        help_table.add_column("Description", style="white")
-        
-        # Section headers
-        section_style = "cyan bold"
-        
-        # Session Commands section
-        help_table.add_row(Text("Session Commands (prefix with '/'):", style=section_style), "")
-        
-        # Sort commands alphabetically
-        commands = [
-            ("/editor", "Open multiline editor"),
-            ("/exit", "End session"),
-            ("/help", "Show this help message"),
-            ("/reset", "Reset Session"),
-            ("/sessions", "List saved sessions"),
-            ("/transcript", "Show recent conversation exchanges")
-        ]
-        commands.sort(key=lambda x: x[0])
-        
-        # Add command rows
-        for cmd, desc in commands:
-            help_table.add_row(cmd, desc)
-        
-        # Keyboard Shortcuts section
-        help_table.add_row("", "")  # Empty row as spacer
-        help_table.add_row(Text("Keyboard Shortcuts:", style=section_style), "")
-        help_table.add_row("Ctrl+E", "Open multiline editor")
-        help_table.add_row("Ctrl+C", "Interrupt/exit session")
-        
-        # Navigation section
-        help_table.add_row("", "")  # Empty row as spacer
-        help_table.add_row(Text("Navigation:", style=section_style), "")
-        help_table.add_row("↑/↓", "Browse input history")
-        
-        # Print the help table
-        console.print(help_table)
-        
-        # Print a separator line at the end
-        console.print(Text("─" * separator_length, style="dim"))
+    # Instantiate the UI handler
+    ui = InteractiveUI(client, args, logger)
 
-    def show_welcome():
-        """Shows a welcome screen with enhanced Rich formatting."""
-        # Get version info
-        from ngpt.version import __version__
-        version_info = f"v{__version__}"
-        
-        # Detect model
-        model_name = None
-        if hasattr(client, 'model'):
-            model_name = client.model
-        elif hasattr(client, 'config') and hasattr(client.config, 'model'):
-            model_name = client.config.model
-        elif hasattr(args, 'model') and args.model:
-            model_name = args.model
-            
-        # Truncate model name if it's too long
-        if model_name and len(model_name) > 40:
-            model_name = model_name[:37] + "..."
-        
-        model_info = f"Model: {model_name}" if model_name else "Default model"
-        status_line = f"Temperature: {temperature} | {model_info}"
-        
-        # Set a fixed width for the logo panel (wider than the separator)
-        panel_width = min(table_width - 4, 100)
-        
-        # Manually center the content
-        logo_lines = [
-            "███╗   ██╗ ██████╗ ██████╗ ████████╗",
-            "████╗  ██║██╔════╝ ██╔══██╗╚══██╔══╝",
-            "██╔██╗ ██║██║  ███╗██████╔╝   ██║   ",
-            "██║╚██╗██║██║   ██║██╔═══╝    ██║   ",
-            "██║ ╚████║╚██████╔╝██║        ██║   ",
-            "╚═╝  ╚═══╝ ╚═════╝ ╚═╝        ╚═╝   "
-        ]
-
-        content_width = panel_width - 4  # Inner width of the panel
-        
-        # Build the final text block with manual centering
-        final_text = "\n"
-        for line in logo_lines:
-            final_text += line.center(content_width) + "\n"
-        
-        final_text += "\n"
-        final_text += version_info.center(content_width) + "\n"
-        final_text += "\n"
-        final_text += status_line.center(content_width) + "\n"
-
-        # Create a welcome panel with the manually centered text
-        welcome_panel = Panel(
-            Text(final_text, style="green"),
-            box=box.ROUNDED,
-            border_style="cyan",
-            width=panel_width,
-            title="nGPT",
-            title_align="center"
-        )
-        
-        # Print the welcome panel with proper centering
-        console.print("\n")
-        console.print(Align.center(welcome_panel))
-        
-        # Create a header for the session
-        header_text = Text("🤖 nGPT Interactive Chat Session 🤖", style="cyan bold")
-        console.print("\n")
-        console.print(header_text, justify="center")
-        
-        # Print separator after header - make it narrower than the panel width
-        separator_width = min(table_width, 76)
-        console.print(Text("─" * separator_width, style="dim"), justify="center")
-        console.print("\n")
-        
-        # Show help info after the welcome panel
-        show_help()
-        
-        # Show logging info if logger is available
-        if logger:
-            console.print(Text(f"Logging conversation to: {logger.get_log_path()}", style="green"))
-        
-        # Display a note about web search if enabled
-        if web_search:
-            console.print(Text("Web search capability is enabled.", style="green"))
-    
     # Show the welcome screen
-    show_welcome()
+    ui.show_welcome()
     
     # Custom separator - use the same length for consistency
     def print_separator():
@@ -286,64 +143,6 @@ def interactive_chat_session(client, args, logger=None):
             print(f"\n{COLORS['yellow']}Conversation history cleared. A new session will be created on next exchange.{COLORS['reset']}")
             print(separator)
 
-    # Function to show conversation history preview
-    def show_conversation_preview():
-        """Shows a preview of the current conversation history."""
-        # Extract user/assistant pairs from conversation
-        pairs = []
-        current_pair = []
-        count = 5  # Fixed count of exchanges to show
-        
-        # Skip the system message
-        for msg in conversation[1:]:
-            if msg['role'] == 'user':
-                if current_pair:
-                    pairs.append(current_pair)
-                current_pair = [msg]
-            elif msg['role'] == 'assistant' and current_pair:
-                current_pair.append(msg)
-                
-        # Add the last pair if it exists
-        if current_pair:
-            pairs.append(current_pair)
-        
-        # Get the last N pairs
-        pairs_to_show = pairs[-count:] if count < len(pairs) else pairs
-        
-        print(f"\n{COLORS['cyan']}{COLORS['bold']}🤖 Conversation Transcript{COLORS['reset']}")
-        print(f"{COLORS['gray']}Showing the last {len(pairs_to_show)} of {len(pairs)} exchanges{COLORS['reset']}")
-        print(separator)
-        
-        if not pairs_to_show:
-            print(f"\n{COLORS['yellow']}No conversation history yet.{COLORS['reset']}")
-            print(separator)
-            return
-        
-        # Show pairs with nice formatting
-        for i, pair in enumerate(pairs_to_show):
-            # User message
-            print(f"\n{COLORS['cyan']}{COLORS['bold']}╭─ 👤 You {i+1}{COLORS['reset']}")
-            
-            # Truncate if very long
-            user_content = pair[0]['content']
-            if len(user_content) > 500:
-                user_content = user_content[:497] + "..."
-                
-            print(f"{COLORS['cyan']}│{COLORS['reset']} {user_content}")
-            
-            # Assistant message if available
-            if len(pair) > 1:
-                print(f"\n{COLORS['green']}{COLORS['bold']}╭─ 🤖 nGPT{COLORS['reset']}")
-                
-                # Truncate if very long
-                ai_content = pair[1]['content']
-                if len(ai_content) > 500:
-                    ai_content = ai_content[:497] + "..."
-                    
-                print(f"{COLORS['green']}│{COLORS['reset']} {ai_content}")
-        
-        print(separator)
-    
     # --- Session Management Functions ---
 
     def session_manager():
@@ -416,13 +215,13 @@ def interactive_chat_session(client, args, logger=None):
                 continue
 
             if user_input.lower() == '/help':
-                show_help()
+                ui.show_help()
                 continue
             
             # Handle transcript/history commands
             if user_input.lower().startswith('/transcript'):
                 # Show the conversation preview
-                show_conversation_preview() # Always show 5 exchanges
+                ui.show_conversation_preview(conversation) # Always show 5 exchanges
                 continue
                 
             # Handle multiline input from either /ml command or Ctrl+E shortcut
