@@ -1,5 +1,5 @@
 from ngpt.core.cli_config import apply_cli_config
-from ngpt.cli.modes import (
+from ..modes import (
     interactive_chat_session,
     chat_mode,
     code_mode,

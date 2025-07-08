@@ -13,11 +13,12 @@ from ngpt.ui.colors import COLORS
 from ngpt.ui.renderers import prettify_streaming_markdown, TERMINAL_RENDER_LOCK, create_spinner_handling_callback
 from ngpt.ui.tui import spinner, get_multiline_input
 from ngpt.utils.web_search import enhance_prompt_with_web_search
-from ngpt.cli.handlers.session_handler import handle_session_management, clear_conversation_history, auto_save_session
+from ..handlers.session_handler import handle_session_management, clear_conversation_history, auto_save_session
 from ngpt.ui.tables import get_table_config
 from ngpt.ui.interactive_ui import InteractiveUI
 
-
+# Import Rich components
+from rich.console import Console
 
 # Optional imports for enhanced UI
 try:

@@ -1,5 +1,5 @@
-from ngpt.core.log import create_logger, Logger
-from ngpt.core.config import (
+from .log import create_logger, Logger
+from .config import (
     load_config, 
     get_config_path, 
     get_config_dir, 
@@ -10,7 +10,7 @@ from ngpt.core.config import (
     DEFAULT_CONFIG_ENTRY,
     check_config
 )
-from ngpt.core.cli_config import (
+from .cli_config import (
     load_cli_config,
     set_cli_config_option,
     get_cli_config_option,
