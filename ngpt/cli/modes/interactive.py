@@ -129,9 +129,10 @@ def interactive_chat_session(client, args, logger=None):
     
     # Define reserved commands once - moved out of conditional blocks
     reserved_commands = [
-        '/reset', '/sessions', '/help', '/editor',
-        '/exit', '/transcript'
+        '/editor', '/exit', '/help', '/reset', '/sessions', '/transcript'
     ]
+    # Always sort commands alphabetically
+    reserved_commands.sort()
     
     # Function to clear conversation history
     def clear_history():

@@ -854,9 +854,11 @@ def handle_session_management(logger=None) -> Optional[Tuple[str, Path, str, Lis
                 
                 # Define session commands for autocompletion
                 session_commands = [
-                    'list', 'search', 'load', 'preview', 'rename', 'delete', 
-                    'help', 'exit', 'quit', 'q'
+                    'delete', 'exit', 'help', 'list', 'load', 'preview', 'q',
+                    'quit', 'rename', 'search'
                 ]
+                # Always sort commands alphabetically
+                session_commands.sort()
                 session_completer = WordCompleter(session_commands, ignore_case=True)
 
                 # Use HTML formatting for better styling
