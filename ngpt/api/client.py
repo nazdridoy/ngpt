@@ -4,6 +4,7 @@ import json
 import requests
 import platform
 import subprocess
+import sys
 
 class NGPTClient:
     def __init__(
@@ -69,10 +70,31 @@ class NGPTClient:
             "model": self.model,
             "messages": messages,
             "stream": stream,
-            "temperature": temperature,
             "top_p": top_p,
         }
         
+        # Handle model-specific parameter constraints
+        # GPT-5 models have special requirements
+        if self.model.startswith("gpt-5"):
+            # Check if temperature was explicitly set by user
+            temperature_explicitly_set = '--temperature' in sys.argv
+            
+            if temperature_explicitly_set and temperature != 1.0:
+                # User explicitly set a non-1.0 temperature for GPT-5
+                print(f"\n\nError: GPT-5 models only support temperature=1 (default).")
+                print(f"You specified --temperature {temperature}, but {self.model} only accepts temperature=1.")
+                print(f"\nOptions:")
+                print(f"  1. Remove --temperature flag (uses default temperature=1)")
+                print(f"  2. Use --temperature 1")
+                print(f"  3. Use a different model that supports custom temperature values\n\n")
+                sys.exit(1)
+            elif temperature_explicitly_set and temperature == 1.0:
+                # User explicitly set temperature=1, which is supported
+                payload["temperature"] = temperature
+            # If temperature not explicitly set, omit it (GPT-5 will use default)
+        else:
+            # Other models support custom temperature values
+            payload["temperature"] = temperature
         # Add max_tokens if provided
         if max_tokens is not None:
             payload["max_tokens"] = max_tokens
@@ -103,6 +125,21 @@ class NGPTClient:
                 # Streaming request
                 collected_content = ""
                 with requests.post(url, headers=self.headers, json=payload, stream=True) as response:
+                    # Check for specific GPT-5 organization verification error before raising
+                    if response.status_code == 400:
+                        try:
+                            error_data = response.json()
+                            error_message = error_data.get('error', {}).get('message', '')
+                            error_param = error_data.get('error', {}).get('param', '')
+                            
+                            if 'organization must be verified to stream' in error_message.lower() and error_param == 'stream':
+                                print(f"\n\nError: {error_message}")
+                                print(f"\nTo use {self.model} without organization verification, add the --plaintext flag:")
+                                print(f"  ngpt --plaintext --provider OpenAI --model {self.model} \"your prompt\"\n\n")
+                                sys.exit(1)
+                        except (json.JSONDecodeError, KeyError):
+                            pass  # Fall through to normal error handling
+                    
                     response.raise_for_status()  # Raise exception for HTTP errors
                     
                     try:
@@ -151,6 +188,8 @@ class NGPTClient:
                 print(f"Error: Endpoint not found at {url}")
             elif e.response.status_code == 429:
                 print("Error: Rate limit exceeded. Please try again later.")
+            elif e.response.status_code == 400:
+                print(f"HTTP Error (400): {e.response.text}")
             else:
                 print(f"HTTP Error: {e}")
             return ""

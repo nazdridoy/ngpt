@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.8"
 resolution-markers = [
     "python_full_version >= '3.9'",
@@ -148,7 +148,7 @@ wheels = [
 
 [[package]]
 name = "ngpt"
-version = "6.6.2"
+version = "6.7.0"
 source = { editable = "." }
 dependencies = [
     { name = "beautifulsoup4" },
