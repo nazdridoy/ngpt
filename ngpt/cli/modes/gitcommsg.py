@@ -88,7 +88,7 @@ OUTPUT FORMAT:
 [CHANGES]: 
 - Technical detail 1 (include specific function/method names and line numbers)
 - Technical detail 2 (be precise about exactly what code was added/modified/removed)
-- Additional technical details (include ALL significant changes in this chunk)
+- Additional technical details (include only significant functional changes in this chunk)
 
 [IMPACT]: Brief technical description of what the changes accomplish
 
@@ -98,10 +98,18 @@ RULES:
 3. ALWAYS identify exact function names, method names, class names, and line numbers where possible
 4. Use format 'filename:function_name()' or 'filename:line_number' when referencing code locations
 5. Be precise and factual - only describe code that actually changed
-6. Include ALL significant changes (do not skip any important modifications)
+6. Include ONLY significant functional changes - EXCLUDE:
+   - Version number updates in package manifests
+   - Lock file changes (any *.lock, *-lock.*, *.lock.* files)
+   - Simple comment additions or documentation updates
+   - Dependency version updates that don't affect functionality
+   - Formatting or whitespace-only changes (unless that's the main purpose)
+   - Build configuration changes that don't affect core functionality
 7. Focus on technical specifics, avoid general statements
 8. When analyzing multiple files, clearly separate each file's changes
-9. Include proper technical details (method names, component identifiers, etc.)"""
+9. Include proper technical details (method names, component identifiers, etc.)
+10. PRIORITIZE the main functional change - if there's one primary change, focus on that
+11. CRITICAL: Completely ignore any automated build system changes or dependency management updates"""
 
     # If preprompt is provided, prepend it to the base prompt with strong wording about absolute priority
     if preprompt:
@@ -195,7 +203,7 @@ refactor(core): simplify preprompt handling for commit prompts
 - [refactor] Update all functions to accept raw preprompt string (gitcommsg.py:create_system_prompt())
 - [refactor] Replace preprompt_data usages with preprompt (gitcommsg.py)
 - [docs] Update library usage doc (docs/usage/library_usage.md:516,531-537)
-- [chore] Bump project version to 2.15.1 (pyproject.toml:3, uv.lock:137)
+
 
 BULLET POINT FORMAT:
 - Each bullet MUST start with a type in square brackets: [type]
@@ -208,14 +216,22 @@ RULES:
 1. BE 100% FACTUAL - Mention ONLY code explicitly shown in the diff
 2. NEVER invent or assume changes not directly visible in the code
 3. EVERY bullet point MUST reference specific files/functions/lines
-4. Include ALL significant changes (do not skip any important modifications)
+4. Include ONLY significant functional changes - EXCLUDE:
+   - Version number updates in package manifests
+   - Lock file changes (any *.lock, *-lock.*, *.lock.* files)
+   - Simple comment additions or documentation updates
+   - Dependency version updates that don't affect functionality
+   - Formatting or whitespace-only changes (unless that's the main purpose)
+   - Build configuration changes that don't affect core functionality
 5. If unsure about a change's purpose, describe WHAT changed, not WHY
 6. Keep summary line under 50 characters (mandatory)
 7. Use appropriate type tags for each change (main summary and each bullet)
 8. ONLY describe code that was actually changed
 9. Focus on technical specifics, avoid general statements
 10. Include proper technical details (method names, component identifiers, etc.)
-11. When all changes are to the same file, mention it once in the summary"""
+11. When all changes are to the same file, mention it once in the summary
+12. PRIORITIZE the main functional change - if there's one primary change, focus on that
+13. CRITICAL: Completely ignore any automated build system changes or dependency management updates"""
 
     # If preprompt is provided, prepend it with strong wording about absolute priority
     if preprompt:
@@ -353,7 +369,7 @@ refactor(core): simplify preprompt handling for commit prompts
 - [refactor] Update all functions to accept raw preprompt string (gitcommsg.py:create_system_prompt())
 - [refactor] Replace preprompt_data usages with preprompt (gitcommsg.py)
 - [docs] Update library usage doc (docs/usage/library_usage.md:516,531-537)
-- [chore] Bump project version to 2.15.1 (pyproject.toml:3, uv.lock:137)
+
 
 BULLET POINT FORMAT:
 - Each bullet MUST start with a type in square brackets: [type]
@@ -366,7 +382,13 @@ RULES:
 1. BE 100% FACTUAL - Mention ONLY code explicitly shown in the diff
 2. NEVER invent or assume changes not directly visible in the code
 3. EVERY bullet point MUST reference specific files/functions/lines
-4. Include ALL significant changes (do not skip any important modifications)
+4. Include ONLY significant functional changes - EXCLUDE:
+   - Version number updates in package manifests
+   - Lock file changes (any *.lock, *-lock.*, *.lock.* files)
+   - Simple comment additions or documentation updates
+   - Dependency version updates that don't affect functionality
+   - Formatting or whitespace-only changes (unless that's the main purpose)
+   - Build configuration changes that don't affect core functionality
 5. If unsure about a change's purpose, describe WHAT changed, not WHY
 6. Keep summary line under 50 characters (mandatory)
 7. Use appropriate type tags for each change (main summary and each bullet)
@@ -374,6 +396,7 @@ RULES:
 9. Focus on technical specifics, avoid general statements
 10. Include proper technical details (method names, component identifiers, etc.)
 11. When all changes are to the same file, mention it once in the summary
+12. PRIORITIZE the main functional change - if there's one primary change, focus on that
 
 Git diff to process:
 
@@ -963,7 +986,7 @@ refactor(core): simplify preprompt handling for commit prompts
 - [refactor] Update all functions to accept raw preprompt string (gitcommsg.py:create_system_prompt())
 - [refactor] Replace preprompt_data usages with preprompt (gitcommsg.py)
 - [docs] Update library usage doc (docs/usage/library_usage.md:516,531-537)
-- [chore] Bump project version to 2.15.1 (pyproject.toml:3, uv.lock:137)
+
 
 REMINDER:
 - First line must be under 50 characters
