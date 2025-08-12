@@ -74,24 +74,26 @@ class NGPTClient:
         }
         
         # Handle model-specific parameter constraints
-        # GPT-5 models have special requirements
-        if self.model.startswith("gpt-5"):
-            # Check if temperature was explicitly set by user
-            temperature_explicitly_set = '--temperature' in sys.argv
-            
+        # Check if temperature was explicitly set by user
+        temperature_explicitly_set = '--temperature' in sys.argv
+        
+        # Models that only support temperature=1.0 (no custom values)
+        temp_restricted_models = ["gpt-5", "o1", "o3", "o4"]
+        model_temp_restricted = any(self.model.startswith(prefix) for prefix in temp_restricted_models)
+        
+        if model_temp_restricted:
+            # Models like GPT-5, o1, o3, o4 that only support temperature=1.0
             if temperature_explicitly_set and temperature != 1.0:
-                # User explicitly set a non-1.0 temperature for GPT-5
-                print(f"\n\nError: GPT-5 models only support temperature=1 (default).")
+                # User explicitly set a non-1.0 temperature
+                model_family = next(prefix for prefix in temp_restricted_models if self.model.startswith(prefix))
+                print(f"\n\nError: {model_family.upper()} models only support temperature=1 (default).")
                 print(f"You specified --temperature {temperature}, but {self.model} only accepts temperature=1.")
-                print(f"\nOptions:")
-                print(f"  1. Remove --temperature flag (uses default temperature=1)")
-                print(f"  2. Use --temperature 1")
-                print(f"  3. Use a different model that supports custom temperature values\n\n")
+                print(f"\nSolution: Remove the --temperature flag or use a different model that supports custom temperature values.\n\n")
                 sys.exit(1)
             elif temperature_explicitly_set and temperature == 1.0:
                 # User explicitly set temperature=1, which is supported
                 payload["temperature"] = temperature
-            # If temperature not explicitly set, omit it (GPT-5 will use default)
+            # If temperature not explicitly set, omit it (model will use default)
         else:
             # Other models support custom temperature values
             payload["temperature"] = temperature
@@ -125,13 +127,15 @@ class NGPTClient:
                 # Streaming request
                 collected_content = ""
                 with requests.post(url, headers=self.headers, json=payload, stream=True) as response:
-                    # Check for specific GPT-5 organization verification error before raising
+                    # Check for specific error conditions before raising
                     if response.status_code == 400:
                         try:
                             error_data = response.json()
                             error_message = error_data.get('error', {}).get('message', '')
                             error_param = error_data.get('error', {}).get('param', '')
+                            error_code = error_data.get('error', {}).get('code', '')
                             
+                            # Handle organization verification error for streaming
                             if 'organization must be verified to stream' in error_message.lower() and error_param == 'stream':
                                 print(f"\n\nError: {error_message}")
                                 print(f"\nTo use {self.model} without organization verification, add the --plaintext flag:")
