@@ -9,7 +9,7 @@ import sys
 class NGPTClient:
     def __init__(
         self,
-        api_key: str = "",
+        api_key: Optional[str] = None,
         base_url: str = "https://api.openai.com/v1/",
         provider: str = "OpenAI",
         model: str = "gpt-3.5-turbo"
@@ -54,7 +54,9 @@ class NGPTClient:
         Returns:
             The generated response as a string
         """
-        if not self.api_key:
+        # Allow blank API keys for local endpoints that don't require authentication
+        # Only show error if api_key is None (not explicitly set) rather than empty string
+        if self.api_key is None:
             print("Error: API key is not set. Please configure your API key in the config file or provide it with --api-key.")
             return ""
             
@@ -221,7 +223,9 @@ class NGPTClient:
         Returns:
             List of available model objects or empty list if failed
         """
-        if not self.api_key:
+        # Allow blank API keys for local endpoints that don't require authentication
+        # Only show error if api_key is None (not explicitly set) rather than empty string
+        if self.api_key is None:
             print("Error: API key is not set. Please configure your API key in the config file or provide it with --api-key.")
             return []
             

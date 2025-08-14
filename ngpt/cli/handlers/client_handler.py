@@ -63,7 +63,8 @@ def initialize_client(args, cli_config):
     active_config = load_config(args.config, effective_config_index, effective_provider)
     
     # Command-line arguments override config settings
-    if args.api_key:
+    # Note: args.api_key can be empty string for local endpoints that don't require auth
+    if args.api_key is not None:
         active_config["api_key"] = args.api_key
     if args.base_url:
         active_config["base_url"] = args.base_url

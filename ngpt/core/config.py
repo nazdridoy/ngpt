@@ -7,7 +7,7 @@ from ngpt.ui.colors import COLORS
 
 # Default configuration
 DEFAULT_CONFIG_ENTRY = {
-    "api_key": "",
+    "api_key": None,
     "base_url": "https://api.openai.com/v1/",
     "provider": "OpenAI",
     "model": "gpt-3.5-turbo"
@@ -72,7 +72,10 @@ def show_config_help():
 
 def check_config(config):
     """Check config for common issues and provide guidance."""
-    if not config.get("api_key"):
+    # Allow empty API keys for local endpoints that don't require authentication
+    # Only show error if api_key is None (not explicitly set) rather than empty string
+    api_key = config.get("api_key")
+    if api_key is None:
         print(f"{COLORS['yellow']}{COLORS['bold']}Error: API key is not set.{COLORS['reset']}")
         show_config_help()
         return False
@@ -270,6 +273,7 @@ def load_config(custom_path: Optional[str] = None, config_index: int = 0, provid
     config = configs[config_index]
     
     # Override with environment variables if they exist
+    # Note: Allow empty strings for API keys (local endpoints that don't require auth)
     env_mapping = {
         "OPENAI_API_KEY": "api_key",
         "OPENAI_BASE_URL": "base_url", 
@@ -277,8 +281,10 @@ def load_config(custom_path: Optional[str] = None, config_index: int = 0, provid
     }
     
     for env_var, config_key in env_mapping.items():
-        if env_var in os.environ and os.environ[env_var]:
-            config[config_key] = os.environ[env_var]
+        if env_var in os.environ:
+            # For API keys, allow empty strings; for others, only override if not empty
+            if config_key == "api_key" or os.environ[env_var]:
+                config[config_key] = os.environ[env_var]
     
     return config
 

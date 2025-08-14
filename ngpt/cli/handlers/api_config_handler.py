@@ -68,7 +68,10 @@ def handle_config_command(config_file: Union[str, bool, None], config_index: int
         print(f"  Provider: {config.get('provider', 'N/A')}")
         print(f"  Model: {config.get('model', 'N/A')}")
         print(f"  Base URL: {config.get('base_url', 'N/A')}")
-        print(f"  API Key: {'[Set]' if config.get('api_key') else '[Not Set]'}")
+        # Allow empty strings for API keys (local endpoints that don't require auth)
+        api_key = config.get('api_key')
+        api_key_status = '[Set]' if api_key is not None else '[Not Set]'
+        print(f"  API Key: {api_key_status}")
         
         # Ask for confirmation
         try:
@@ -177,8 +180,9 @@ def show_config(config_file: Union[str, bool, None], config_index: int, provider
             active_index = matching_configs[0]
     
     # Check for environment variable overrides
+    # Note: Allow empty strings for API keys (local endpoints that don't require auth)
     env_overrides = {}
-    if os.environ.get("OPENAI_API_KEY"):
+    if "OPENAI_API_KEY" in os.environ:
         env_overrides["api_key"] = "[Set via environment]"
     if os.environ.get("OPENAI_BASE_URL"):
         env_overrides["base_url"] = os.environ.get("OPENAI_BASE_URL")
@@ -212,7 +216,10 @@ def show_config(config_file: Union[str, bool, None], config_index: int, provider
         ) else " "
         
         # Display config summary with model
-        print(f"[{i}]{active_marker} {COLORS['green']}{provider_display}{COLORS['reset']} - {cfg.get('model', 'N/A')} ({'[API Key Set]' if cfg.get('api_key') else '[Not Set]'})")
+        # Allow empty strings for API keys (local endpoints that don't require auth)
+        api_key = cfg.get('api_key')
+        api_key_status = '[API Key Set]' if api_key is not None else '[Not Set]'
+        print(f"[{i}]{active_marker} {COLORS['green']}{provider_display}{COLORS['reset']} - {cfg.get('model', 'N/A')} ({api_key_status})")
     
     # Display active configuration with clear separation
     print("\n" + "-" * 50)
@@ -223,7 +230,9 @@ def show_config(config_file: Union[str, bool, None], config_index: int, provider
     print(f"  Provider: {COLORS['green']}{provider_value}{COLORS['reset']}")
     
     # API Key - only show if set
-    api_key_value = "[Set]" if active_config.get('api_key') or "api_key" in env_overrides else "[Not Set]"
+    # Allow empty strings for API keys (local endpoints that don't require auth)
+    api_key = active_config.get('api_key')
+    api_key_value = "[Set]" if (api_key is not None or "api_key" in env_overrides) else "[Not Set]"
     if "api_key" in env_overrides:
         print(f"  API Key: {COLORS['yellow']}{api_key_value}{COLORS['reset']} {COLORS['gray']}(from environment){COLORS['reset']}")
     else:
@@ -284,7 +293,10 @@ def show_config(config_file: Union[str, bool, None], config_index: int, provider
             print(f"\n{COLORS['cyan']}{COLORS['bold']}Configuration Details (Index {selected_index}):{COLORS['reset']}")
         
         print(f"  Provider: {COLORS['green']}{selected_config.get('provider', 'N/A')}{COLORS['reset']}")
-        print(f"  API Key: {'[Set]' if selected_config.get('api_key') else '[Not Set]'}")
+        # Allow empty strings for API keys (local endpoints that don't require auth)
+        api_key = selected_config.get('api_key')
+        api_key_status = '[Set]' if api_key is not None else '[Not Set]'
+        print(f"  API Key: {api_key_status}")
         print(f"  Base URL: {selected_config.get('base_url', 'N/A')}")
         print(f"  Model: {selected_config.get('model', 'N/A')}")
         
