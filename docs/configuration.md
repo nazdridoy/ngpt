@@ -117,6 +117,23 @@ nGPT determines configuration values in the following order (highest priority fi
 4. **Main configuration file**: Selected configuration (by default, index 0)
 5. **Default values**: Fall back to built-in defaults
 
+### Checking Configuration Sources
+
+Use `ngpt --show-config` to see which configuration values are being used and their sources:
+
+```bash
+# Example output showing command-line overrides
+ngpt --api-key "" --base-url "http://localhost:1337/api/DeepInfra" --show-config
+
+# Output:
+# API Key: [Set] (from command line)
+# Base URL: http://localhost:1337/api/DeepInfra (from command line)
+# Model: deepseek-ai/DeepSeek-V3 (from command line)
+# Note: command line arguments are overriding some configuration values.
+```
+
+This helps you understand exactly which configuration values are being used and where they're coming from.
+
 ## Interactive Configuration
 
 You can configure nGPT interactively using the CLI:

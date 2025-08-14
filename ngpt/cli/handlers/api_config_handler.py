@@ -142,13 +142,17 @@ def handle_config_command(config_file: Union[str, bool, None], config_index: int
     
     add_config_entry(config_path, config_idx)
 
-def show_config(config_file: Union[str, bool, None], config_index: int, provider: Optional[str]) -> None:
+def show_config(config_file: Union[str, bool, None], config_index: int, provider: Optional[str], 
+                api_key: Optional[str] = None, base_url: Optional[str] = None, model: Optional[str] = None) -> None:
     """Show configuration information.
     
     Args:
         config_file: Path to config file, None, or boolean True when --config is used without a path
         config_index: Index of the config to show
         provider: Provider name to use
+        api_key: API key from command line arguments
+        base_url: Base URL from command line arguments
+        model: Model from command line arguments
     """
     # Convert bool to None to handle --config flag without value
     if isinstance(config_file, bool):
@@ -188,6 +192,16 @@ def show_config(config_file: Union[str, bool, None], config_index: int, provider
         env_overrides["base_url"] = os.environ.get("OPENAI_BASE_URL")
     if os.environ.get("OPENAI_MODEL"):
         env_overrides["model"] = os.environ.get("OPENAI_MODEL")
+    
+    # Check for command-line argument overrides
+    # Note: Allow empty strings for API keys (local endpoints that don't require auth)
+    cli_overrides = {}
+    if api_key is not None:
+        cli_overrides["api_key"] = "[Set via command line]"
+    if base_url:
+        cli_overrides["base_url"] = base_url
+    if model:
+        cli_overrides["model"] = model
     
     # Get base configuration details
     active_config = configs[active_index]
@@ -232,20 +246,26 @@ def show_config(config_file: Union[str, bool, None], config_index: int, provider
     # API Key - only show if set
     # Allow empty strings for API keys (local endpoints that don't require auth)
     api_key = active_config.get('api_key')
-    api_key_value = "[Set]" if (api_key is not None or "api_key" in env_overrides) else "[Not Set]"
-    if "api_key" in env_overrides:
+    api_key_value = "[Set]" if (api_key is not None or "api_key" in env_overrides or "api_key" in cli_overrides) else "[Not Set]"
+    if "api_key" in cli_overrides:
+        print(f"  API Key: {COLORS['yellow']}{api_key_value}{COLORS['reset']} {COLORS['gray']}(from command line){COLORS['reset']}")
+    elif "api_key" in env_overrides:
         print(f"  API Key: {COLORS['yellow']}{api_key_value}{COLORS['reset']} {COLORS['gray']}(from environment){COLORS['reset']}")
     else:
         print(f"  API Key: {api_key_value}")
     
     # Base URL with override if present
-    if "base_url" in env_overrides:
+    if "base_url" in cli_overrides:
+        print(f"  Base URL: {COLORS['yellow']}{cli_overrides['base_url']}{COLORS['reset']} {COLORS['gray']}(from command line){COLORS['reset']}")
+    elif "base_url" in env_overrides:
         print(f"  Base URL: {COLORS['yellow']}{env_overrides['base_url']}{COLORS['reset']} {COLORS['gray']}(from environment){COLORS['reset']}")
     else:
         print(f"  Base URL: {active_config.get('base_url', 'N/A')}")
     
     # Model with override if present
-    if "model" in env_overrides:
+    if "model" in cli_overrides:
+        print(f"  Model: {COLORS['yellow']}{cli_overrides['model']}{COLORS['reset']} {COLORS['gray']}(from command line){COLORS['reset']}")
+    elif "model" in env_overrides:
         print(f"  Model: {COLORS['yellow']}{env_overrides['model']}{COLORS['reset']} {COLORS['gray']}(from environment){COLORS['reset']}")
     else:
         print(f"  Model: {active_config.get('model', 'N/A')}")
@@ -254,9 +274,16 @@ def show_config(config_file: Union[str, bool, None], config_index: int, provider
     if cli_provider and not provider and active_config.get('provider', '').lower() == cli_provider.lower():
         print(f"  {COLORS['gray']}(Selected via CLI config: provider = {cli_provider}){COLORS['reset']}")
     
-    # Display environment override info if needed
-    if env_overrides:
-        print(f"\n{COLORS['yellow']}Note: Environment variables are overriding some configuration values.{COLORS['reset']}")
+    # Display override info if needed
+    if cli_overrides or env_overrides:
+        override_sources = []
+        if cli_overrides:
+            override_sources.append("command line arguments")
+        if env_overrides:
+            override_sources.append("environment variables")
+        
+        override_text = " and ".join(override_sources)
+        print(f"\n{COLORS['yellow']}Note: {override_text} are overriding some configuration values.{COLORS['reset']}")
     
     # Interactive provider selection
     try:
