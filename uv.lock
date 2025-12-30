@@ -202,7 +202,7 @@ wheels = [
 
 [[package]]
 name = "ngpt"
-version = "6.7.3"
+version = "6.7.4"
 source = { editable = "." }
 dependencies = [
     { name = "beautifulsoup4" },

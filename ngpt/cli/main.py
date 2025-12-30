@@ -1,5 +1,5 @@
 import sys
-from ngpt.core.cli_config import load_cli_config
+from ngpt.core.cli_config import load_cli_config, apply_cli_config
 from ngpt.core.config import check_config
 from ngpt.ui.colors import COLORS
 from ngpt.cli.args import parse_args, validate_args, handle_cli_config_args, setup_argument_parser, handle_role_config_args
@@ -25,6 +25,9 @@ def main():
     """Main entry point for the CLI application."""
     # Parse command line arguments using args.py
     args = parse_args()
+    
+    # Apply CLI configuration (persistent defaults)
+    args = apply_cli_config(args, mode="all")
     
     try:
         args = validate_args(args)

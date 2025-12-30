@@ -9,7 +9,7 @@ from typing import Tuple, Optional, Dict, Any, List, Union
 
 from ngpt.ui.colors import COLORS
 from ngpt.core.config import load_config, get_config_path, load_configs, add_config_entry, remove_config_entry, check_config
-from ngpt.core.cli_config import load_cli_config
+
 
 def handle_config_command(config_file: Union[str, bool, None], config_index: int, provider: Optional[str], remove: bool = False) -> None:
     """Handle the --config command.
@@ -161,12 +161,6 @@ def show_config(config_file: Union[str, bool, None], config_index: int, provider
     config_path = get_config_path(config_file)
     configs = load_configs(config_file)
     
-    # Check CLI configuration for provider preference if not overridden by command line
-    cli_config = load_cli_config()
-    cli_provider = None
-    if not provider and not ('--config-index' in sys.argv):
-        cli_provider = cli_config.get('provider')
-    
     # Show minimal config file info
     print(f"Configuration file: {config_path}")
     
@@ -175,11 +169,6 @@ def show_config(config_file: Union[str, bool, None], config_index: int, provider
     if provider:
         # Find by explicit provider flag
         matching_configs = [i for i, cfg in enumerate(configs) if cfg.get('provider', '').lower() == provider.lower()]
-        if matching_configs:
-            active_index = matching_configs[0]
-    elif cli_provider:
-        # Find by CLI config provider
-        matching_configs = [i for i, cfg in enumerate(configs) if cfg.get('provider', '').lower() == cli_provider.lower()]
         if matching_configs:
             active_index = matching_configs[0]
     
@@ -204,6 +193,8 @@ def show_config(config_file: Union[str, bool, None], config_index: int, provider
         cli_overrides["model"] = model
     
     # Get base configuration details
+    if active_index >= len(configs):
+        active_index = 0
     active_config = configs[active_index]
     
     # Check for duplicate provider names for warning
@@ -225,8 +216,7 @@ def show_config(config_file: Union[str, bool, None], config_index: int, provider
         # Determine if this config is active
         active_marker = "*" if (
             (provider and cfg_provider.lower() == provider.lower()) or 
-            (cli_provider and not provider and cfg_provider.lower() == cli_provider.lower()) or
-            (not provider and not cli_provider and i == active_index)
+            (not provider and i == active_index)
         ) else " "
         
         # Display config summary with model
@@ -270,9 +260,7 @@ def show_config(config_file: Union[str, bool, None], config_index: int, provider
     else:
         print(f"  Model: {active_config.get('model', 'N/A')}")
     
-    # Display source if from CLI config
-    if cli_provider and not provider and active_config.get('provider', '').lower() == cli_provider.lower():
-        print(f"  {COLORS['gray']}(Selected via CLI config: provider = {cli_provider}){COLORS['reset']}")
+
     
     # Display override info if needed
     if cli_overrides or env_overrides:
@@ -308,8 +296,7 @@ def show_config(config_file: Union[str, bool, None], config_index: int, provider
         selected_provider = selected_config.get('provider', 'N/A')
         is_active = (
             (selected_index == active_index) or
-            (provider and selected_provider.lower() == provider.lower()) or
-            (cli_provider and not provider and selected_provider.lower() == cli_provider.lower())
+            (provider and selected_provider.lower() == provider.lower())
         )
         
         # Clear a few lines and show the selected configuration details
