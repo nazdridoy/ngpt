@@ -76,6 +76,9 @@ Generate clean code without markdown formatting or explanations:
 ```bash
 ngpt --code "function to calculate Fibonacci numbers"
 ngpt -c "function to calculate Fibonacci numbers"
+
+# Use interactive multiline editor if no prompt is provided
+ngpt -c
 ```
 
 ### Shell Command Mode
@@ -83,6 +86,9 @@ Generate and execute OS-aware shell commands:
 ```bash
 ngpt --shell "list all files recursively"
 ngpt -s "list all files recursively"
+
+# Use interactive multiline editor if no prompt is provided
+ngpt -s
 ```
 
 ### Text Rewriting Mode
@@ -91,6 +97,9 @@ Improve the quality of text while preserving tone and meaning:
 ngpt --rewrite "I want to said that I think yours product is good and I like it Alot."
 cat text.txt | ngpt --rewrite
 cat text.txt | ngpt -r
+
+# Use interactive multiline editor if no prompt is provided
+ngpt -r
 ```
 
 ### Git Commit Message Mode
@@ -115,9 +124,11 @@ cat README.md | ngpt --pipe "Summarize this document: {}"
 
 # Code mode
 cat algorithm.py | ngpt --code --pipe "Optimize this algorithm: {}"
+echo "create a python request" | ngpt -c --language python
 
 # Shell mode
 cat logs.txt | ngpt --shell --pipe "Generate a command to analyze these logs: {}"
+echo "list files" | ngpt -s
 
 # Rewrite mode 
 cat email.txt | ngpt --rewrite --pipe "Make this more professional: {}"

@@ -78,6 +78,12 @@ ngpt --shell "download CSV data from our API, filter rows where the status is 'f
 
 # System monitoring script
 ngpt --shell "create a script that monitors CPU, memory, and disk usage every 5 minutes, alerts if any exceeds 80%, and logs the results to a timestamped file"
+
+# Use the interactive multiline editor for very complex script descriptions
+ngpt --shell
+
+# Pipe command description directly to shell mode
+echo "list files" | ngpt -s
 ```
 
 ### Creating Scripts from Natural Language
@@ -116,6 +122,12 @@ ngpt --code --language typescript --preprompt "Generate a complete TypeScript Ex
 
 # Generate a React component
 ngpt --code --language javascript --preprompt "Create a React functional component for a data table with sorting, filtering, and pagination. Use React hooks, include PropTypes, and add comprehensive comments." "DataTable component"
+
+# Use the interactive multiline editor to provide extensive requirements for code generation
+ngpt --code
+
+# Pipe code description directly to code mode
+echo "create a python request" | ngpt -c --language python
 ```
 
 ### Language-Specific Optimizations

@@ -66,6 +66,12 @@ ngpt --code --language javascript "create a function that checks if a number is 
 
 # Generate Rust code
 ngpt --code --language rust "create a function that checks if a number is prime"
+
+# Use interactive multiline editor for complex code descriptions
+ngpt --code
+
+# Pipe code description directly to code mode
+echo "create a python request" | ngpt -c --language python
 ```
 
 ### Generate Code with Specific Requirements
@@ -104,6 +110,12 @@ ngpt --shell "extract all email addresses from input.txt and save to emails.txt"
 
 # System management
 ngpt --shell "show current memory and CPU usage"
+
+# Use interactive multiline editor for complex command descriptions
+ngpt --shell
+
+# Pipe command description directly to shell mode
+echo "list files" | ngpt -s
 ```
 
 ### OS-Specific Commands
@@ -165,7 +177,7 @@ ngpt --rewrite --preprompt "You are a professional email writer. Format the text
 ### Interactive Text Rewriting
 
 ```bash
-# Open multiline editor for text input
+# Open interactive multiline editor to enter or paste text to rewrite
 ngpt --rewrite
 ```
 

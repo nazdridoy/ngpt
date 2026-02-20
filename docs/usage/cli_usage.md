@@ -365,6 +365,8 @@ In shell command mode, nGPT:
 3. Asks for confirmation before executing it
 4. Shows the command output
 
+If you don't provide a prompt after the `--shell` (or `-s`) flag, nGPT will open the interactive multiline editor for you to enter a more complex command description.
+
 This is especially useful for complex commands that you can't remember the syntax for, or for OS-specific commands that work differently on different platforms.
 
 ### Code Generation
@@ -380,6 +382,8 @@ By default, this generates Python code. To specify a different language:
 ```bash
 ngpt --code --language javascript "create a function that calculates prime numbers up to n"
 ```
+
+If you don't provide a prompt after the `--code` (or `-c`) flag, nGPT will open the interactive multiline editor for you to enter a more complex code description.
 
 You can combine code generation with pretty formatting:
 
@@ -406,6 +410,8 @@ cat text.txt | ngpt --rewrite
 
 # Use multiline editor to enter and rewrite text
 ngpt --rewrite
+
+If you don't provide a prompt after the `--rewrite` (or `-r`) flag, nGPT will open the interactive multiline editor for you to enter or paste the text you want to rewrite.
 ```
 
 The rewrite mode is perfect for:
@@ -551,9 +557,11 @@ cat README.md | ngpt --pipe "Summarize this document in bullet points: {}"
 
 # Code generation mode with pipe
 cat algorithm.py | ngpt --code --pipe "Optimize this algorithm and add comments: {}"
+echo "create a python request" | ngpt -c --language python
 
 # Shell command generation with pipe
 cat server_logs.txt | ngpt --shell --pipe "Generate a command to extract all error messages from these logs: {}"
+echo "list files" | ngpt -s
 
 # Rewrite mode with pipe (explicit placeholder)
 cat draft_email.txt | ngpt --rewrite --pipe "Make this email more professional while keeping key points: {}"
