@@ -1,6 +1,6 @@
 from ngpt.ui.colors import COLORS
 from ngpt.ui.renderers import prettify_streaming_markdown, TERMINAL_RENDER_LOCK, setup_plaintext_spinner, cleanup_plaintext_spinner, create_spinner_handling_callback
-from ngpt.ui.tui import spinner, copy_to_clipboard
+from ngpt.ui.tui import spinner, copy_to_clipboard, get_multiline_input
 from ngpt.utils.web_search import enhance_prompt_with_web_search
 from ngpt.ui.pipe import process_piped_input
 import sys
@@ -88,19 +88,35 @@ def code_mode(client, args, logger=None):
         args: The parsed command-line arguments
         logger: Optional logger instance
     """
-    if args.prompt is None:
-        try:
-            print("Enter code description: ", end='')
-            prompt = input()
-        except KeyboardInterrupt:
-            print("\nInput cancelled by user. Exiting gracefully.")
-            sys.exit(130)
-    else:
+    # Check if using --pipe flag with a specific placeholder
+    if args.pipe and args.prompt:
+        prompt = process_piped_input(args.prompt, logger=logger)
+    # Normal code mode functionality (direct stdin piping without --pipe flag)
+    elif not sys.stdin.isatty():
+        # Read from stdin if data is piped
+        piped_data = sys.stdin.read().strip()
+        
+        # If prompt is also provided, append it to the piped input
+        if args.prompt:
+            prompt = f"{piped_data}\n\n{args.prompt}"
+        else:
+            prompt = piped_data
+    elif args.prompt:
+        # Use the command-line argument if provided
         prompt = args.prompt
-    
-    # Apply piped input if --pipe is enabled
-    if args.pipe:
-        prompt = process_piped_input(prompt, logger=logger)
+    else:
+        # No pipe or prompt - use multiline input
+        print("Enter code description (Ctrl+D or Ctrl+Z to submit):")
+        prompt = get_multiline_input()
+        if prompt is None:
+            # Input was cancelled or empty
+            print("Exiting.")
+            return
+
+    # Check if input is empty
+    if not prompt:
+        print(f"{COLORS['yellow']}Error: Empty input. Please provide a code description.{COLORS['reset']}")
+        return
     
     # Log the user prompt if logging is enabled
     if logger:
