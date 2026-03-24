@@ -22,7 +22,7 @@
 🤖 **nGPT** - A lightning-fast CLI tool that brings any OpenAI-compatible LLM (OpenAI, Ollama, Groq, Claude, Gemini) directly to your terminal. Generate code, craft git commits, execute shell commands, rewrite text, and chat interactively, all with seamless provider switching and real-time streaming.
 
 
-![ngpt-i](https://raw.githubusercontent.com/nazdridoy/ngpt/main/previews/ngpt-i.png)
+![ngpt-i](https://raw.githubusercontent.com/nazdridoy/ngpt/main/previews/rec-n-gif/ngpt-i.gif)
 
 
 ## Features
@@ -757,3 +757,4 @@ Please check the [CONTRIBUTING.md](CONTRIBUTING.md) file for detailed guidelines
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
